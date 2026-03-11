@@ -1,0 +1,52 @@
+{
+  "name": "@glasshome/widget-sdk",
+  "version": "0.1.0",
+  "description": "SDK for building GlassHome dashboard widgets with SolidJS",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "@glasshome/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vite": {
+      "@glasshome/source": "./src/vite/index.ts",
+      "types": "./dist/vite/index.d.ts",
+      "import": "./dist/vite/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "preview"
+  ],
+  "scripts": {
+    "build": "vite build && tsc",
+    "dev": "vite build --watch"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.9.11"
+  },
+  "dependencies": {
+    "@modular-forms/solid": "^0.25.1",
+    "@solid-primitives/resize-observer": "^2.1.5",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.2.2",
+    "typescript": "^5",
+    "vite": "^7.3.1",
+    "vite-plugin-externalize-deps": "^0.8.0",
+    "vite-plugin-solid": "^2.11.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glasshome-labs/widget-sdk.git"
+  },
+  "author": "GlassHome Labs",
+  "license": "MIT"
+}

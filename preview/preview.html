@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Widget Preview</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --color-primary: #3b82f6;
+        --color-background: #ffffff;
+        --color-foreground: #0f172a;
+        --color-border: #e2e8f0;
+        --color-success: #22c55e;
+        --color-error: #ef4444;
+        color-scheme: light;
+      }
+
+      .dark {
+        --color-primary: #60a5fa;
+        --color-background: #0f172a;
+        --color-foreground: #f1f5f9;
+        --color-border: #334155;
+        --color-success: #4ade80;
+        --color-error: #f87171;
+        color-scheme: dark;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: var(--color-background);
+        color: var(--color-foreground);
+        min-height: 100vh;
+        transition: background 0.2s, color 0.2s;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/@glasshome/preview"></script>
+  </body>
+</html>
