@@ -46,7 +46,8 @@
     "@modular-forms/solid": "^0.25.1",
     "@solid-primitives/resize-observer": "^2.1.5",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/bun": "latest",
