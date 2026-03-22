@@ -2,21 +2,28 @@
 
 SDK for building GlassHome dashboard widgets with SolidJS.
 
+Provides `defineWidget`, reactive entity bindings, framework components/hooks, a Vite plugin for widget development, and Tailwind v4 source paths — everything you need to build, preview, and ship dashboard widgets.
+
 ## Install
 
 ```bash
-bun add @glasshome/widget-sdk
+npm install @glasshome/widget-sdk solid-js
+# or
+bun add @glasshome/widget-sdk solid-js
 ```
 
-## Quick Start
+> `solid-js ^1.9.11` is a required peer dependency.
+
+## Subpath Imports
+
+### `@glasshome/widget-sdk` — SDK API
+
+Core widget API: define widgets, create reactive entity bindings, and use framework components/hooks.
 
 ```tsx
-import { defineWidget } from "@glasshome/widget-sdk";
-import { Card } from "@glasshome/ui";
+import { defineWidget, createEntity, SDK_VERSION } from "@glasshome/widget-sdk";
 
-function MyWidget(props: { config: { label: string } }) {
-  return <Card>{props.config.label}</Card>;
-}
+const entity = createEntity("light.living_room");
 
 export default defineWidget({
   manifest: {
@@ -27,13 +34,45 @@ export default defineWidget({
     sdkVersion: "^0.1.0",
     defaultConfig: { label: "Hello" },
   },
-  component: MyWidget,
+  component: (props) => <div>{props.config.label}</div>,
 });
 ```
 
-## Documentation
+### `@glasshome/widget-sdk/vite` — Vite Plugin
 
-Full docs at [glasshome.app/docs](https://glasshome.app/docs)
+Vite plugin for widget development. Handles widget bundling, preview server, and registry generation.
+
+```typescript
+// vite.config.ts
+import { defineConfig } from "vite";
+import { glasshomeWidget } from "@glasshome/widget-sdk/vite";
+
+export default defineConfig({
+  plugins: [glasshomeWidget()],
+});
+```
+
+The plugin accepts an optional `entry` option (defaults to `"src/index.tsx"`):
+
+```typescript
+glasshomeWidget({ entry: "src/my-widget.tsx" });
+```
+
+### `@glasshome/widget-sdk/tailwind-sources` — Tailwind v4 CSS Source
+
+Provides a `@source` directive for Tailwind v4 so the compiler scans widget SDK source files for class names.
+
+```css
+/* In your widget's CSS entrypoint */
+@import "tailwindcss";
+@source "@glasshome/widget-sdk/tailwind-sources";
+```
+
+## Peer Dependencies
+
+| Package    | Required | Notes                                       |
+| ---------- | -------- | ------------------------------------------- |
+| `solid-js` | Yes      | SolidJS reactive primitives and JSX runtime |
 
 ## License
 

@@ -1,16 +1,21 @@
-export type WidgetType = "chart" | "status" | "control";
-export type WidgetSize = "small" | "medium" | "large";
+/**
+ * Grid size constraint — number of columns (w) and rows (h).
+ */
+export interface GridSize {
+  w: number;
+  h: number;
+}
 
 /**
  * Widget manifest — declarative metadata about a widget.
  * Framework-agnostic: no SolidJS imports.
  */
-export interface WidgetManifest<T extends WidgetType = WidgetType> {
+export interface WidgetManifest {
   tag: string;
-  type: T;
   name: string;
   description?: string;
-  size: WidgetSize;
+  minSize: GridSize;
+  maxSize: GridSize;
   sdkVersion: string;
   icon?: string;
   schema?: object;
@@ -39,10 +44,9 @@ export interface WidgetContext {
  * (internally the runtime knows it is SolidJS, but widget authors code against
  * a stable contract that does not leak framework internals).
  *
- * @template T - Widget type (chart, status, control)
  * @template C - Widget configuration type
  */
-export interface WidgetDefinition<T extends WidgetType = WidgetType, C = Record<string, unknown>> {
-  manifest: WidgetManifest<T>;
+export interface WidgetDefinition<C = Record<string, unknown>> {
+  manifest: WidgetManifest;
   component: (props: { config: C }) => any;
 }

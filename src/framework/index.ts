@@ -118,6 +118,8 @@ export { WIDGET_Z, type WidgetZIndex } from "./design-system/z-index";
 // ============================================================================
 
 export {
+  type AdaptiveIconColors,
+  deriveAdaptiveIconColors,
   GRADIENT_NAMES,
   GRADIENT_PRESET_KEYS,
   GRADIENT_PRESETS,

@@ -85,18 +85,6 @@ export const spacing = {
     return sizes[size];
   },
 
-  /** Icon border radius */
-  iconRadius: (size: WidgetSize): string => {
-    const sizes = {
-      xs: "10px",
-      sm: "12px", // Current WidgetIcon default (rounded-[12px])
-      md: "14px",
-      lg: "14px",
-      xl: "16px",
-    };
-    return sizes[size];
-  },
-
   /** Container padding */
   container: (size: WidgetSize): string => {
     const sizes = {

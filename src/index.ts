@@ -11,11 +11,10 @@ export * from "./framework";
 export { getThemeToken, isDark } from "./theme";
 // v1.0 Types (original SDK API)
 export type {
+  GridSize,
   WidgetContext,
   WidgetDefinition,
   WidgetManifest,
-  WidgetSize as LegacyWidgetSize,
-  WidgetType,
 } from "./types";
 // Version constant
 export { SDK_VERSION } from "./version";

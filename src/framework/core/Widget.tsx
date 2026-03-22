@@ -233,7 +233,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       <div
         ref={containerRef}
         class={cn(
-          "relative h-full w-full select-none rounded-[var(--radius-xl)] border border-border/50",
+          "relative h-full w-full select-none rounded-xl border border-border/50",
           // Variant styles (lowest priority)
           variantConfig()?.styles?.class,
           // Custom class (highest priority)
@@ -244,7 +244,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
         {/* Inner container with gradient and overflow */}
         <div
           class={cn(
-            "relative h-full w-full overflow-hidden rounded-[var(--radius-xl)]",
+            "relative h-full w-full overflow-hidden rounded-xl",
             // Gradient prop (overrides variant, auto-applied for empty state)
             finalGradient(),
           )}

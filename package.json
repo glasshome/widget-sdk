@@ -2,7 +2,18 @@
   "name": "@glasshome/widget-sdk",
   "version": "0.1.0",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
+  "keywords": [
+    "glasshome",
+    "widget",
+    "sdk",
+    "solidjs",
+    "vite",
+    "home-assistant",
+    "dashboard",
+    "smart-home"
+  ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,11 +27,13 @@
       "types": "./dist/vite/index.d.ts",
       "import": "./dist/vite/index.js"
     },
+    "./tailwind-sources": "./tailwind-sources.css",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
-    "preview"
+    "preview",
+    "tailwind-sources.css"
   ],
   "scripts": {
     "build": "vite build && tsc",
@@ -45,8 +58,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/glasshome-labs/widget-sdk.git"
+    "url": "https://github.com/glasshome/widget-sdk.git"
+  },
+  "homepage": "https://github.com/glasshome/widget-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/glasshome/widget-sdk/issues"
   },
   "author": "GlassHome Labs",
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

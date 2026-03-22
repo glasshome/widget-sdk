@@ -89,7 +89,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "Button",
   ]);
 
-  const [activeTab, setActiveTab] = createSignal(local.defaultTab ?? "edit");
+  const [activeTab, setActiveTab] = createSignal(local.defaultTab ?? "controls");
 
   const maxWidthClass = () => {
     const mw = local.maxWidth ?? "3xl";
@@ -113,7 +113,14 @@ export function WidgetDialog(props: WidgetDialogProps) {
       id: "edit",
       label: "Edit",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="size-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
@@ -129,7 +136,14 @@ export function WidgetDialog(props: WidgetDialogProps) {
       id: "controls",
       label: "Controls",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="size-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <line x1="4" y1="21" x2="4" y2="14" />
           <line x1="4" y1="10" x2="4" y2="3" />
           <line x1="12" y1="21" x2="12" y2="12" />
@@ -152,7 +166,14 @@ export function WidgetDialog(props: WidgetDialogProps) {
       id: "debug",
       label: "Debug",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="size-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <path d="m8 2 1.88 1.88" />
           <path d="M14.12 3.88 16 2" />
           <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />

@@ -30,12 +30,15 @@
  */
 
 import type { GestureConfig, WidgetOrientation } from "../types";
+import { cursors } from "./cursors";
 
 export interface GestureHandlers {
   onPointerDown: (e: PointerEvent) => void;
   onPointerMove: (e: PointerEvent) => void;
   onPointerUp: (e: PointerEvent) => void;
   onPointerCancel: (e: PointerEvent) => void;
+  /** Sets the correct cursor on the element. Bind via on:pointerenter. */
+  onPointerEnter: (e: PointerEvent) => void;
   /** Cancel any pending hold/slide timers. Call on component unmount via onCleanup. */
   dispose: () => void;
 }
@@ -52,6 +55,7 @@ interface GestureState {
   slideActive: boolean;
   slideActivationTimer: ReturnType<typeof setTimeout> | null;
   lockedAxis: "horizontal" | "vertical" | null;
+  element: HTMLElement | null;
 }
 
 /**
@@ -82,6 +86,7 @@ export function useWidgetGestures(
     slideActive: false,
     slideActivationTimer: null,
     lockedAxis: null,
+    element: null,
   };
 
   // Constants
@@ -99,14 +104,19 @@ export function useWidgetGestures(
     }
   };
 
-  const getSlideOrientation = (): "horizontal" | "vertical" => {
+  // Resolve slide orientation from config, context, or element dimensions
+  const getSlideOrientation = (el?: HTMLElement): "horizontal" | "vertical" => {
     const cfg = config();
     const slide = cfg.slide;
-    if (slide?.orientation === "auto") {
-      const orient = orientation?.() ?? "horizontal";
-      return orient === "vertical" ? "vertical" : "horizontal";
+    if (slide?.orientation === "horizontal") return "horizontal";
+    if (slide?.orientation === "vertical") return "vertical";
+    // "auto" — prefer element dimensions (avoids stale context from parent providers)
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      return rect.height > rect.width ? "vertical" : "horizontal";
     }
-    return slide?.orientation || "horizontal";
+    const orient = orientation?.() ?? "horizontal";
+    return orient === "horizontal" ? "horizontal" : "vertical";
   };
 
   const onPointerDown = (e: PointerEvent) => {
@@ -116,6 +126,7 @@ export function useWidgetGestures(
     if (!cfg.tap && !cfg.hold && !cfg.slide) return;
 
     state.isDown = true;
+    state.element = e.currentTarget as HTMLElement;
     state.startX = e.clientX;
     state.startY = e.clientY;
     state.currentX = e.clientX;
@@ -165,7 +176,8 @@ export function useWidgetGestures(
     const absDeltaY = Math.abs(deltaY);
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    const slideOrientation = getSlideOrientation();
+    const el = e.currentTarget as HTMLElement;
+    const slideOrientation = getSlideOrientation(el);
 
     // Axis lock detection
     // Once movement exceeds threshold, determine dominant axis and lock to it
@@ -178,7 +190,7 @@ export function useWidgetGestures(
 
       // If locked axis doesn't match slide orientation, release and allow scroll
       if (cfg.slide && state.lockedAxis !== slideOrientation) {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        el.releasePointerCapture(e.pointerId);
         state.isDown = false;
         state.slideActive = false;
         clearTimers();
@@ -265,11 +277,33 @@ export function useWidgetGestures(
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
+  const getCursorForElement = (el: HTMLElement): string => {
+    const cfg = config();
+    if (cfg.slide) {
+      const orient = cfg.slide.orientation;
+      if (orient === "horizontal") return cursors.slideHorizontal.css;
+      if (orient === "vertical") return cursors.slideVertical.css;
+      // "auto" — measure element
+      const rect = el.getBoundingClientRect();
+      return rect.height > rect.width ? cursors.slideVertical.css : cursors.slideHorizontal.css;
+    }
+    if (cfg.tap) return cursors.tap.css;
+    if (cfg.hold) return cursors.hold.css;
+    return "";
+  };
+
+  const onPointerEnter = (e: PointerEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    state.element = el;
+    el.style.cursor = getCursorForElement(el);
+  };
+
   return {
     onPointerDown,
     onPointerMove,
     onPointerUp,
     onPointerCancel,
+    onPointerEnter,
     dispose: clearTimers,
   };
 }
