@@ -1,4 +1,4 @@
-import { createSignal, type JSX, type ParentComponent, Show, splitProps } from "solid-js";
+import { type Component, createSignal, type JSX, type ParentComponent, Show, splitProps } from "solid-js";
 import { cn } from "../utils/cn";
 
 interface TabButtonProps {
@@ -51,17 +51,19 @@ export interface WidgetDialogProps {
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
   defaultTab?: string;
   headerActions?: JSX.Element;
-  ResponsiveDialog: ParentComponent<{ open: boolean; onOpenChange: (open: boolean) => void }>;
-  ResponsiveDialogContent: ParentComponent<{ class?: string }>;
-  ResponsiveDialogHeader: ParentComponent<{ class?: string }>;
-  ResponsiveDialogTitle: ParentComponent<{ class?: string }>;
-  ResponsiveDialogDescription: ParentComponent<{ class?: string }>;
-  Button: ParentComponent<{
-    size?: string;
-    variant?: string;
-    onClick?: () => void;
-    class?: string;
-  }>;
+  // Injected UI components — typed permissively so any compatible component satisfies the contract
+  // biome-ignore lint/suspicious/noExplicitAny: injected UI components with varying prop signatures
+  ResponsiveDialog: Component<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
+  ResponsiveDialogContent: Component<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
+  ResponsiveDialogHeader: Component<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
+  ResponsiveDialogTitle: Component<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
+  ResponsiveDialogDescription: Component<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
+  Button: Component<any>;
 }
 
 export function WidgetDialog(props: WidgetDialogProps) {
