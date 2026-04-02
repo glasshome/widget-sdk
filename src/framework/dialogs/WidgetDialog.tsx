@@ -1,4 +1,4 @@
-import { type Component, createSignal, type JSX, type ParentComponent, Show, splitProps } from "solid-js";
+import { type Component, createSignal, type JSX, Show, splitProps } from "solid-js";
 import { cn } from "../utils/cn";
 
 interface TabButtonProps {
