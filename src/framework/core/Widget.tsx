@@ -33,7 +33,7 @@ import type { WidgetSubtitle as WidgetSubtitleType } from "../components/WidgetS
 import type { WidgetTitle as WidgetTitleType } from "../components/WidgetTitle";
 import type { WidgetValue as WidgetValueType } from "../components/WidgetValue";
 import { WIDGET_Z } from "../design-system/z-index";
-import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
+import { type BridgeableWidgetContext, type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
 import type {
   WidgetDimensions,
   WidgetOrientation,
@@ -203,6 +203,19 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   // Create reactive context value
   // Inherit updateConfig from parent context if available
   const parentCtx = useContext(WidgetCtx);
+
+  // Bridge: if parent context is a bridgeable stub (created by WidgetSlot),
+  // write real measured values into it so widget authors calling useWidgetContext()
+  // at the top level get reactive values after Widget mounts.
+  const bridgeable = parentCtx as BridgeableWidgetContext | undefined;
+  if (bridgeable?._isStub?.() && bridgeable._bridge) {
+    createEffect(() => { bridgeable._bridge.setSize(sizeClass()); });
+    createEffect(() => { bridgeable._bridge.setOrientation(orientation()); });
+    createEffect(() => { bridgeable._bridge.setContentLayout(contentLayout()); });
+    createEffect(() => { bridgeable._bridge.setDimensions(dimensions()); });
+    createEffect(() => { bridgeable._bridge.setIsStub(false); });
+  }
+
   const contextValue: ReactiveWidgetContext = {
     size: sizeClass,
     orientation,
