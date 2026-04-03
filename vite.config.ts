@@ -7,6 +7,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: "src/index.ts",
+        schemas: "src/schemas.ts",
         "vite/index": "src/vite/index.ts",
       },
       formats: ["es"],
@@ -17,6 +18,7 @@ export default defineConfig({
         "solid-js/web",
         "solid-js/store",
         "vite",
+        "node:crypto",
         "node:fs",
         "node:path",
         "node:url",

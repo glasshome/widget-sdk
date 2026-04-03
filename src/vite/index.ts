@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -14,6 +15,19 @@ import type { InlineConfig, Plugin, ViteDevServer } from "vite";
 export interface GlasshomeWidgetOptions {
   /** Entry file for the widget (default: "src/index.tsx") */
   entry?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Schema hash utility
+// ---------------------------------------------------------------------------
+
+/**
+ * Produces a stable 16-char hex hash of a JSON Schema object.
+ * Used to detect shape changes between builds so we can warn when configVersion was not bumped.
+ */
+function hashSchema(jsonSchema: object): string {
+  const stable = JSON.stringify(jsonSchema, Object.keys(jsonSchema).sort());
+  return createHash("sha256").update(stable).digest("hex").slice(0, 16);
 }
 
 const VIRTUAL_WIDGET_ID = "virtual:glasshome-widget";
@@ -84,7 +98,8 @@ export function generateRegistry(srcDir: string, outDir: string): void {
       const manifestPath = join(srcDir, dir, "manifest.json");
       try {
         const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-        widgets.push({ ...manifest, bundleUrl: `./${dir}.js` });
+        // The directory name is the widget's tag/slug — not read from manifest
+        widgets.push({ ...manifest, tag: dir, bundleUrl: `./${dir}.js` });
       } catch {
         // skip dirs without manifest
       }
@@ -275,7 +290,53 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     },
   };
 
-  return [buildPlugin, devPlugin];
+  const schemaPlugin: Plugin = {
+    name: "glasshome-widget:schema",
+    apply: "build",
+    async closeBundle() {
+      // After the widget bundle is written, attempt to dynamically import it
+      // to extract configSchema and generate a JSON Schema for the manifest.
+      const outFile = resolve(process.cwd(), "dist", "index.js");
+      if (!existsSync(outFile)) return;
+
+      try {
+        // Dynamic import with cache-busting timestamp to avoid Node module cache
+        const mod = await import(`${outFile}?t=${Date.now()}`);
+        const def = mod.default;
+        if (!def?.configSchema) return;
+
+        const { z } = await import("zod");
+        const jsonSchema = z.toJSONSchema(def.configSchema, { unrepresentable: "any" });
+
+        // Write generated JSON Schema into manifest.json
+        const manifestPath = resolve(process.cwd(), "manifest.json");
+        if (existsSync(manifestPath)) {
+          const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+          manifest.schema = jsonSchema;
+          writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+        }
+
+        // Schema hash guard: warn when schema shape changes without a configVersion bump
+        const hash = hashSchema(jsonSchema);
+        const hashFile = resolve(process.cwd(), ".schema-hash");
+        if (existsSync(hashFile)) {
+          const oldHash = readFileSync(hashFile, "utf-8").trim();
+          if (oldHash !== hash) {
+            const widgetName = def.manifest?.name ?? "unknown";
+            console.warn(
+              `[widget-sdk] Schema shape changed for "${widgetName}" — verify configVersion was bumped`,
+            );
+          }
+        }
+        writeFileSync(hashFile, hash);
+      } catch {
+        // Non-fatal: widget may not have configSchema, or dynamic import may fail
+        // due to externalized dependencies (solid-js, etc.)
+      }
+    },
+  };
+
+  return [buildPlugin, schemaPlugin, devPlugin];
 }
 
 // ---------------------------------------------------------------------------
