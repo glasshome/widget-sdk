@@ -125,6 +125,7 @@ export function useWidgetGestures(
     // If no gestures configured, do nothing
     if (!cfg.tap && !cfg.hold && !cfg.slide) return;
 
+    e.preventDefault();
     state.isDown = true;
     state.element = e.currentTarget as HTMLElement;
     state.startX = e.clientX;
