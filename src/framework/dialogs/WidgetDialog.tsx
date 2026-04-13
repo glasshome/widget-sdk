@@ -1,4 +1,6 @@
-import { type Component, createSignal, type JSX, Show, splitProps } from "solid-js";
+import { type Component, createEffect, createSignal, type JSX, on, Show, splitProps } from "solid-js";
+import type { ZodType } from "zod";
+import { toFormSchema } from "../to-form-schema";
 import { cn } from "../utils/cn";
 
 interface TabButtonProps {
@@ -51,6 +53,11 @@ export interface WidgetDialogProps {
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
   defaultTab?: string;
   headerActions?: JSX.Element;
+  // Schema-driven config editing (optional — replaces editContent when provided)
+  configSchema?: ZodType;
+  config?: Record<string, unknown>;
+  onConfigSave?: (config: Record<string, unknown>) => void;
+
   // Injected UI components — typed permissively so any compatible component satisfies the contract
   // biome-ignore lint/suspicious/noExplicitAny: injected UI components with varying prop signatures
   ResponsiveDialog: Component<any>;
@@ -64,6 +71,8 @@ export interface WidgetDialogProps {
   ResponsiveDialogDescription: Component<any>;
   // biome-ignore lint/suspicious/noExplicitAny: injected UI component
   Button: Component<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: injected form renderer component
+  SchemaForm?: Component<any>;
 }
 
 export function WidgetDialog(props: WidgetDialogProps) {
@@ -83,13 +92,55 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "maxWidth",
     "defaultTab",
     "headerActions",
+    "configSchema",
+    "config",
+    "onConfigSave",
     "ResponsiveDialog",
     "ResponsiveDialogContent",
     "ResponsiveDialogHeader",
     "ResponsiveDialogTitle",
     "ResponsiveDialogDescription",
     "Button",
+    "SchemaForm",
   ]);
+
+  // Schema-driven config editing: draft lifecycle
+  const schemaMode = () =>
+    !!local.configSchema && !!local.config && !!local.onConfigSave && !!local.SchemaForm;
+  const [draftConfig, setDraftConfig] = createSignal<Record<string, unknown>>({});
+  const [formSchema, setFormSchema] = createSignal<object | null>(null);
+
+  // Reset draft when config changes or dialog opens
+  createEffect(
+    on(
+      () => local.config,
+      (config) => {
+        if (config) setDraftConfig({ ...config });
+      },
+    ),
+  );
+
+  // Generate JSON Schema from Zod configSchema once
+  createEffect(
+    on(
+      () => local.configSchema,
+      (schema) => {
+        if (schema) setFormSchema(toFormSchema(schema));
+      },
+    ),
+  );
+
+  const schemaDirty = () =>
+    schemaMode() && JSON.stringify(draftConfig()) !== JSON.stringify(local.config);
+
+  const handleSchemaClose = (open: boolean) => {
+    if (!open && local.config) setDraftConfig({ ...local.config });
+    local.onOpenChange(open);
+  };
+
+  const handleSchemaSave = () => {
+    local.onConfigSave?.(draftConfig());
+  };
 
   const [activeTab, setActiveTab] = createSignal(local.defaultTab ?? "controls");
 
@@ -127,11 +178,18 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
       ),
-      content: local.editContent ?? (
-        <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
-          <p class="text-muted-foreground text-sm">No edit options available</p>
-        </div>
-      ),
+      content: local.editContent ??
+        (schemaMode() && formSchema() ? (
+          <SchemaFormEdit
+            schema={formSchema()!}
+            data={draftConfig()}
+            onChange={setDraftConfig}
+          />
+        ) : (
+          <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
+            <p class="text-muted-foreground text-sm">No edit options available</p>
+          </div>
+        )),
     });
 
     tabs.push({
@@ -224,9 +282,18 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const RDTitle = local.ResponsiveDialogTitle;
   const RDDescription = local.ResponsiveDialogDescription;
   const Btn = local.Button;
+  const SchemaFormEdit = local.SchemaForm as Component<{
+    schema: object;
+    data: Record<string, unknown>;
+    onChange: (data: Record<string, unknown>) => void;
+  }>;
+
+  const effectiveOnOpenChange = schemaMode() ? handleSchemaClose : local.onOpenChange;
+  const effectiveHasChanges = schemaMode() ? schemaDirty() : local.hasUnsavedChanges;
+  const effectiveOnSave = schemaMode() ? handleSchemaSave : local.onSave;
 
   return (
-    <RD open={local.open} onOpenChange={local.onOpenChange}>
+    <RD open={local.open} onOpenChange={effectiveOnOpenChange}>
       <RDContent class={cn(maxWidthClass(), local.class)}>
         {/* Header: title on left, tabs + actions on right */}
         <RDHeader class="flex flex-row items-center justify-between gap-3">
@@ -250,8 +317,8 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
             {/* Context actions */}
             <Show when={local.headerActions}>{local.headerActions}</Show>
-            <Show when={activeTab() === "edit" && local.onSave && local.hasUnsavedChanges}>
-              <Btn size="sm" onClick={() => local.onSave?.()}>
+            <Show when={activeTab() === "edit" && effectiveOnSave && effectiveHasChanges}>
+              <Btn size="sm" onClick={() => effectiveOnSave?.()}>
                 Save
               </Btn>
             </Show>
