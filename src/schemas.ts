@@ -13,16 +13,37 @@ export const GridSizeSchema = z.object({
   h: z.number().int().min(1),
 });
 
-export const WidgetManifestSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  minSize: GridSizeSchema,
-  maxSize: GridSizeSchema,
-  sdkVersion: z.string().min(1),
-  icon: z.string().optional(),
-  schema: z.record(z.string(), z.unknown()).optional(),
-  defaultConfig: z.record(z.string(), z.unknown()).optional(),
-});
+export const WidgetManifestSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    minSize: GridSizeSchema,
+    maxSize: GridSizeSchema,
+    sdkVersion: z.string().min(1),
+    icon: z.string().optional(),
+    schema: z.record(z.string(), z.unknown()).optional(),
+    defaultConfig: z.record(z.string(), z.unknown()).optional(),
+
+    // Round-trip fields set by the Hub / widget browser when installing. These
+    // must validate so real manifests stringified from WidgetRegistryEntry
+    // pass through the canonical schema without being stripped.
+    version: z.string().optional(),
+    displayName: z.string().optional(),
+    scope: z.string().optional(),
+    author: z.string().optional(),
+    license: z.string().optional(),
+    homepage: z.string().url().optional(),
+    source: z.string().url().optional(),
+    permissions: z.array(z.string()).optional(),
+    isOfficial: z.boolean().optional(),
+    sha256Hash: z.string().optional(),
+    bundleUrl: z.string().optional(),
+    _registry: z.enum(["hub", "local"]).optional(),
+    releaseNotes: z.string().optional(),
+  })
+  // Tolerate unknown keys so a new Hub-side optional field doesn't require
+  // an SDK bump to install. Required fields still fail.
+  .passthrough();
 
 const SCOPE_REGEX = /^[a-z0-9][a-z0-9-]*$/;
 
