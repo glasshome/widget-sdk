@@ -288,12 +288,14 @@ export function WidgetDialog(props: WidgetDialogProps) {
     onChange: (data: Record<string, unknown>) => void;
   }>;
 
-  const effectiveOnOpenChange = schemaMode() ? handleSchemaClose : local.onOpenChange;
-  const effectiveHasChanges = schemaMode() ? schemaDirty() : local.hasUnsavedChanges;
-  const effectiveOnSave = schemaMode() ? handleSchemaSave : local.onSave;
+  const effectiveOnOpenChange = (open: boolean) =>
+    schemaMode() ? handleSchemaClose(open) : local.onOpenChange(open);
+  const effectiveHasChanges = () =>
+    schemaMode() ? schemaDirty() : local.hasUnsavedChanges;
+  const effectiveOnSave = () => (schemaMode() ? handleSchemaSave : local.onSave);
 
   return (
-    <RD open={local.open} onOpenChange={effectiveOnOpenChange}>
+    <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
       <RDContent class={cn(maxWidthClass(), local.class)}>
         {/* Header: title on left, tabs + actions on right */}
         <RDHeader class="flex flex-row items-center justify-between gap-3">
@@ -317,16 +319,6 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
             {/* Context actions */}
             <Show when={local.headerActions}>{local.headerActions}</Show>
-            <Show when={activeTab() === "edit" && effectiveOnSave && effectiveHasChanges}>
-              <Btn size="sm" onClick={() => effectiveOnSave?.()}>
-                Save
-              </Btn>
-            </Show>
-            <Show when={activeTab() === "edit" && local.onDelete}>
-              <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                Delete
-              </Btn>
-            </Show>
           </div>
         </RDHeader>
 
@@ -335,11 +327,32 @@ export function WidgetDialog(props: WidgetDialogProps) {
           {activeTabContent()}
         </div>
 
-        <Show when={activeTab() === "debug" && local.debugData !== undefined}>
-          <div class="flex shrink-0 justify-end pt-3">
-            <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-              Copy
-            </Btn>
+        <Show
+          when={
+            (activeTab() === "edit" && (effectiveOnSave() || local.onDelete)) ||
+            (activeTab() === "debug" && local.debugData !== undefined)
+          }
+        >
+          <div class="flex shrink-0 items-center justify-end gap-2 border-border/50 border-t pt-3">
+            <Show when={activeTab() === "edit" && local.onDelete}>
+              <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
+                Delete
+              </Btn>
+            </Show>
+            <Show when={activeTab() === "edit" && effectiveOnSave()}>
+              <Btn
+                size="sm"
+                disabled={!effectiveHasChanges()}
+                onClick={() => effectiveOnSave()?.()}
+              >
+                Save
+              </Btn>
+            </Show>
+            <Show when={activeTab() === "debug" && local.debugData !== undefined}>
+              <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
+                Copy
+              </Btn>
+            </Show>
           </div>
         </Show>
       </RDContent>
