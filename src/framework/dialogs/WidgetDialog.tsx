@@ -331,7 +331,9 @@ export function WidgetDialog(props: WidgetDialogProps) {
         </RDHeader>
 
         {/* Tab content */}
-        <div class="min-h-0 flex-1 overflow-y-auto">{activeTabContent()}</div>
+        <div class="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+          {activeTabContent()}
+        </div>
 
         <Show when={activeTab() === "debug" && local.debugData !== undefined}>
           <div class="flex shrink-0 justify-end pt-3">
