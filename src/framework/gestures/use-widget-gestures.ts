@@ -249,11 +249,9 @@ export function useWidgetGestures(
           ? -deltaY // Negative because Y increases downward
           : deltaX;
 
-      // Get container width/height for percentage calculation
-      const containerSize =
-        slideOrientation === "vertical"
-          ? (e.currentTarget as HTMLElement).clientHeight
-          : (e.currentTarget as HTMLElement).clientWidth;
+      // Use cached dimensions to avoid forced layout reflow on every pointer-move
+      const rect = cachedRect ?? { width: el.clientWidth, height: el.clientHeight };
+      const containerSize = slideOrientation === "vertical" ? rect.height : rect.width;
 
       // Calculate new value
       const percentChange = delta / containerSize;
