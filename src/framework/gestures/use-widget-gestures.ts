@@ -89,6 +89,34 @@ export function useWidgetGestures(
     element: null,
   };
 
+  // Cached element dimensions — avoids forced layout recalculation in hot paths
+  let cachedRect: { width: number; height: number } | null = null;
+  let observedElement: HTMLElement | null = null;
+  let resizeObserver: ResizeObserver | null = null;
+
+  function observeElement(el: HTMLElement): void {
+    if (el === observedElement) return;
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+    resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        // Use borderBoxSize when available (avoids layout), fall back to contentRect
+        const box = entry.borderBoxSize?.[0];
+        if (box) {
+          cachedRect = { width: box.inlineSize, height: box.blockSize };
+        } else {
+          cachedRect = { width: entry.contentRect.width, height: entry.contentRect.height };
+        }
+      }
+    });
+    observedElement = el;
+    resizeObserver.observe(el);
+    // Seed the cache synchronously from clientWidth/clientHeight (no layout forced if recent)
+    cachedRect = { width: el.clientWidth, height: el.clientHeight };
+  }
+
   // Constants
   const TAP_THRESHOLD = 10; // pixels
   const AXIS_LOCK_THRESHOLD = 5; // pixels before axis is determined
@@ -112,8 +140,11 @@ export function useWidgetGestures(
     if (slide?.orientation === "vertical") return "vertical";
     // "auto" — prefer element dimensions (avoids stale context from parent providers)
     if (el) {
-      const rect = el.getBoundingClientRect();
-      return rect.height > rect.width ? "vertical" : "horizontal";
+      // Use cached dimensions — no layout thrash during pointer moves
+      if (!cachedRect) observeElement(el);
+      if (cachedRect) {
+        return cachedRect.height > cachedRect.width ? "vertical" : "horizontal";
+      }
     }
     const orient = orientation?.() ?? "horizontal";
     return orient === "horizontal" ? "horizontal" : "vertical";
@@ -128,6 +159,7 @@ export function useWidgetGestures(
     e.preventDefault();
     state.isDown = true;
     state.element = e.currentTarget as HTMLElement;
+    observeElement(state.element);
     state.startX = e.clientX;
     state.startY = e.clientY;
     state.currentX = e.clientX;
@@ -284,9 +316,12 @@ export function useWidgetGestures(
       const orient = cfg.slide.orientation;
       if (orient === "horizontal") return cursors.slideHorizontal.css;
       if (orient === "vertical") return cursors.slideVertical.css;
-      // "auto" — measure element
-      const rect = el.getBoundingClientRect();
-      return rect.height > rect.width ? cursors.slideVertical.css : cursors.slideHorizontal.css;
+      // "auto" — use cached dimensions, no layout thrash on pointer enter
+      if (!cachedRect) observeElement(el);
+      if (cachedRect) {
+        return cachedRect.height > cachedRect.width ? cursors.slideVertical.css : cursors.slideHorizontal.css;
+      }
+      return cursors.slideHorizontal.css; // fallback before first observation
     }
     if (cfg.tap) return cursors.tap.css;
     if (cfg.hold) return cursors.hold.css;
@@ -305,6 +340,14 @@ export function useWidgetGestures(
     onPointerUp,
     onPointerCancel,
     onPointerEnter,
-    dispose: clearTimers,
+    dispose: () => {
+      clearTimers();
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      }
+      observedElement = null;
+      cachedRect = null;
+    },
   };
 }
