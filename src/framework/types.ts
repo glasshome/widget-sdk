@@ -349,10 +349,10 @@ export interface EntityView {
   state: string;
   /** Entity attributes */
   attributes: Record<string, any>;
-  /** When the state last changed */
-  lastChanged: Date;
-  /** When the state was last updated (even if unchanged) */
-  lastUpdated: Date;
+  /** When the state last changed (ISO 8601 string) */
+  lastChanged: string;
+  /** When the state was last updated, even if unchanged (ISO 8601 string) */
+  lastUpdated: string;
   /** Context of the last state change */
   context: {
     id: string;
