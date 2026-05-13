@@ -33,6 +33,7 @@ import type { WidgetSubtitle as WidgetSubtitleType } from "../components/WidgetS
 import type { WidgetTitle as WidgetTitleType } from "../components/WidgetTitle";
 import type { WidgetValue as WidgetValueType } from "../components/WidgetValue";
 import { WIDGET_Z } from "../design-system/z-index";
+import type { GestureHandlers } from "../gestures/use-widget-gestures";
 import { type BridgeableWidgetContext, type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
 import type {
   WidgetDimensions,
@@ -69,6 +70,12 @@ export interface WidgetProps {
   onDelete?: () => void;
   /** Empty state configuration - when provided, shows empty state and applies gray gradient */
   emptyState?: WidgetEmptyStateConfig;
+  /**
+   * Gesture handlers from `useWidgetGestures`. When provided, Widget binds
+   * pointer events on its outer container and wires the size observer so
+   * widget authors don't need a gesture wrapper div. Suppressed in edit mode.
+   */
+  gestures?: GestureHandlers;
   /** Child elements */
   children?: JSX.Element;
 }
@@ -241,10 +248,36 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     }),
   );
 
+  // Solid's `on:event` directive binds the handler once at element creation —
+  // it does NOT react to accessor changes. So we register stable closures that
+  // re-read `props.gestures` and `props.isEditMode` at dispatch time. Edit mode
+  // suppresses gesture forwarding so the user can drag/select widgets.
+  const gestureEnabled = () => !!props.gestures && !props.isEditMode;
+  const onPointerEnter = (e: PointerEvent) => {
+    if (gestureEnabled()) props.gestures?.onPointerEnter(e);
+  };
+  const onPointerDown = (e: PointerEvent) => {
+    if (gestureEnabled()) props.gestures?.onPointerDown(e);
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    if (gestureEnabled()) props.gestures?.onPointerMove(e);
+  };
+  const onPointerUp = (e: PointerEvent) => {
+    if (gestureEnabled()) props.gestures?.onPointerUp(e);
+  };
+  const onPointerCancel = (e: PointerEvent) => {
+    if (gestureEnabled()) props.gestures?.onPointerCancel(e);
+  };
+
   return (
     <WidgetCtx.Provider value={contextValue}>
       <div
-        ref={containerRef}
+        ref={(el) => {
+          containerRef = el;
+          // Observe size unconditionally — cheap, needed for "auto" slide
+          // orientation as soon as gestures re-enable after edit mode.
+          props.gestures?.bindElement(el);
+        }}
         class={cn(
           "relative h-full w-full select-none rounded-xl border border-border/50",
           // Variant styles (lowest priority)
@@ -253,6 +286,11 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           props.class,
         )}
         style={mergedStyles()}
+        on:pointerenter={onPointerEnter}
+        on:pointerdown={onPointerDown}
+        on:pointermove={onPointerMove}
+        on:pointerup={onPointerUp}
+        on:pointercancel={onPointerCancel}
       >
         {/* Inner container with gradient and overflow */}
         <div

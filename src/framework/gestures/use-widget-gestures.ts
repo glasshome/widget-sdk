@@ -39,6 +39,12 @@ export interface GestureHandlers {
   onPointerCancel: (e: PointerEvent) => void;
   /** Sets the correct cursor on the element. Bind via on:pointerenter. */
   onPointerEnter: (e: PointerEvent) => void;
+  /**
+   * Ref callback. Seeds the size observer used for `orientation: "auto"` slide
+   * resolution. Bind via `ref={gestures.bindElement}` on the same element that
+   * receives the pointer handlers.
+   */
+  bindElement: (el: HTMLElement) => void;
   /** Cancel any pending hold/slide timers. Call on component unmount via onCleanup. */
   dispose: () => void;
 }
@@ -332,12 +338,19 @@ export function useWidgetGestures(
     el.style.cursor = getCursorForElement(el);
   };
 
+  const bindElement = (el: HTMLElement) => {
+    if (!el) return;
+    state.element = el;
+    observeElement(el);
+  };
+
   return {
     onPointerDown,
     onPointerMove,
     onPointerUp,
     onPointerCancel,
     onPointerEnter,
+    bindElement,
     dispose: () => {
       clearTimers();
       if (resizeObserver) {
