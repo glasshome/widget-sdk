@@ -1,36 +1,27 @@
 /**
- * Widget Gestures Hook
+ * Widget Gestures Hook — Mobile-aware
  *
- * Provides gesture handling for widgets with automatic conflict resolution.
- * Ported from React reference, adapted for SolidJS:
- * - Uses mutable state object instead of useRef (imperative gesture tracking)
- * - Accepts config/orientation as accessors for reactivity
- * - Returns native PointerEvent handlers (not React.PointerEvent)
- * - Callers bind via on:pointerdown={handlers.onPointerDown}
+ * Two grammars by pointer type:
  *
- * @example
- * ```tsx
- * const gestures = useWidgetGestures(
- *   () => ({
- *     tap: handleTap,
- *     hold: { action: handleHold, delay: 300 },
- *     slide: {
- *       value: brightness(),
- *       onChange: setBrightness,
- *       min: 0,
- *       max: 100,
- *       orientation: "auto",
- *     },
- *   }),
- *   () => ctx.orientation(),
- * );
+ *   TOUCH (phone, tablet):
+ *     - tap    → primary action
+ *     - hold   → detail dialog (with haptic bump)
+ *     - slide  → DISABLED. Fine control lives in the detail dialog instead.
+ *     This eliminates the slide-vs-page-scroll conflict that makes mobile
+ *     gestures fragile. `touch-action: manipulation` ensures the browser
+ *     handles scroll natively without our interference.
  *
- * return <div on:pointerdown={gestures.onPointerDown} on:pointermove={gestures.onPointerMove} on:pointerup={gestures.onPointerUp} on:pointercancel={gestures.onPointerCancel}>...</div>;
- * ```
+ *   MOUSE / PEN (desktop, hybrid devices):
+ *     - tap, hold, slide all active. Slide arms immediately on pointerdown —
+ *     no scroll conflict to worry about (mouse uses wheel for scroll).
+ *
+ * Pointer type is decided per press at pointerdown. A hybrid device (tablet
+ * + bluetooth mouse) gets the right grammar based on which input fired.
  */
 
 import type { GestureConfig, WidgetOrientation } from "../types";
 import { cursors } from "./cursors";
+import { haptics } from "./haptics";
 
 export interface GestureHandlers {
   onPointerDown: (e: PointerEvent) => void;
@@ -46,76 +37,58 @@ export interface GestureHandlers {
    */
   bindElement: (el: HTMLElement) => void;
   /**
-   * CSS `touch-action` value for the gesture root. Horizontal slide → `pan-y`
-   * (page scrolls vertically, slider owns horizontal). Vertical slide → `pan-x`.
-   * Tap/hold only → `manipulation`. Without this, mobile browsers cancel the
-   * pointer mid-slide once they decide the touch is a pan.
+   * CSS `touch-action` for the gesture root. Always `manipulation` when any
+   * gesture is configured — mobile slide is intentionally dropped, so the
+   * browser owns scroll completely on touch surfaces.
    */
   touchAction: () => string;
-  /** Cancel any pending hold/slide timers. Call on component unmount via onCleanup. */
+  /** Cancel any pending hold timer. Call on component unmount via onCleanup. */
   dispose: () => void;
 }
 
 interface GestureState {
   isDown: boolean;
+  isTouch: boolean;
   startX: number;
   startY: number;
-  currentX: number;
-  currentY: number;
   startTime: number;
   hasMoved: boolean;
+  /** True for mouse/pen once user starts dragging — drives slide path. */
+  sliding: boolean;
   holdTimer: ReturnType<typeof setTimeout> | null;
-  slideActive: boolean;
-  slideActivationTimer: ReturnType<typeof setTimeout> | null;
-  lockedAxis: "horizontal" | "vertical" | null;
   element: HTMLElement | null;
 }
 
-/**
- * Widget gestures hook with conflict resolution
- *
- * Features:
- * - Axis locking: Once slide direction is detected, locks to that axis
- * - Scroll prevention: Blocks page scroll when sliding along widget axis
- * - Tap/hold/slide gesture support with automatic conflict resolution
- *
- * @param config - Accessor returning gesture configuration
- * @param orientation - Accessor returning widget orientation (for auto slide orientation)
- */
 export function useWidgetGestures(
   config: () => GestureConfig,
   orientation?: () => WidgetOrientation,
 ): GestureHandlers {
-  // Mutable state -- gesture tracking is imperative, not reactive
+  const HOLD_DELAY = 500; // ms — long-press standard
+  const TAP_THRESHOLD = 10; // px — movement above this means not-a-tap
+
   const state: GestureState = {
     isDown: false,
+    isTouch: false,
     startX: 0,
     startY: 0,
-    currentX: 0,
-    currentY: 0,
     startTime: 0,
     hasMoved: false,
+    sliding: false,
     holdTimer: null,
-    slideActive: false,
-    slideActivationTimer: null,
-    lockedAxis: null,
     element: null,
   };
 
-  // Cached element dimensions — avoids forced layout recalculation in hot paths
+  // Cached element dimensions — avoids forced layout in slide path.
   let cachedRect: { width: number; height: number } | null = null;
   let observedElement: HTMLElement | null = null;
   let resizeObserver: ResizeObserver | null = null;
 
   function observeElement(el: HTMLElement): void {
     if (el === observedElement) return;
-    if (resizeObserver) {
-      resizeObserver.disconnect();
-    }
+    if (resizeObserver) resizeObserver.disconnect();
     resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        // Use borderBoxSize when available (avoids layout), fall back to contentRect
         const box = entry.borderBoxSize?.[0];
         if (box) {
           cachedRect = { width: box.inlineSize, height: box.blockSize };
@@ -126,34 +99,29 @@ export function useWidgetGestures(
     });
     observedElement = el;
     resizeObserver.observe(el);
-    // Seed the cache synchronously from clientWidth/clientHeight (no layout forced if recent)
     cachedRect = { width: el.clientWidth, height: el.clientHeight };
   }
 
-  // Constants
-  const TAP_THRESHOLD = 10; // pixels
-  const AXIS_LOCK_THRESHOLD = 5; // pixels before axis is determined
-
-  const clearTimers = () => {
+  const clearHold = () => {
     if (state.holdTimer) {
       clearTimeout(state.holdTimer);
       state.holdTimer = null;
     }
-    if (state.slideActivationTimer) {
-      clearTimeout(state.slideActivationTimer);
-      state.slideActivationTimer = null;
-    }
   };
 
-  // Resolve slide orientation from config, context, or element dimensions
+  const resetState = () => {
+    state.isDown = false;
+    state.hasMoved = false;
+    state.sliding = false;
+  };
+
+  // Slide orientation — only consulted on mouse/pen path.
   const getSlideOrientation = (el?: HTMLElement): "horizontal" | "vertical" => {
     const cfg = config();
     const slide = cfg.slide;
     if (slide?.orientation === "horizontal") return "horizontal";
     if (slide?.orientation === "vertical") return "vertical";
-    // "auto" — prefer element dimensions (avoids stale context from parent providers)
     if (el) {
-      // Use cached dimensions — no layout thrash during pointer moves
       if (!cachedRect) observeElement(el);
       if (cachedRect) {
         return cachedRect.height > cachedRect.width ? "vertical" : "horizontal";
@@ -165,46 +133,37 @@ export function useWidgetGestures(
 
   const onPointerDown = (e: PointerEvent) => {
     const cfg = config();
-
-    // If no gestures configured, do nothing
     if (!cfg.tap && !cfg.hold && !cfg.slide) return;
 
-    e.preventDefault();
     state.isDown = true;
+    state.isTouch = e.pointerType === "touch";
     state.element = e.currentTarget as HTMLElement;
     observeElement(state.element);
     state.startX = e.clientX;
     state.startY = e.clientY;
-    state.currentX = e.clientX;
-    state.currentY = e.clientY;
     state.startTime = Date.now();
     state.hasMoved = false;
-    state.slideActive = false;
-    state.lockedAxis = null;
+    state.sliding = false;
 
-    // Capture pointer
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-
-    // Start hold timer if hold gesture is configured
+    // Hold timer — same on touch and mouse. Cancelled by movement.
     if (cfg.hold) {
-      const holdDelay = cfg.hold.delay ?? 300;
+      const holdDelay = cfg.hold.delay ?? HOLD_DELAY;
       state.holdTimer = setTimeout(() => {
-        if (state.isDown && !state.hasMoved) {
-          cfg.hold!.action();
-          state.isDown = false; // Prevent tap after hold
-        }
+        state.holdTimer = null;
+        if (!state.isDown || state.hasMoved) return;
+        haptics.bump();
+        cfg.hold?.action();
+        state.isDown = false; // prevent tap on release
       }, holdDelay);
     }
 
-    // Start slide activation timer if slide is configured
-    if (cfg.slide) {
-      const slideActivationDelay = cfg.slide.activationDelay ?? 0;
-      if (slideActivationDelay > 0) {
-        state.slideActivationTimer = setTimeout(() => {
-          state.slideActive = true;
-        }, slideActivationDelay);
-      } else {
-        state.slideActive = true;
+    // Mouse/pen slide path captures pointer so we keep events outside element.
+    // Touch path NEVER captures — browser handles scroll naturally.
+    if (!state.isTouch && cfg.slide) {
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch {
+        // ignore
       }
     }
   };
@@ -213,112 +172,78 @@ export function useWidgetGestures(
     if (!state.isDown) return;
 
     const cfg = config();
-    state.currentX = e.clientX;
-    state.currentY = e.clientY;
-
-    const deltaX = state.currentX - state.startX;
-    const deltaY = state.currentY - state.startY;
-    const absDeltaX = Math.abs(deltaX);
-    const absDeltaY = Math.abs(deltaY);
+    const deltaX = e.clientX - state.startX;
+    const deltaY = e.clientY - state.startY;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    const el = e.currentTarget as HTMLElement;
-    const slideOrientation = getSlideOrientation(el);
-
-    // Axis lock detection
-    // Once movement exceeds threshold, determine dominant axis and lock to it
-    if (!state.lockedAxis && distance > AXIS_LOCK_THRESHOLD) {
-      if (absDeltaX > absDeltaY) {
-        state.lockedAxis = "horizontal";
-      } else {
-        state.lockedAxis = "vertical";
-      }
-
-      // If locked axis doesn't match slide orientation, release and allow scroll
-      if (cfg.slide && state.lockedAxis !== slideOrientation) {
-        el.releasePointerCapture(e.pointerId);
-        state.isDown = false;
-        state.slideActive = false;
-        clearTimers();
-        return;
-      }
-    }
-
-    // Check if pointer has moved beyond threshold
     if (distance > TAP_THRESHOLD) {
+      clearHold();
       state.hasMoved = true;
-      clearTimers(); // Cancel hold if we've moved
     }
 
-    // Handle slide gesture (only if axis is locked to slide direction)
-    if (cfg.slide && state.slideActive && state.hasMoved && state.lockedAxis === slideOrientation) {
+    // Touch path: no slide. Once moved past tap threshold the press is dead —
+    // user is scrolling or has just changed their mind. Stay passive so the
+    // browser can scroll. We don't release capture because we never took it.
+    if (state.isTouch) return;
+
+    // Mouse/pen slide path.
+    if (cfg.slide && state.hasMoved) {
+      const el = e.currentTarget as HTMLElement;
+      const slideOrientation = getSlideOrientation(el);
+      state.sliding = true;
+
       const min = cfg.slide.min ?? 0;
       const max = cfg.slide.max ?? 100;
       const range = max - min;
 
-      // Calculate delta based on orientation (use only the locked axis)
-      const delta =
-        slideOrientation === "vertical"
-          ? -deltaY // Negative because Y increases downward
-          : deltaX;
-
-      // Use cached dimensions to avoid forced layout reflow on every pointer-move
+      const delta = slideOrientation === "vertical" ? -deltaY : deltaX;
       const rect = cachedRect ?? { width: el.clientWidth, height: el.clientHeight };
       const containerSize = slideOrientation === "vertical" ? rect.height : rect.width;
 
-      // Calculate new value
       const percentChange = delta / containerSize;
       const valueChange = percentChange * range;
       const newValue = Math.max(min, Math.min(max, cfg.slide.value + valueChange));
 
-      // Call onChange
       cfg.slide.onChange(Math.round(newValue));
 
-      // Update start position for continuous sliding
-      state.startX = state.currentX;
-      state.startY = state.currentY;
+      // Reset start so subsequent moves are incremental.
+      state.startX = e.clientX;
+      state.startY = e.clientY;
 
-      // Prevent default to stop scrolling during slide
       e.preventDefault();
     }
   };
 
   const onPointerUp = (e: PointerEvent) => {
-    if (!state.isDown) return;
-
     const cfg = config();
-    const holdDelay = cfg.hold?.delay ?? 300;
+    const wasDown = state.isDown;
+    const duration = Date.now() - state.startTime;
+    const holdDelay = cfg.hold?.delay ?? HOLD_DELAY;
 
-    clearTimers();
+    clearHold();
 
-    // Check for tap
-    if (cfg.tap && !state.hasMoved) {
-      const duration = Date.now() - state.startTime;
-      // Only trigger tap if not a hold (hold would have cleared isDown)
-      if (state.isDown && duration < holdDelay) {
-        cfg.tap();
-      }
+    // Tap: still down (hold didn't fire), no real movement, released before
+    // the hold threshold. Same rule on touch and mouse.
+    if (wasDown && cfg.tap && !state.hasMoved && duration < holdDelay) {
+      cfg.tap();
     }
 
-    // Reset state
-    state.isDown = false;
-    state.hasMoved = false;
-    state.slideActive = false;
-    state.lockedAxis = null;
-
-    // Release pointer
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // never captured on touch path — fine
+    }
+    resetState();
   };
 
   const onPointerCancel = (e: PointerEvent) => {
-    clearTimers();
-
-    state.isDown = false;
-    state.hasMoved = false;
-    state.slideActive = false;
-    state.lockedAxis = null;
-
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    clearHold();
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    resetState();
   };
 
   const getCursorForElement = (el: HTMLElement): string => {
@@ -327,12 +252,13 @@ export function useWidgetGestures(
       const orient = cfg.slide.orientation;
       if (orient === "horizontal") return cursors.slideHorizontal.css;
       if (orient === "vertical") return cursors.slideVertical.css;
-      // "auto" — use cached dimensions, no layout thrash on pointer enter
       if (!cachedRect) observeElement(el);
       if (cachedRect) {
-        return cachedRect.height > cachedRect.width ? cursors.slideVertical.css : cursors.slideHorizontal.css;
+        return cachedRect.height > cachedRect.width
+          ? cursors.slideVertical.css
+          : cursors.slideHorizontal.css;
       }
-      return cursors.slideHorizontal.css; // fallback before first observation
+      return cursors.slideHorizontal.css;
     }
     if (cfg.tap) return cursors.tap.css;
     if (cfg.hold) return cursors.hold.css;
@@ -351,19 +277,12 @@ export function useWidgetGestures(
     observeElement(el);
   };
 
+  // `manipulation` lets the browser handle scroll/pinch but suppresses the
+  // double-tap-to-zoom delay. Safe for tap/hold widgets. Mouse users are
+  // unaffected — touch-action is a no-op for non-touch input.
   const touchAction = (): string => {
     const cfg = config();
-    if (cfg.slide) {
-      const orient = cfg.slide.orientation;
-      if (orient === "horizontal") return "pan-y";
-      if (orient === "vertical") return "pan-x";
-      // "auto" — use cached dimensions; default to pan-y (horizontal slide) before observation
-      if (cachedRect) {
-        return cachedRect.height > cachedRect.width ? "pan-x" : "pan-y";
-      }
-      return "pan-y";
-    }
-    if (cfg.tap || cfg.hold) return "manipulation";
+    if (cfg.tap || cfg.hold || cfg.slide) return "manipulation";
     return "auto";
   };
 
@@ -376,7 +295,7 @@ export function useWidgetGestures(
     bindElement,
     touchAction,
     dispose: () => {
-      clearTimers();
+      clearHold();
       if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
