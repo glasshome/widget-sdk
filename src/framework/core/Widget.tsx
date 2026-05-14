@@ -21,7 +21,7 @@
  */
 
 import { createElementSize } from "@solid-primitives/resize-observer";
-import { createEffect, createMemo, createSignal, type JSX, untrack, useContext } from "solid-js";
+import { createEffect, createMemo, createSignal, type JSX, onMount, untrack, useContext } from "solid-js";
 import type { WidgetSliderFill as WidgetSliderFillType } from "../backgrounds/WidgetSliderFill";
 // Import slot component types for compound interface
 import type { WidgetContent as WidgetContentType } from "../components/WidgetContent";
@@ -41,6 +41,7 @@ import type {
   WidgetSize,
   WidgetVariantConfig,
 } from "../types";
+import { injectTokens } from "../theming/tokens";
 import { cn } from "../utils/cn";
 import { getBuiltInVariant } from "../variants";
 
@@ -136,6 +137,8 @@ export function detectContentLayout(width: number, height: number): WidgetOrient
  * Main Widget container component
  */
 function WidgetBase(props: WidgetProps): JSX.Element {
+  onMount(() => { injectTokens(); });
+
   let containerRef!: HTMLDivElement;
 
   // Track container size reactively via @solid-primitives/resize-observer
@@ -282,6 +285,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           props.gestures?.bindElement(el);
         }}
         class={cn(
+          "glasshome-widget",
           "relative h-full w-full select-none rounded-xl border border-border/50",
           // Variant styles (lowest priority)
           variantConfig()?.styles?.class,
