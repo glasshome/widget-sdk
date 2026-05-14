@@ -1,9 +1,34 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { __resetInjectedForTests, type InjectTokensRoot, injectTokens } from "./tokens";
 
 const CSS_PATH = join(import.meta.dir, "tokens.css");
 const css = readFileSync(CSS_PATH, "utf8");
+
+function makeStub() {
+  const appended: unknown[] = [];
+  let querySelectorReturns: unknown = null;
+  const stub: InjectTokensRoot = {
+    head: {
+      appendChild: (n) => {
+        appended.push(n);
+      },
+      querySelector: () => querySelectorReturns,
+    },
+    createElement: () => ({
+      setAttribute() {},
+      textContent: null,
+    }),
+  };
+  return {
+    stub,
+    appended,
+    setQuerySelector(v: unknown) {
+      querySelectorReturns = v;
+    },
+  };
+}
 
 describe("tokens.css contract", () => {
   test("tone vars at root and dark", () => {
@@ -60,5 +85,29 @@ describe("tokens.css contract", () => {
     const closingBrace = css.indexOf("}", atPropIdx);
     const block = css.slice(atPropIdx, closingBrace);
     expect(block).not.toContain("initial-value: var(");
+  });
+});
+
+describe("injection idempotent", () => {
+  beforeEach(() => {
+    __resetInjectedForTests();
+  });
+
+  test("module sentinel — repeated calls append once", () => {
+    const { stub, appended } = makeStub();
+    injectTokens(stub);
+    injectTokens(stub);
+    expect(appended).toHaveLength(1);
+  });
+
+  test("DOM sentinel — existing style[data-glasshome-tokens] short-circuits", () => {
+    const { stub, appended, setQuerySelector } = makeStub();
+    setQuerySelector({}); // truthy stand-in for existing <style> element
+    injectTokens(stub);
+    expect(appended).toHaveLength(0);
+  });
+
+  test("ssr safe — no document and no stub is a silent no-op", () => {
+    expect(() => injectTokens(undefined)).not.toThrow();
   });
 });

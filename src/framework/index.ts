@@ -130,7 +130,10 @@ export {
   getGradient,
   getGradientFromString,
   gradientColorPresets,
+  injectTokens,
   stateColors,
+  type Tone,
+  ToneSchema,
   type WidgetColorPreset,
 } from "./theming";
 
