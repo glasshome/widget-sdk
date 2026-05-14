@@ -45,6 +45,13 @@ export interface GestureHandlers {
    * receives the pointer handlers.
    */
   bindElement: (el: HTMLElement) => void;
+  /**
+   * CSS `touch-action` value for the gesture root. Horizontal slide → `pan-y`
+   * (page scrolls vertically, slider owns horizontal). Vertical slide → `pan-x`.
+   * Tap/hold only → `manipulation`. Without this, mobile browsers cancel the
+   * pointer mid-slide once they decide the touch is a pan.
+   */
+  touchAction: () => string;
   /** Cancel any pending hold/slide timers. Call on component unmount via onCleanup. */
   dispose: () => void;
 }
@@ -344,6 +351,22 @@ export function useWidgetGestures(
     observeElement(el);
   };
 
+  const touchAction = (): string => {
+    const cfg = config();
+    if (cfg.slide) {
+      const orient = cfg.slide.orientation;
+      if (orient === "horizontal") return "pan-y";
+      if (orient === "vertical") return "pan-x";
+      // "auto" — use cached dimensions; default to pan-y (horizontal slide) before observation
+      if (cachedRect) {
+        return cachedRect.height > cachedRect.width ? "pan-x" : "pan-y";
+      }
+      return "pan-y";
+    }
+    if (cfg.tap || cfg.hold) return "manipulation";
+    return "auto";
+  };
+
   return {
     onPointerDown,
     onPointerMove,
@@ -351,6 +374,7 @@ export function useWidgetGestures(
     onPointerCancel,
     onPointerEnter,
     bindElement,
+    touchAction,
     dispose: () => {
       clearTimers();
       if (resizeObserver) {

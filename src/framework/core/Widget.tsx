@@ -238,11 +238,14 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     props.emptyState && !props.gradient ? emptyStateGradient : props.gradient,
   );
 
-  // Merge variant styles with props
+  // Merge variant styles with props. `touch-action` is driven by the gesture
+  // config so mobile browsers don't hijack horizontal slides as page pans.
   const mergedStyles = createMemo(
     (): JSX.CSSProperties => ({
       "container-type": "size",
       "container-name": "widget",
+      "touch-action":
+        props.gestures && !props.isEditMode ? props.gestures.touchAction() : undefined,
       ...variantConfig()?.styles?.container,
       ...(variantConfig()?.styles?.cssVars || {}),
     }),

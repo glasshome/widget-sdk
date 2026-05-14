@@ -105,7 +105,7 @@ export function WidgetIcon(props: WidgetIconProps): JSX.Element {
         "pointer-events-none",
         props.dimmed && "opacity-50",
         // Only apply Tailwind classes when not using dynamic colors
-        !useDynamic() && props.glow && "shadow-[0_0_25px]",
+        !useDynamic() && props.glow && "shadow-[0_0_25px_var(--tw-shadow-color,transparent)]",
         !useDynamic() && (props.color ?? "bg-foreground/10"),
         !useDynamic() && props.glow,
         props.class,
