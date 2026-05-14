@@ -1,0 +1,48 @@
+/* packages/public/widget-sdk/src/framework/theming/tokens.css
+ *
+ * Phase 25: Channel Core + Tone Tokens
+ * Authoritative SDK CSS contract. Injected once on first Widget mount
+ * via framework/theming/tokens.ts. Final palette tuned in Phase 29.
+ */
+
+/* Tone palette (VIS-C01) -- placeholder oklch values (D-06) mirroring Tailwind 500 stops */
+:root {
+  --tone-success:  oklch(0.72 0.17 145);
+  --tone-warning:  oklch(0.79 0.16 75);
+  --tone-danger:   oklch(0.65 0.22 27);
+  --tone-info:     oklch(0.66 0.19 245);
+  --tone-neutral:  oklch(0.65 0.02 250);
+  --tone-accent:   oklch(0.75 0.16 60);
+
+  /* Envelope vars (VIS-C03), light mode */
+  --widget-grad-strength:    1;
+  --widget-glow-default:     0.4;
+  --widget-border-highlight: oklch(0.98 0 0 / 0.4);
+}
+
+.dark {
+  --tone-success:  oklch(0.74 0.17 145);
+  --tone-warning:  oklch(0.81 0.16 75);
+  --tone-danger:   oklch(0.68 0.22 27);
+  --tone-info:     oklch(0.70 0.19 245);
+  --tone-neutral:  oklch(0.70 0.02 250);
+  --tone-accent:   oklch(0.78 0.16 60);
+
+  --widget-grad-strength:    1.1;
+  --widget-glow-default:     0.5;
+  --widget-border-highlight: oklch(1 0 0 / 0.08);
+}
+
+/* @property declaration for animatable channel base (VIS-C04, D-11)
+   initial-value must be a literal <color>; cannot reference var(). */
+@property --widget-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(0.65 0.02 250);
+}
+
+/* Channel defaults on the Widget root (VIS-C02, D-08) */
+.glasshome-widget {
+  --widget-color: var(--tone-neutral);
+  --widget-glow-strength: var(--widget-glow-default);
+}
