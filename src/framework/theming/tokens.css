@@ -71,3 +71,17 @@
 .glasshome-widget-loading {
   background: color-mix(in oklch, var(--widget-color) 20%, transparent);
 }
+
+/* === Phase 27 additions === */
+
+/* VIS-P04 slider fill channel rendering (D-05, D-06, D-08).
+   Mirrors .glasshome-widget-icon precedent: --widget-icon-color override
+   with --widget-color fallback. Glow rendered via box-shadow on the same
+   fill element (D-07). 30% bg opacity preserves prior 0.3 default; 40px
+   blur approximates prior blur-2xl on the deleted glow div; glow radius
+   modulated by --widget-glow-strength to track the per-mode envelope. */
+.glasshome-widget-slider-fill {
+  background: color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 30%, transparent);
+  box-shadow: 0 0 calc(var(--widget-glow-strength) * 40px)
+    color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 40%, transparent);
+}
