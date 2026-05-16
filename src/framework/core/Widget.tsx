@@ -254,12 +254,6 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
   };
 
-  // Auto-apply empty state gradient if emptyState prop is provided and no gradient is explicitly provided
-  const emptyStateGradient = "bg-gradient-to-br from-gray-500/20 to-gray-600/20";
-  const finalGradient = createMemo(() =>
-    props.emptyState && !props.gradient ? emptyStateGradient : props.gradient,
-  );
-
   // Channel-aware inline style. Phase 26 channel vars (tone/color/colorTo/gradient)
   // land here as conditional spreads, last-write-wins means `color` overrides `tone`
   // when both are set (D-08). The .glasshome-widget CSS rule in tokens.css consumes
@@ -311,7 +305,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
         }}
         class={cn(
           "glasshome-widget",
-          "relative h-full w-full select-none rounded-xl border border-border/50",
+          "relative h-full w-full select-none overflow-hidden rounded-xl border border-border/50",
           // Variant styles (lowest priority)
           variantConfig()?.styles?.class,
           // Custom class (highest priority)
@@ -324,35 +318,26 @@ function WidgetBase(props: WidgetProps): JSX.Element {
         on:pointerup={onPointerUp}
         on:pointercancel={onPointerCancel}
       >
-        {/* Inner container with gradient and overflow */}
-        <div
-          class={cn(
-            "relative h-full w-full overflow-hidden rounded-xl",
-            // Gradient prop (overrides variant, auto-applied for empty state)
-            finalGradient(),
-          )}
-        >
-          {/* Content - flexible layout controlled by widget author */}
-          <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
-            {props.emptyState ? (
-              <WidgetEmptyStateInner
-                icon={props.emptyState.icon}
-                title={props.emptyState.title}
-                message={props.emptyState.message}
-              />
-            ) : (
-              props.children
-            )}
-          </div>
-
-          {/* Loading overlay */}
-          {props.loading && (
-            <div
-              class="pointer-events-none absolute inset-0 animate-pulse bg-blue-500/20"
-              style={{ "z-index": WIDGET_Z.OVERLAY }}
+        {/* Content, channel renders shell gradient + inset highlight via tokens.css */}
+        <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
+          {props.emptyState ? (
+            <WidgetEmptyStateInner
+              icon={props.emptyState.icon}
+              title={props.emptyState.title}
+              message={props.emptyState.message}
             />
+          ) : (
+            props.children
           )}
         </div>
+
+        {/* Loading overlay, color-mix tint via .glasshome-widget-loading rule in tokens.css */}
+        {props.loading && (
+          <div
+            class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
+            style={{ "z-index": WIDGET_Z.OVERLAY }}
+          />
+        )}
       </div>
     </WidgetCtx.Provider>
   );
