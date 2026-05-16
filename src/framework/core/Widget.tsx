@@ -12,9 +12,9 @@
  * </Widget>
  * ```
  *
- * @example With gradient and loading
+ * @example With CSS gradient and loading
  * ```tsx
- * <Widget gradient="bg-gradient-to-br from-blue-500/40 to-blue-700/40" loading={isLoading}>
+ * <Widget gradient="linear-gradient(135deg, oklch(0.7 0.2 30), oklch(0.5 0.18 270))" loading={isLoading}>
  *   {children}
  * </Widget>
  * ```
@@ -41,6 +41,7 @@ import type {
   WidgetSize,
   WidgetVariantConfig,
 } from "../types";
+import type { Tone } from "../theming/tone";
 import { injectTokens } from "../theming/tokens";
 import { cn } from "../utils/cn";
 import { getBuiltInVariant } from "../variants";
@@ -57,19 +58,37 @@ export interface WidgetEmptyStateConfig {
 export interface WidgetProps {
   /** Widget variant (string ID or inline config) */
   variant?: string | WidgetVariantConfig;
-  /** Gradient background (Tailwind classes like "bg-gradient-to-br from-cyan-600/40 to-blue-700/40") */
+  /**
+   * Semantic tone (success, warning, danger, info, neutral, accent).
+   * Resolves to `--widget-color: var(--tone-{name})` inline on the widget root.
+   * Phase 26 channel API, preferred path for state-driven semantic widgets.
+   */
+  tone?: Tone;
+  /**
+   * CSS color string (oklch, hsl, hex, rgb, var()).
+   * Sets `--widget-color` directly. Overrides `tone` when both supplied.
+   */
+  color?: string;
+  /**
+   * Optional second-stop CSS color string for two-stop gradient identity.
+   * Sets `--widget-color-to`. When omitted the shell formula falls back to `--widget-color`.
+   */
+  colorTo?: string;
+  /**
+   * Full CSS gradient string (e.g. `linear-gradient(135deg, oklch(...), oklch(...))`).
+   * Sets `--widget-gradient` and overrides the auto-derived shell gradient verbatim.
+   * BREAKING (Phase 26): previously accepted Tailwind class strings; now expects raw CSS.
+   */
   gradient?: string;
   /** Show loading overlay */
   loading?: boolean;
-  /** Background glow color (Tailwind color like "bg-blue-500") (runtime override) */
-  backgroundGlow?: string;
   /** Additional CSS classes */
   class?: string;
   /** Is edit mode (disables gestures) */
   isEditMode?: boolean;
   /** Called when delete button is clicked (only shown in edit mode) */
   onDelete?: () => void;
-  /** Empty state configuration - when provided, shows empty state and applies gray gradient */
+  /** Empty state configuration, when provided shows empty state UI inside the shell */
   emptyState?: WidgetEmptyStateConfig;
   /**
    * Gesture handlers from `useWidgetGestures`. When provided, Widget binds
@@ -241,9 +260,11 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     props.emptyState && !props.gradient ? emptyStateGradient : props.gradient,
   );
 
-  // Merge variant styles with props. `touch-action` is driven by the gesture
-  // config so mobile browsers don't hijack horizontal slides as page pans.
-  const mergedStyles = createMemo(
+  // Channel-aware inline style. Phase 26 channel vars (tone/color/colorTo/gradient)
+  // land here as conditional spreads, last-write-wins means `color` overrides `tone`
+  // when both are set (D-08). The .glasshome-widget CSS rule in tokens.css consumes
+  // these vars to render the shell gradient + inset highlight.
+  const channelStyle = createMemo(
     (): JSX.CSSProperties => ({
       "container-type": "size",
       "container-name": "widget",
@@ -251,6 +272,10 @@ function WidgetBase(props: WidgetProps): JSX.Element {
         props.gestures && !props.isEditMode ? props.gestures.touchAction() : undefined,
       ...variantConfig()?.styles?.container,
       ...(variantConfig()?.styles?.cssVars || {}),
+      ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
+      ...(props.color ? { "--widget-color": props.color } : {}),
+      ...(props.colorTo ? { "--widget-color-to": props.colorTo } : {}),
+      ...(props.gradient ? { "--widget-gradient": props.gradient } : {}),
     }),
   );
 
@@ -292,7 +317,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           // Custom class (highest priority)
           props.class,
         )}
-        style={mergedStyles()}
+        style={channelStyle()}
         on:pointerenter={onPointerEnter}
         on:pointerdown={onPointerDown}
         on:pointermove={onPointerMove}
@@ -307,16 +332,6 @@ function WidgetBase(props: WidgetProps): JSX.Element {
             finalGradient(),
           )}
         >
-          {/* Background glow effect */}
-          {props.backgroundGlow && (
-            <div
-              class="pointer-events-none absolute inset-0"
-              style={{ "z-index": WIDGET_Z.BACKGROUND }}
-            >
-              <div class={cn("absolute inset-0 opacity-20 blur-2xl", props.backgroundGlow)} />
-            </div>
-          )}
-
           {/* Content - flexible layout controlled by widget author */}
           <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
             {props.emptyState ? (
