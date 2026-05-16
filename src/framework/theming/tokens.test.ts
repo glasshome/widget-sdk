@@ -111,3 +111,38 @@ describe("injection idempotent", () => {
     expect(() => injectTokens(undefined)).not.toThrow();
   });
 });
+
+describe("Phase 26 shell gradient (VIS-P01)", () => {
+  test("shell gradient — color-mix oklch formula at 135deg with 22%/11% asymmetric stops modulated by --widget-grad-strength", () => {
+    expect(css).toContain("background: var(--widget-gradient,");
+    expect(css).toContain("linear-gradient(135deg,");
+    expect(css).toContain(
+      "color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent)",
+    );
+    expect(css).toContain(
+      "color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)",
+    );
+  });
+});
+
+describe("Phase 26 inset highlight (VIS-P02)", () => {
+  test("inset highlight — single 1px highlight using --widget-border-highlight", () => {
+    expect(css).toContain("box-shadow: inset 0 1px 0 var(--widget-border-highlight)");
+  });
+});
+
+describe("Phase 26 icon glow rule (VIS-P03)", () => {
+  test("glasshome-widget-icon — bg + glow with calc(--widget-glow-strength * 30px) and color-mix at 50% transparent", () => {
+    expect(css).toContain(".glasshome-widget-icon {");
+    expect(css).toContain("background: var(--widget-icon-color, var(--widget-color))");
+    expect(css).toContain("box-shadow: 0 0 calc(var(--widget-glow-strength) * 30px)");
+    expect(css).toContain(
+      "color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 50%, transparent)",
+    );
+  });
+
+  test("glasshome-widget-loading — color-mix tint at 20% of widget-color", () => {
+    expect(css).toContain(".glasshome-widget-loading {");
+    expect(css).toContain("background: color-mix(in oklch, var(--widget-color) 20%, transparent)");
+  });
+});
