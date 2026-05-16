@@ -1,15 +1,25 @@
 /**
  * WidgetSliderFill Component
  *
- * Animated fill overlay that follows a slider value.
- * Automatically adapts direction based on widget orientation.
+ * Animated fill overlay that follows a slider value. Background and glow are
+ * rendered by the `.glasshome-widget-slider-fill` CSS rule in tokens.css via
+ * the channel vars (`--widget-icon-color` with fallback to `--widget-color`).
+ * The `color` prop is the optional per-fill override: when provided it is
+ * written inline as `--widget-icon-color`, mirroring `Widget.Icon.color`
+ * (Phase 26 VIS-A05). Orientation is inherited from the parent Widget context
+ * and drives the `clip-path` direction.
  *
- * @example
+ * @example Default, inherits parent Widget channel color
  * ```tsx
- * <Widget gestures={{ slide: { value, onChange } }}>
- *   <Widget.SliderFill value={brightness} color="rgb(255, 200, 0)" />
+ * <Widget tone="info" gestures={{ slide: { value, onChange } }}>
+ *   <Widget.SliderFill value={position} />
  *   <Widget.Content>...</Widget.Content>
  * </Widget>
+ * ```
+ *
+ * @example Per-fill override (sets --widget-icon-color, not background directly)
+ * ```tsx
+ * <Widget.SliderFill value={brightness} color={bulbColor} />
  * ```
  */
 
@@ -21,61 +31,47 @@ import { cn } from "../utils/cn";
 export interface WidgetSliderFillProps {
   /** Current value (0-100) */
   value: number;
-  /** Fill color (CSS color string) */
+  /**
+   * Optional channel override: sets `--widget-icon-color` inline on the fill
+   * root. When omitted the fill renders in the parent Widget's channel color
+   * (var(--widget-color)). Mirrors Widget.Icon.color (Phase 26 VIS-A05).
+   */
   color?: string;
-  /** Show glow effect */
-  glow?: boolean;
-  /** Opacity of the fill (0-1) */
-  opacity?: number;
-  /** Whether slider is currently being dragged (disables transition) */
+  /** Whether the slider is currently being dragged (disables transition) */
   isDragging?: boolean;
   /** Additional CSS classes */
   class?: string;
 }
 
 /**
- * Animated slider fill that adapts to widget orientation
+ * Animated slider fill that adapts to widget orientation.
  */
 export function WidgetSliderFill(props: WidgetSliderFillProps): JSX.Element {
   const ctx = useWidgetContext();
 
-  // Calculate clipPath based on orientation
-  // Vertical: fill from bottom to top
-  // Horizontal: fill from left to right
+  // Vertical: fill from bottom to top. Horizontal: fill from left to right.
   const clipPath = () =>
     ctx.orientation() === "vertical"
       ? `inset(${100 - props.value}% 0 0 0)`
       : `inset(0 ${100 - props.value}% 0 0)`;
 
-  const fillColor = () => props.color ?? "rgb(59, 130, 246)";
+  const containerStyle = (): JSX.CSSProperties => {
+    const base: JSX.CSSProperties = {
+      "clip-path": clipPath(),
+      "z-index": WIDGET_Z.BACKGROUND,
+    };
+    if (props.color) base["--widget-icon-color"] = props.color;
+    return base;
+  };
 
   return (
-    <>
-      {/* Glow effect (optional) */}
-      {(props.glow ?? false) && props.value > 0 && (
-        <div
-          class="pointer-events-none absolute inset-0 opacity-40 blur-2xl"
-          style={{
-            background: fillColor(),
-            "z-index": WIDGET_Z.BACKGROUND,
-          }}
-        />
+    <div
+      class={cn(
+        "glasshome-widget-slider-fill pointer-events-none absolute inset-0",
+        props.isDragging ? "duration-0" : "transition-all duration-300 ease-out",
+        props.class,
       )}
-
-      {/* Animated fill */}
-      <div
-        class={cn(
-          "pointer-events-none absolute inset-0",
-          props.isDragging ? "duration-0" : "transition-all duration-300 ease-out",
-          props.class,
-        )}
-        style={{
-          background: fillColor(),
-          "clip-path": clipPath(),
-          opacity: props.opacity ?? 0.3,
-          "z-index": WIDGET_Z.BACKGROUND,
-        }}
-      />
-    </>
+      style={containerStyle()}
+    />
   );
 }
