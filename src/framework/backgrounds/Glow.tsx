@@ -1,52 +1,57 @@
 /**
  * Glow Component
  *
- * Background glow effect for widgets.
- * Renders a radial gradient background at the BACKGROUND z-index layer.
+ * Channel-driven background glow. Renders a blurred radial gradient at the
+ * BACKGROUND z-index layer using the Widget's channel color. Defaults to the
+ * parent Widget's `--widget-color`; pass `color` to override locally.
  *
  * @example
  * ```tsx
- * <Glow color="blue" />
+ * <Widget tone="info">
+ *   <Glow />
+ * </Widget>
+ * ```
+ *
+ * @example With local override
+ * ```tsx
+ * <Glow color="oklch(0.7 0.2 30)" />
  * ```
  */
 
 import type { JSX } from "solid-js";
 import { WIDGET_Z } from "../design-system/z-index";
-import type { ColorVariant } from "../types";
 import { cn } from "../utils/cn";
 
-/**
- * Color variant to Tailwind background class mapping
- */
-const COLOR_MAP: Record<string, string> = {
-  blue: "bg-blue-500/30",
-  green: "bg-green-500/30",
-  red: "bg-red-500/30",
-  yellow: "bg-yellow-500/30",
-  purple: "bg-purple-500/30",
-  gray: "bg-gray-500/30",
-};
-
 export interface GlowProps {
-  /** Glow color (Tailwind color name or CSS color) */
-  color: ColorVariant;
+  /**
+   * Optional CSS color string override (oklch, hsl, rgb, hex, var()).
+   * Sets `--widget-color` locally on the Glow element. When omitted the
+   * parent Widget's channel color cascades in.
+   * BREAKING (Phase 26): previously a Tailwind color variant key.
+   */
+  color?: string;
   /** Additional CSS classes */
   class?: string;
 }
 
 /**
- * Glow effect component
- * Applies a blurred radial gradient background effect
+ * Glow effect component, channel-driven radial gradient.
  */
 export function Glow(props: GlowProps): JSX.Element {
-  const colorClass = () => COLOR_MAP[props.color] ?? props.color;
+  const style = (): JSX.CSSProperties => {
+    const base: JSX.CSSProperties = {
+      "z-index": WIDGET_Z.BACKGROUND,
+      background:
+        "radial-gradient(circle, color-mix(in oklch, var(--widget-color) 30%, transparent), transparent 70%)",
+    };
+    if (props.color) base["--widget-color"] = props.color;
+    return base;
+  };
 
   return (
     <div
-      class={cn("pointer-events-none absolute inset-0", props.class)}
-      style={{ "z-index": WIDGET_Z.BACKGROUND }}
-    >
-      <div class={cn("absolute inset-0 opacity-40 blur-3xl", colorClass())} />
-    </div>
+      class={cn("pointer-events-none absolute inset-0 opacity-40 blur-3xl", props.class)}
+      style={style()}
+    />
   );
 }

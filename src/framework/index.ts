@@ -196,7 +196,6 @@ export {
 export type {
   AbsoluteLayoutStrategy,
   BaseComponentProps,
-  ColorVariant,
   CustomLayoutStrategy,
   ElementConfig,
   EntityView,

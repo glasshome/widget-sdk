@@ -108,11 +108,6 @@ export interface GestureConfig {
 export type SpacingScale = "S1" | "S2" | "S3" | "S4";
 
 /**
- * Color variants for common components
- */
-export type ColorVariant = "blue" | "green" | "red" | "yellow" | "purple" | "gray" | string;
-
-/**
  * Image overlay types
  */
 export type ImageOverlay = "gradient" | "dark" | "none";
