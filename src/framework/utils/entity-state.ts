@@ -11,22 +11,6 @@
 import type { EntityView } from "../types";
 
 /**
- * Check if entity is available (not unavailable/unknown)
- *
- * @example
- * ```typescript
- * const isAvailable = isEntityAvailable(entity);
- * if (isAvailable) {
- *   // Entity is available, can display state
- * }
- * ```
- */
-export function isEntityAvailable(entity: EntityView | null | undefined): boolean {
-  if (!entity) return false;
-  return entity.state !== "unavailable" && entity.state !== "unknown";
-}
-
-/**
  * Check if entity is active (on, open, locked, etc.)
  * Domain-aware state checking
  *
@@ -54,22 +38,6 @@ export function isEntityActive(entity: EntityView | null | undefined): boolean {
 }
 
 /**
- * Get entity state with fallback
- *
- * @example
- * ```typescript
- * const state = getEntityState(entity, "unknown");
- * return <Widget.Status>{state}</Widget.Status>;
- * ```
- */
-export function getEntityState(
-  entity: EntityView | null | undefined,
-  fallback = "unknown",
-): string {
-  return entity?.state ?? fallback;
-}
-
-/**
  * Get entity attribute with type safety
  *
  * @example
@@ -88,32 +56,6 @@ export function getEntityAttribute<T = unknown>(
 }
 
 /**
- * Count entities by state
- *
- * @example
- * ```typescript
- * const onCount = countEntitiesByState(entities, "on");
- * return <Widget.Status>{onCount} lights on</Widget.Status>;
- * ```
- */
-export function countEntitiesByState(entities: EntityView[], state: string): number {
-  return entities.filter((e) => e.state === state).length;
-}
-
-/**
- * Count available entities (excludes unavailable/unknown)
- *
- * @example
- * ```typescript
- * const availableCount = countAvailableEntities(entities);
- * const unavailableCount = entities.length - availableCount;
- * ```
- */
-export function countAvailableEntities(entities: EntityView[]): number {
-  return entities.filter(isEntityAvailable).length;
-}
-
-/**
  * Count active entities (on, open, etc.)
  *
  * @example
@@ -124,30 +66,4 @@ export function countAvailableEntities(entities: EntityView[]): number {
  */
 export function countActiveEntities(entities: EntityView[]): number {
   return entities.filter(isEntityActive).length;
-}
-
-/**
- * Check if all entities match state
- *
- * @example
- * ```typescript
- * const allOn = allEntitiesInState(entities, "on");
- * const statusText = allOn ? "All on" : "Mixed";
- * ```
- */
-export function allEntitiesInState(entities: EntityView[], state: string): boolean {
-  return entities.length > 0 && entities.every((e) => e.state === state);
-}
-
-/**
- * Check if any entity matches state
- *
- * @example
- * ```typescript
- * const anyOpen = anyEntityInState(entities, "open");
- * const iconColor = anyOpen ? "red" : "green";
- * ```
- */
-export function anyEntityInState(entities: EntityView[], state: string): boolean {
-  return entities.some((e) => e.state === state);
 }

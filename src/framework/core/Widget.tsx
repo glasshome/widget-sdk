@@ -25,11 +25,8 @@ import { createEffect, createMemo, createSignal, type JSX, onMount, untrack, use
 import type { WidgetSliderFill as WidgetSliderFillType } from "../backgrounds/WidgetSliderFill";
 // Import slot component types for compound interface
 import type { WidgetContent as WidgetContentType } from "../components/WidgetContent";
-import type { WidgetEmptyState as WidgetEmptyStateType } from "../components/WidgetEmptyState";
 import type { WidgetIcon as WidgetIconType } from "../components/WidgetIcon";
-import type { WidgetMetrics as WidgetMetricsType } from "../components/WidgetMetrics";
 import type { WidgetStatus as WidgetStatusType } from "../components/WidgetStatus";
-import type { WidgetSubtitle as WidgetSubtitleType } from "../components/WidgetSubtitle";
 import type { WidgetTitle as WidgetTitleType } from "../components/WidgetTitle";
 import type { WidgetValue as WidgetValueType } from "../components/WidgetValue";
 import { WIDGET_Z } from "../design-system/z-index";
@@ -106,11 +103,8 @@ interface WidgetComponent {
   Content: typeof WidgetContentType;
   Icon: typeof WidgetIconType;
   Title: typeof WidgetTitleType;
-  Subtitle: typeof WidgetSubtitleType;
   Status: typeof WidgetStatusType;
   Value: typeof WidgetValueType;
-  Metrics: typeof WidgetMetricsType;
-  EmptyState: typeof WidgetEmptyStateType;
   SliderFill: typeof WidgetSliderFillType;
 }
 
@@ -367,11 +361,8 @@ function WidgetEmptyStateInner(props: {
 
 import { WidgetSliderFill } from "../backgrounds/WidgetSliderFill";
 import { WidgetContent } from "../components/WidgetContent";
-import { WidgetEmptyState } from "../components/WidgetEmptyState";
 import { WidgetIcon } from "../components/WidgetIcon";
-import { WidgetMetrics } from "../components/WidgetMetrics";
 import { WidgetStatus } from "../components/WidgetStatus";
-import { WidgetSubtitle } from "../components/WidgetSubtitle";
 import { WidgetTitle } from "../components/WidgetTitle";
 import { WidgetValue } from "../components/WidgetValue";
 
@@ -382,11 +373,8 @@ export const Widget = WidgetBase as unknown as WidgetComponent;
 Widget.Content = WidgetContent;
 Widget.Icon = WidgetIcon;
 Widget.Title = WidgetTitle;
-Widget.Subtitle = WidgetSubtitle;
 Widget.Status = WidgetStatus;
 Widget.Value = WidgetValue;
-Widget.Metrics = WidgetMetrics;
-Widget.EmptyState = WidgetEmptyState;
 
 // Attach background components to Widget
 Widget.SliderFill = WidgetSliderFill;

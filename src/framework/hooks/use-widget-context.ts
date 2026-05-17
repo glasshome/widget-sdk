@@ -63,22 +63,6 @@ export interface BridgeableWidgetContext extends ReactiveWidgetContext {
   _bridge: BridgeFns;
 }
 
-// Warn once per page load when stub values are read before Widget mounts.
-let _devWarned = false;
-
-/**
- * Emit a one-time dev-mode console.warn when stub context values are read
- * before Widget has mounted and bridged real measured values.
- */
-export function warnIfStub(isStub: () => boolean): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isDev = (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
-  if (isDev && !_devWarned && isStub()) {
-    _devWarned = true;
-    console.warn("[Widget SDK] Context read before Widget mounted — values are estimated");
-  }
-}
-
 /**
  * Widget context
  * Uses reactive accessor pattern for SolidJS

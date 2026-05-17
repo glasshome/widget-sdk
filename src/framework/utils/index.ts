@@ -1,16 +1,12 @@
 /**
- * Framework Utilities - Barrel Export
+ * Framework Utilities - Barrel Export (internal)
  *
- * Helper functions for value formatting, entity state management,
- * and class name composition.
+ * Public exports are routed through src/framework/index.ts. Files that remain
+ * in this directory are still consumed internally even when not part of the
+ * public re-export surface.
  */
 
 export { cn } from "./cn";
-export {
-  createEmptyStateConfig,
-  type EmptyStateConfigOptions,
-  type WidgetEmptyStateConfig,
-} from "./empty-state";
 export {
   calculateLightGroup,
   calculateSensorGroup,
@@ -19,15 +15,9 @@ export {
   type SensorGroupType,
 } from "./entity-aggregation";
 export {
-  allEntitiesInState,
-  anyEntityInState,
   countActiveEntities,
-  countAvailableEntities,
-  countEntitiesByState,
   getEntityAttribute,
-  getEntityState,
   isEntityActive,
-  isEntityAvailable,
 } from "./entity-state";
 export { formatValue } from "./format-value";
 export { interpretValue } from "./interpret-value";

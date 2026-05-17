@@ -1,25 +1,13 @@
 // Core widget API
 
-export type { Entity } from "./create-entity";
-// SolidJS-specific utilities
-export { createEntity } from "./create-entity";
 export { defineWidget } from "./define-widget";
 // Framework (widget composition API)
-// Re-exports all framework components, hooks, design tokens, theming, variants, and types
+// Re-exports framework components, hooks, design tokens, theming, and types
 export * from "./framework";
-// Runtime validation schemas and serialization helpers
-export {
-  formatSchemaError,
-  GridSizeSchema,
-  PublishBodySchema,
-  PublishConfirmSchema,
-  PublishRequestSchema,
-  parseGridSize,
-  serializeGridSize,
-  WidgetManifestSchema,
-} from "./schemas";
+// Runtime validation schemas (legacy re-exports; prefer "@glasshome/widget-sdk/schemas")
+export { formatSchemaError, WidgetManifestSchema } from "./schemas";
 // Theme utilities (framework-agnostic)
-export { getThemeToken, isDark } from "./theme";
+export { isDark } from "./theme";
 // v1.0 Types (original SDK API)
 export type {
   GridSize,

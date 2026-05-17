@@ -53,16 +53,6 @@ export interface WidgetContextValue {
 }
 
 /**
- * Gradient configuration
- */
-export interface GradientConfig {
-  /** Tailwind gradient from class (e.g., "from-blue-500") */
-  from: string;
-  /** Tailwind gradient to class (e.g., "to-blue-700") */
-  to: string;
-}
-
-/**
  * Slide gesture configuration
  */
 export interface SlideGestureConfig {
@@ -107,28 +97,13 @@ export interface GestureConfig {
  */
 export type SpacingScale = "S1" | "S2" | "S3" | "S4";
 
-/**
- * Image overlay types
- */
-export type ImageOverlay = "gradient" | "dark" | "none";
-
-/**
- * Base props that all framework components accept
- */
-export interface BaseComponentProps {
-  /** Additional CSS classes (SolidJS uses `class` instead of `className`) */
-  class?: string;
-  /** Child elements */
-  children?: JSX.Element;
-}
-
 // ============================================================================
 // Variant System Types (CSS Variables + Discriminated Unions)
+// Internal use only — not re-exported from the public SDK surface.
 // ============================================================================
 
 /**
  * CSS variable-based styling configuration
- * Replaces brittle Tailwind class strings with type-safe CSS variables
  */
 export interface WidgetStyles {
   /** Inline CSS properties applied to widget container */
@@ -144,17 +119,11 @@ export interface WidgetStyles {
  */
 export interface FlexLayoutStrategy {
   type: "flex";
-  /** Flex direction */
   direction: "row" | "column" | "row-reverse" | "column-reverse";
-  /** Align items */
   align: "start" | "center" | "end" | "stretch";
-  /** Justify content */
   justify: "start" | "center" | "end" | "between" | "around";
-  /** Flex wrap */
   wrap?: boolean;
-  /** Gap between items (CSS value) */
   gap?: string;
-  /** Custom order for specific elements */
   order?: Partial<Record<WidgetElement, number>>;
 }
 
@@ -163,15 +132,10 @@ export interface FlexLayoutStrategy {
  */
 export interface GridLayoutStrategy {
   type: "grid";
-  /** Grid template areas string */
   areas: string;
-  /** Grid template columns */
   columns?: string;
-  /** Grid template rows */
   rows?: string;
-  /** Gap between items (CSS value) */
   gap?: string;
-  /** Grid area assignments for elements */
   elementAreas: Partial<Record<WidgetElement, string>>;
 }
 
@@ -180,7 +144,6 @@ export interface GridLayoutStrategy {
  */
 export interface AbsoluteLayoutStrategy {
   type: "absolute";
-  /** Position configurations for specific elements */
   positions: Partial<Record<WidgetElement, PositionConfig>>;
 }
 
@@ -189,13 +152,11 @@ export interface AbsoluteLayoutStrategy {
  */
 export interface CustomLayoutStrategy {
   type: "custom";
-  /** Custom render function or component */
-  renderer: string; // Plugin ID that implements custom layout
+  renderer: string;
 }
 
 /**
  * Discriminated union of all layout strategies
- * Ensures type safety - can't use gridArea with flex, etc.
  */
 export type LayoutStrategy =
   | FlexLayoutStrategy
@@ -233,24 +194,17 @@ export type WidgetElement =
  * Element-specific configuration
  */
 export interface ElementConfig {
-  /** Show/hide specific elements */
   visible?: Partial<Record<WidgetElement, boolean>>;
-  /** Element-specific styling */
   styles?: Partial<Record<WidgetElement, JSX.CSSProperties>>;
-  /** Element-specific CSS classes */
   classNames?: Partial<Record<WidgetElement, string>>;
 }
 
 /**
  * Plugin system configuration (serializable)
- * Uses string IDs instead of JSX.Element for serializability
  */
 export interface VariantPlugins {
-  /** Background plugin ID */
   background?: string;
-  /** Overlay plugin ID */
   overlay?: string;
-  /** Decoration plugin IDs */
   decorations?: string[];
 }
 
@@ -258,47 +212,27 @@ export interface VariantPlugins {
  * Interaction configuration
  */
 export interface InteractionConfig {
-  /** Enable hover effects */
   hover?: boolean;
-  /** Enable active/pressed state */
   active?: boolean;
-  /** Enable focus ring */
   focus?: boolean;
-  /** Custom hover scale (e.g., 1.02) */
   hoverScale?: number;
-  /** Custom active scale (e.g., 0.98) */
   activeScale?: number;
 }
 
 /**
  * Complete variant configuration
- * This is the core of the variant system
  */
 export interface WidgetVariantConfig {
-  /** Unique variant identifier */
   id: string;
-  /** Human-readable name */
   name: string;
-  /** Description of variant purpose/style */
   description?: string;
-  /** Styling configuration */
   styles?: WidgetStyles;
-  /** Layout strategy */
   layout?: LayoutStrategy;
-  /** Element-specific configuration */
   elements?: ElementConfig;
-  /** Plugin configurations */
   plugins?: VariantPlugins;
-  /** Interaction behavior */
   interactions?: InteractionConfig;
-  /** Base variant to extend (enables composition) */
   extends?: string;
 }
-
-/**
- * Variant type union (built-in + custom)
- */
-export type WidgetVariant = "classic-glass" | "minimal" | "compact-horizontal" | (string & {}); // Allow custom variants while preserving autocomplete
 
 /**
  * Variant registry type
