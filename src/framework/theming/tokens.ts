@@ -1,3 +1,4 @@
+/// <reference path="./tokens.css.d.ts" />
 import tokensCss from "./tokens.css?raw";
 
 /**
