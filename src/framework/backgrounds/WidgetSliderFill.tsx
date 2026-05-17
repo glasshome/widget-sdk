@@ -28,7 +28,7 @@ import { WIDGET_Z } from "../design-system/z-index";
 import { useWidgetContext } from "../hooks/use-widget-context";
 import { cn } from "../utils/cn";
 
-export interface WidgetSliderFillProps {
+interface WidgetSliderFillProps {
   /** Current value (0-100) */
   value: number;
   /**

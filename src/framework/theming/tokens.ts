@@ -5,7 +5,7 @@ import tokensCss from "./tokens.css?raw";
  * Minimal document-shape needed for token injection. Allows tests to pass
  * a stub without a full DOM implementation.
  */
-export interface InjectTokensRoot {
+interface InjectTokensRoot {
   head: {
     appendChild: (node: unknown) => void;
     querySelector?: (sel: string) => unknown;

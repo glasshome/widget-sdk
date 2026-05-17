@@ -22,7 +22,7 @@ import type { JSX } from "solid-js";
 import { WIDGET_Z } from "../design-system/z-index";
 import { cn } from "../utils/cn";
 
-export interface GlowProps {
+interface GlowProps {
   /**
    * Optional CSS color string override (oklch, hsl, rgb, hex, var()).
    * Sets `--widget-color` locally on the Glow element. When omitted the

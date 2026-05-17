@@ -20,7 +20,7 @@ import { typography } from "../design-system/typography";
 import { useWidgetContext } from "../hooks/use-widget-context";
 import { cn } from "../utils/cn";
 
-export interface WidgetMetricsProps {
+interface WidgetMetricsProps {
   /** Layout direction (default: "auto" - horizontal for horizontal widgets, vertical for others) */
   direction?: "horizontal" | "vertical" | "auto";
   /** Additional CSS classes */
@@ -30,7 +30,7 @@ export interface WidgetMetricsProps {
 }
 
 // Compound component interface
-export interface WidgetMetricsComponent {
+interface WidgetMetricsComponent {
   (props: WidgetMetricsProps): JSX.Element;
   Item: typeof WidgetMetricsItem;
 }
@@ -65,7 +65,7 @@ function WidgetMetricsBase(props: WidgetMetricsProps): JSX.Element {
 // WidgetMetrics.Item
 // ============================================================================
 
-export interface WidgetMetricsItemProps {
+interface WidgetMetricsItemProps {
   /** Metric label */
   label: string;
   /** Metric value */
@@ -83,7 +83,7 @@ export interface WidgetMetricsItemProps {
 /**
  * Individual metric item
  */
-export function WidgetMetricsItem(props: WidgetMetricsItemProps): JSX.Element {
+function WidgetMetricsItem(props: WidgetMetricsItemProps): JSX.Element {
   const ctx = useWidgetContext();
 
   return (

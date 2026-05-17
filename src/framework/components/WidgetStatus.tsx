@@ -15,7 +15,7 @@ import { WIDGET_Z } from "../design-system/z-index";
 import { useWidgetContext } from "../hooks/use-widget-context";
 import { cn } from "../utils/cn";
 
-export interface WidgetStatusProps {
+interface WidgetStatusProps {
   /** Reduce opacity further */
   dimmed?: boolean;
   /** Additional CSS classes */

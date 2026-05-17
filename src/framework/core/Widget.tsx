@@ -46,7 +46,7 @@ import { injectTokens } from "../theming/tokens";
 import { cn } from "../utils/cn";
 import { getBuiltInVariant } from "../variants";
 
-export interface WidgetEmptyStateConfig {
+interface WidgetEmptyStateConfig {
   /** Icon to display */
   icon?: JSX.Element;
   /** Main title/heading */
@@ -55,7 +55,7 @@ export interface WidgetEmptyStateConfig {
   message?: string;
 }
 
-export interface WidgetProps {
+interface WidgetProps {
   /** Widget variant (string ID or inline config) */
   variant?: string | WidgetVariantConfig;
   /**
@@ -101,7 +101,7 @@ export interface WidgetProps {
 }
 
 // Extend Widget interface with slot components
-export interface WidgetComponent {
+interface WidgetComponent {
   (props: WidgetProps): JSX.Element;
   Content: typeof WidgetContentType;
   Icon: typeof WidgetIconType;
@@ -117,7 +117,7 @@ export interface WidgetComponent {
 /**
  * Classify widget size based on grid dimensions
  */
-export function classifySize(gridWidth: number, gridHeight: number): WidgetSize {
+function classifySize(gridWidth: number, gridHeight: number): WidgetSize {
   const area = gridWidth * gridHeight;
 
   if (area <= 2) return "xs"; // 1x1, 1x2
@@ -131,7 +131,7 @@ export function classifySize(gridWidth: number, gridHeight: number): WidgetSize 
  * Detect orientation from dimensions based on aspect ratio
  * Used for gesture direction (slide horizontal vs vertical)
  */
-export function detectOrientation(width: number, height: number): WidgetOrientation {
+function detectOrientation(width: number, height: number): WidgetOrientation {
   if (width > height) return "horizontal";
   if (height > width) return "vertical";
   return "square";
@@ -142,7 +142,7 @@ export function detectOrientation(width: number, height: number): WidgetOrientat
  * Used for UI arrangement (stack vertically vs horizontally)
  * Considers height threshold - tall widgets benefit from vertical stacking
  */
-export function detectContentLayout(width: number, height: number): WidgetOrientation {
+function detectContentLayout(width: number, height: number): WidgetOrientation {
   // If widget is tall enough (150px+), use vertical layout for better content flow
   if (height >= 150) return "vertical";
 

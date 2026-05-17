@@ -19,7 +19,7 @@ import { typography } from "../design-system/typography";
 import { useWidgetContext } from "../hooks/use-widget-context";
 import { cn } from "../utils/cn";
 
-export interface WidgetSubtitleProps {
+interface WidgetSubtitleProps {
   /** Whether to dim the subtitle */
   dimmed?: boolean;
   /** Additional CSS classes */

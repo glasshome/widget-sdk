@@ -5,8 +5,6 @@
  * config, entity, entity group, debug data, and gestures.
  */
 
-// Gestures (re-export from gestures directory for convenience)
-export { type GestureHandlers, useWidgetGestures } from "../gestures/use-widget-gestures";
 // Debug
 export { type UseDebugDataOptions, useDebugData } from "./use-debug-data";
 // Config

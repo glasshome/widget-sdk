@@ -21,7 +21,7 @@ import { typography } from "../design-system/typography";
 import { useWidgetContext } from "../hooks/use-widget-context";
 import { cn } from "../utils/cn";
 
-export interface WidgetEmptyStateProps {
+interface WidgetEmptyStateProps {
   /** Icon to display (optional) */
   icon?: JSX.Element;
   /** Main title/heading */

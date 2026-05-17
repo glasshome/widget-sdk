@@ -22,7 +22,7 @@ import { useWidgetContext } from "../hooks/use-widget-context";
 import { formatValue, interpretValue } from "../utils";
 import { cn } from "../utils/cn";
 
-export interface WidgetValueProps {
+interface WidgetValueProps {
   /** The value to display */
   value: number | string;
   /** Unit of measurement */

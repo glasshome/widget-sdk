@@ -112,7 +112,7 @@ const slideAutoSvg = wrapSvg(`
   </g>
 `);
 
-export interface CursorDef {
+interface CursorDef {
   css: string;
   hotspotX: number;
   hotspotY: number;

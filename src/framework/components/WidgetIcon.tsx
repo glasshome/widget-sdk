@@ -25,7 +25,7 @@ import { spacing } from "../design-system/spacing";
 import { useWidgetContext } from "../hooks/use-widget-context";
 import { cn } from "../utils/cn";
 
-export interface WidgetIconProps {
+interface WidgetIconProps {
   /** Icon component (JSX.Element) */
   icon: JSX.Element;
   /**

@@ -19,7 +19,7 @@ import { useWidgetContext } from "../hooks/use-widget-context";
 import type { SpacingScale } from "../types";
 import { cn } from "../utils/cn";
 
-export interface WidgetStackProps {
+interface WidgetStackProps {
   /** Spacing between items (default: "S2") */
   spacing?: SpacingScale;
   /** Additional CSS classes */
