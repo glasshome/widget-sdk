@@ -5,6 +5,71 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-05-17
+
+Dead-export trim. Files that are still used internally (variant system,
+`cn`, `spacing`, `typography`, `WIDGET_Z`, `format-value`, `interpret-value`,
+`entity-aggregation`, `empty-state` type, `to-form-schema`) remain in the
+source tree but are no longer re-exported from the public package surface.
+Bundle dropped from 70.56 kB to 50.74 kB (gzip 19.40 kB to 14.97 kB).
+
+### Removed
+
+- **Variant system public exports.** `builtInVariants`, `classicGlass`,
+  `compactHorizontal`, `minimal`, `applyCssVars`, `applyLayout`,
+  `composeVariants`, `createFlexLayout`, `extendVariant`, `getBuiltInVariant`,
+  `getBuiltInVariantIds`, `isBuiltInVariant`, `mergeVariants`. The
+  `framework/variants/` directory stays in-tree because `Widget.tsx` and three
+  internal widgets still resolve `variant="classic-glass"` through it; the
+  variants are simply no longer part of the published API.
+- **Theming color palette.** `colors.ts` and its exports (`GRADIENT_NAMES`,
+  `GRADIENT_PRESET_KEYS`, `GRADIENT_PRESETS`, `GradientPreset`, `getGradient`,
+  `getGradientFromString`, `gradientColorPresets`, `stateColors`,
+  `WidgetColorPreset`). The channel API (`tone`/`color`/`colorTo`/`gradient`)
+  on `<Widget>` is the only supported color path.
+- **Dead components.** `WidgetSubtitle`, `WidgetMetrics`, `WidgetEmptyState`
+  component, `WidgetStack` layout, `Glow` background. `Widget.Subtitle`,
+  `Widget.Metrics`, `Widget.EmptyState` compound members are detached from
+  `Widget`. The `emptyState` prop on `<Widget>` still renders the inline
+  empty-state UI.
+- **Dead hooks.** `useDebugData`, `useWidgetConfig`, `useWidgetEntity`,
+  `useWidgetForm`, `useWidgetResponsive`, plus their option/return types.
+  `warnIfStub` is no longer exported (the helper itself is removed).
+- **Dead utils.** `cn`, `formatValue`, `interpretValue`, `createEmptyStateConfig`
+  and the `EmptyStateConfigOptions` / `WidgetEmptyStateConfig` types from
+  the public surface; `isEntityAvailable`, `getEntityState`,
+  `countEntitiesByState`, `countAvailableEntities`, `allEntitiesInState`,
+  `anyEntityInState` removed entirely. `getEntityAttribute`,
+  `isEntityActive`, `countActiveEntities` remain.
+- **Design system exports.** `spacing`, `getSpacingClass`, `typography`,
+  `WIDGET_Z`, `WidgetZIndex` un-exported. Files stay in-tree because internal
+  components still consume them.
+- **`createEntity` and `Entity` type.** The signal infrastructure was dead
+  legacy from before the sync-layer port. Widgets read entities from
+  `useWidgetEntityGroup` or `EntityView` props.
+- **`getThemeToken`.** Only `isDark` remains in `theme.ts`.
+- **Schema exports.** `PublishBodySchema`, `PublishConfirmSchema`,
+  `PublishRequestSchema`, `GridSizeSchema`, `parseGridSize`,
+  `serializeGridSize` removed from the root entry. The dedicated
+  `@glasshome/widget-sdk/schemas` subpath still exports
+  `WidgetManifestSchema` and `formatSchemaError`.
+- **`toFormSchema` and `extractDefaults`.** Used internally by
+  `define-widget.ts` and `WidgetDialog.tsx`; no longer part of the public
+  surface (file stays in-tree).
+- **Public type surface trim.** `AbsoluteLayoutStrategy`, `BaseComponentProps`,
+  `CustomLayoutStrategy`, `ElementConfig`, `FlexLayoutStrategy`,
+  `GestureConfig`, `GradientConfig`, `GridLayoutStrategy`, `HoldGestureConfig`,
+  `ImageOverlay`, `InteractionConfig`, `LayoutStrategy`, `PositionConfig`,
+  `SlideGestureConfig`, `SpacingScale`, `VariantPlugins`, `VariantRegistry`,
+  `WidgetElement`, `WidgetVariant`, `AggregationPreset` (kept as it's still
+  exported via hooks for `useWidgetEntityGroup`). `GradientConfig`,
+  `ImageOverlay`, `BaseComponentProps`, `WidgetVariant` removed from the
+  source file. The rest stay internal for `variants/`, `gestures/`,
+  `design-system/`.
+
+[0.4.1]: https://github.com/glasshome/widget-sdk/releases/tag/v0.4.1
+[0.4.0]: https://github.com/glasshome/widget-sdk/releases/tag/v0.4.0
+
 ## [0.4.0] - 2026-05-17
 
 The widget visual system release. A single CSS-var channel now drives icon color,
@@ -93,5 +158,3 @@ widget-side authoring.
 - `WidgetIcon` `glow` and `dynamicColor` props.
 - `src/framework/design-system/index.ts` barrel (dead, all consumers used direct file paths).
 - `vite-plugin-externalize-deps` devDependency (never referenced by `vite.config.ts`).
-
-[0.4.0]: https://github.com/glasshome/widget-sdk/releases/tag/v0.4.0
