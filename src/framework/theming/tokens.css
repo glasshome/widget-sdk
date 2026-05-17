@@ -65,6 +65,12 @@
   background: var(--widget-icon-color, var(--widget-color));
   box-shadow: 0 0 calc(var(--widget-glow-strength) * 30px)
     color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 50%, transparent);
+  /* Glyph keeps icon-bg hue but flips to L extreme via sign() step + damps chroma.
+     bg L > 0.5 -> glyph L=0.09 (dark); bg L < 0.5 -> glyph L=0.95 (light).
+     Chroma 0.2x of bg keeps subtle hue tint without competing with bg saturation.
+     Requires CSS relative color (Chromium 119+, Safari 16.4+, Firefox 128+) and
+     sign() (Chromium 111+, Safari 18.2+, Firefox 118+). */
+  color: oklch(from var(--widget-icon-color, var(--widget-color)) calc(0.52 + sign(0.5 - l) * 0.43) calc(c * 0.2) h);
 }
 
 /* D-13 loading overlay tint */

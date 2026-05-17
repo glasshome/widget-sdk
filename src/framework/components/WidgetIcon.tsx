@@ -100,7 +100,7 @@ export function WidgetIcon(props: WidgetIconProps): JSX.Element {
         style={{
           "font-size": `${spacing.iconSize(ctx.size())}px`,
         }}
-        class="flex items-center justify-center text-foreground"
+        class="flex items-center justify-center"
       >
         {props.icon}
       </div>
