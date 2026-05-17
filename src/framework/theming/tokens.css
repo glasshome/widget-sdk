@@ -5,28 +5,31 @@
  * via framework/theming/tokens.ts. Final palette tuned in Phase 29.
  */
 
-/* Tone palette (VIS-C01) -- placeholder oklch values (D-06) mirroring Tailwind 500 stops */
+/* Tone palette (VIS-C01) -- Phase 29 retune (VIS-P05).
+   Hand-tuned against apps/dash/src/routes/dev.palette-tune.tsx so each
+   tone reads vibrant at the 20% composition stop on both #fafaf9 (light)
+   and #0c0a09 (dark) without overpowering the calm-confidence aesthetic. */
 :root {
-  --tone-success:  oklch(0.72 0.17 145);
-  --tone-warning:  oklch(0.79 0.16 75);
-  --tone-danger:   oklch(0.65 0.22 27);
-  --tone-info:     oklch(0.66 0.19 245);
-  --tone-neutral:  oklch(0.65 0.02 250);
-  --tone-accent:   oklch(0.75 0.16 60);
+  --tone-success:  oklch(0.70 0.18 145);  /* deeper L vs placeholder lifts chroma at 20% on light bg without going neon */
+  --tone-warning:  oklch(0.80 0.17 75);   /* keeps amber readable at 22%/11% gradient stops without yellowing the shell */
+  --tone-danger:   oklch(0.64 0.22 27);   /* anchors red just below midline so 20% alpha stays unambiguous on light bg */
+  --tone-info:     oklch(0.66 0.20 245);  /* +0.01 chroma so info-blue keeps presence in 30%/40% slider fill against light */
+  --tone-neutral:  oklch(0.65 0.02 250);  /* pinned literal -- matches @property --widget-color initial-value (tokens.test) */
+  --tone-accent:   oklch(0.74 0.18 60);   /* +0.02 chroma for warm-amber accent so glow reads at 50% on light icon bg */
 
-  /* Envelope vars (VIS-C03), light mode */
+  /* Envelope vars (VIS-C03), light mode -- retained from Phase 25 baseline */
   --widget-grad-strength:    1;
   --widget-glow-default:     0.4;
   --widget-border-highlight: oklch(0.98 0 0 / 0.4);
 }
 
 .dark {
-  --tone-success:  oklch(0.74 0.17 145);
-  --tone-warning:  oklch(0.81 0.16 75);
-  --tone-danger:   oklch(0.68 0.22 27);
-  --tone-info:     oklch(0.70 0.19 245);
-  --tone-neutral:  oklch(0.70 0.02 250);
-  --tone-accent:   oklch(0.78 0.16 60);
+  --tone-success:  oklch(0.74 0.18 145);  /* +0.04 L lifts chroma at 20% alpha against #0c0a09 so green isn't muddy */
+  --tone-warning:  oklch(0.82 0.17 75);   /* +0.02 L only -- amber already bright on dark bg, more would wash the gradient */
+  --tone-danger:   oklch(0.68 0.22 27);   /* +0.04 L preserves red identity without dipping into maroon at low alpha */
+  --tone-info:     oklch(0.70 0.20 245);  /* +0.04 L plus chroma parity with light keeps info-blue vibrant at 30%/40% on dark */
+  --tone-neutral:  oklch(0.69 0.02 250);  /* +0.04 L vs light, chroma parity -- defaults read calm on dark widget surfaces */
+  --tone-accent:   oklch(0.78 0.18 60);   /* +0.04 L matches accent glow envelope so 50% icon glow stays warm on dark */
 
   --widget-grad-strength:    1.1;
   --widget-glow-default:     0.5;
