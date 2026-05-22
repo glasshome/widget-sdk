@@ -276,8 +276,16 @@ export interface EntityView {
   domain: EntityDomain;
   /** Current state value */
   state: string;
-  /** Entity attributes */
-  attributes: Record<string, any>;
+  /**
+   * Entity attributes from Home Assistant, excluding keys that are
+   * surfaced as canonical resolved fields elsewhere on EntityView
+   * (`deviceClass`, `unitOfMeasurement`, `friendlyName`, `icon`).
+   * Use those fields instead of reaching into `attributes`.
+   */
+  attributes: Omit<
+    Record<string, any>,
+    "device_class" | "unit_of_measurement" | "friendly_name" | "icon"
+  >;
   /** When the state last changed */
   lastChanged: Date;
   /** When the state was last updated (even if unchanged) */
