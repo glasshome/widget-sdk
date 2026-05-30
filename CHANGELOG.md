@@ -5,6 +5,106 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-30
+
+Visual scale moves to pure CSS. The widget shell already declared
+`container-type: size; container-name: widget;`, but every icon/text/padding
+value was still computed in JS via the `WidgetSize` tier classifier
+(`gridWidth = round(width / 150)` etc.). This release deletes the classifier
+and drives all visual scale from CSS custom properties + container queries
+on `.glasshome-widget`. Widgets at the same rendered box scale identically
+without a tier-bucket discontinuity, and resize is smooth instead of stepped.
+
+`useWidgetContext()` shrinks to host RPC, edit mode, and raw measured
+dimensions. Widgets that branch rendered content on size (media-player,
+weather, area, clock) read `ctx.dimensions().width` / `.height` directly and
+apply their own pixel thresholds; no shared tier enum.
+
+Bundle: 50.78 kB → 43.67 kB (gzip 14.99 → 12.61 kB).
+
+### Breaking changes
+
+- **`WidgetSize` enum removed.** `xs`/`sm`/`md`/`lg`/`xl` is no longer the
+  scaling primitive. `ctx.size()` is gone. Widgets that previously gated on
+  size should read `ctx.dimensions().width` / `.height` and apply pixel
+  thresholds (e.g. `d.width <= 300` to replace `size === "xs" || size === "sm"`).
+- **`WidgetOrientation` enum removed.** `ctx.orientation()` and
+  `ctx.contentLayout()` are gone. CSS container queries on
+  `.glasshome-widget` swap content layout direction automatically
+  (`@container widget (min-aspect-ratio: 1) and (max-height: 149px)` flips
+  the row layout). The `WidgetSliderFill` direction toggle is CSS-driven
+  via `@container widget (max-aspect-ratio: 1)` and reads
+  `--widget-fill-value`.
+- **`WidgetDimensions` shape change.** No more `gridWidth` / `gridHeight`
+  fields; just `{ width, height }` in raw CSS px.
+- **`WidgetContextValue` removed.** Superseded by `ReactiveWidgetContext`
+  (host RPC + edit mode + dimensions).
+- **`BridgeableWidgetContext` and `BridgeFns` removed.** Hosts no longer
+  need to provide a stub provider that the inner `<Widget>` writes into.
+  Host `WidgetSlot` implementations should provide a plain
+  `{ isEditMode, updateConfig, dimensions: () => ({ width: 0, height: 0 }) }`
+  literal; the shell measures itself.
+- **`SpacingScale` type removed.** Internal spacing tables (`S1`–`S4`) are
+  gone from JS; gap and padding now flow through `--widget-gap` and
+  `--widget-pad` CSS vars defined on the shell.
+- **`useWidgetGestures` orientation argument is no-op.** The gesture
+  library already runs its own size observer for `slide.orientation:
+  "auto"`; callers should drop the second argument. The slide-orientation
+  type alias is now internal to the gestures module.
+- **Slot text CSS class contract.** `Widget.Title`, `Widget.Status`,
+  `Widget.Value`, and badge nodes now render with SDK-owned classes
+  (`.glasshome-widget-title`, `.glasshome-widget-status`,
+  `.glasshome-widget-value`, `.glasshome-widget-badge`) and read scale from
+  CSS vars. Tailwind text-size classes inside slot components are gone.
+  Hosts that styled these elements via Tailwind utilities should switch
+  to the CSS-var override path.
+- **Pixel classifier deleted.** `classifySize`, `detectOrientation`,
+  `detectContentLayout` private helpers and the `150 × 75` cell-size
+  constants are removed.
+
+### Removed (since 0.4.1)
+
+- **Design system runtime tables.** `framework/design-system/spacing.ts` and
+  `framework/design-system/typography.ts` deleted. Replaced by `clamp()`
+  formulas and container-query rules on the shell in
+  `framework/theming/tokens.css`.
+- **`framework/types.ts` types.** `WidgetSize`, `WidgetOrientation`,
+  `WidgetDimensions`, `WidgetContextValue`, `SpacingScale` removed from
+  the file and from the public surface (`WidgetDimensions` re-defined in
+  `hooks/use-widget-context.ts` with the new `{ width, height }` shape).
+- **Bridgeable stub types.** `BridgeableWidgetContext` and `BridgeFns` no
+  longer exported from `hooks/use-widget-context.ts` or the root entry.
+
+### Added
+
+- **CSS scale tokens on `.glasshome-widget`.** `--widget-icon-box`,
+  `--widget-icon-glyph`, `--widget-pad`, `--widget-gap`,
+  `--widget-title-size`, `--widget-subtitle`, `--widget-status-size`,
+  `--widget-value-size`, `--widget-badge-size`. Each is
+  `clamp(min, N·cqmin|cqi, max)` so widgets at the same rendered box
+  match exactly while still scaling smoothly on resize. Host stylesheets
+  can override these vars to retune density without touching JS.
+- **`--widget-fill-value` channel.** `WidgetSliderFill` writes a single
+  custom property (0–100). The shell's container query picks horizontal
+  versus vertical clip-path direction.
+- **`ctx.dimensions()` raw px accessor.** Backed by an internal
+  `createElementSize` on the shell element. Widgets that need to branch
+  rendered content (mount thumbnails on small, full controls on large,
+  etc.) read this and apply their own pixel thresholds.
+
+### Host migration notes
+
+- `WidgetSlot`-style host components no longer need a bridgeable stub.
+  Replace the bridge object with a plain `ReactiveWidgetContext` literal.
+  The inner `<Widget>` measures itself via its own resize observer.
+- Built-in widgets in this monorepo (`packages/public/widgets/`) have been
+  updated in lockstep; external widgets that referenced `ctx.size()`,
+  `ctx.orientation()`, or `ctx.contentLayout()` need the same edits.
+- Widget manifest `sdkVersion` ranges should now include `^0.5.0`. The
+  shared widget bundle peer-deps on `@glasshome/widget-sdk ^0.5.0`.
+
+[0.5.0]: https://github.com/glasshome/widget-sdk/releases/tag/v0.5.0
+
 ## [0.4.1] - 2026-05-17
 
 Dead-export trim. Files that are still used internally (variant system,

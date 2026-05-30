@@ -1,58 +1,62 @@
-/* packages/public/widget-sdk/src/framework/theming/tokens.css
+/* Authoritative SDK CSS contract. Injected once on first Widget mount
+ * via framework/theming/tokens.ts.
  *
- * Phase 25: Channel Core + Tone Tokens
- * Authoritative SDK CSS contract. Injected once on first Widget mount
- * via framework/theming/tokens.ts. Final palette tuned in Phase 29.
+ * All widget-internal visual scale is driven from CSS custom properties +
+ * container queries on the `.glasshome-widget` shell (`container-type: size`).
+ * No JS classifier, no size tier enum.
  */
 
-/* Tone palette (VIS-C01) -- Phase 29 retune (VIS-P05).
-   Hand-tuned against apps/dash/src/routes/dev.palette-tune.tsx so each
-   tone reads vibrant at the 20% composition stop on both #fafaf9 (light)
-   and #0c0a09 (dark) without overpowering the calm-confidence aesthetic. */
 :root {
-  --tone-success:  oklch(0.70 0.18 145);  /* deeper L vs placeholder lifts chroma at 20% on light bg without going neon */
-  --tone-warning:  oklch(0.80 0.17 75);   /* keeps amber readable at 22%/11% gradient stops without yellowing the shell */
-  --tone-danger:   oklch(0.64 0.22 27);   /* anchors red just below midline so 20% alpha stays unambiguous on light bg */
-  --tone-info:     oklch(0.66 0.20 245);  /* +0.01 chroma so info-blue keeps presence in 30%/40% slider fill against light */
-  --tone-neutral:  oklch(0.65 0.02 250);  /* pinned literal -- matches @property --widget-color initial-value (tokens.test) */
-  --tone-accent:   oklch(0.74 0.18 60);   /* +0.02 chroma for warm-amber accent so glow reads at 50% on light icon bg */
+  --tone-success:  oklch(0.70 0.18 145);
+  --tone-warning:  oklch(0.80 0.17 75);
+  --tone-danger:   oklch(0.64 0.22 27);
+  --tone-info:     oklch(0.66 0.20 245);
+  --tone-neutral:  oklch(0.65 0.02 250);
+  --tone-accent:   oklch(0.74 0.18 60);
 
-  /* Envelope vars (VIS-C03), light mode -- retained from Phase 25 baseline */
   --widget-grad-strength:    1;
   --widget-glow-default:     0.4;
   --widget-border-highlight: oklch(0.98 0 0 / 0.4);
 }
 
 .dark {
-  --tone-success:  oklch(0.74 0.18 145);  /* +0.04 L lifts chroma at 20% alpha against #0c0a09 so green isn't muddy */
-  --tone-warning:  oklch(0.82 0.17 75);   /* +0.02 L only -- amber already bright on dark bg, more would wash the gradient */
-  --tone-danger:   oklch(0.68 0.22 27);   /* +0.04 L preserves red identity without dipping into maroon at low alpha */
-  --tone-info:     oklch(0.70 0.20 245);  /* +0.04 L plus chroma parity with light keeps info-blue vibrant at 30%/40% on dark */
-  --tone-neutral:  oklch(0.69 0.02 250);  /* +0.04 L vs light, chroma parity -- defaults read calm on dark widget surfaces */
-  --tone-accent:   oklch(0.78 0.18 60);   /* +0.04 L matches accent glow envelope so 50% icon glow stays warm on dark */
+  --tone-success:  oklch(0.74 0.18 145);
+  --tone-warning:  oklch(0.82 0.17 75);
+  --tone-danger:   oklch(0.68 0.22 27);
+  --tone-info:     oklch(0.70 0.20 245);
+  --tone-neutral:  oklch(0.69 0.02 250);
+  --tone-accent:   oklch(0.78 0.18 60);
 
   --widget-grad-strength:    1.1;
   --widget-glow-default:     0.5;
   --widget-border-highlight: oklch(1 0 0 / 0.08);
 }
 
-/* @property declaration for animatable channel base (VIS-C04, D-11)
-   initial-value must be a literal <color>; cannot reference var(). */
 @property --widget-color {
   syntax: "<color>";
   inherits: true;
   initial-value: oklch(0.65 0.02 250);
 }
 
-/* Channel defaults on the Widget root (VIS-C02, D-08) */
+/* === Widget shell ===
+ * Fluid scale tokens — tied to the shell's own container box (cqmin/cqi/cqb).
+ * Same input box → same output, so two widgets at the same grid cell match
+ * exactly. Tune multipliers / clamps to adjust density. */
 .glasshome-widget {
   --widget-color: var(--tone-neutral);
   --widget-glow-strength: var(--widget-glow-default);
+
+  --widget-icon-box:    clamp(28px, 22cqmin, 64px);
+  --widget-icon-glyph:  clamp(16px, 13cqmin, 36px);
+  --widget-pad:         clamp(8px,  4cqmin,  24px);
+  --widget-gap:         clamp(6px,  2cqmin,  16px);
+  --widget-title-size:  clamp(12px, 2cqi,    18px);
+  --widget-subtitle:    clamp(12px, 2.5cqi,  20px);
+  --widget-status-size: clamp(14px, 5cqi,    36px);
+  --widget-value-size:  clamp(18px, 7cqi,    48px);
+  --widget-badge-size:  clamp(11px, 1.6cqi,  14px);
 }
 
-/* === Phase 26 additions === */
-
-/* VIS-P01 shell gradient + VIS-P02 inset highlight (D-02, D-03, D-06) */
 .glasshome-widget {
   background: var(--widget-gradient,
     linear-gradient(135deg,
@@ -63,34 +67,105 @@
   box-shadow: inset 0 1px 0 var(--widget-border-highlight);
 }
 
-/* VIS-P03 icon channel rendering (D-16) */
+/* === Slot: content layout === */
+/* Default: column. Flip to row only on wide-and-short widgets (matches the
+ * old contentLayout heuristic: aspect > 1 AND height < 150px). */
+.glasshome-widget-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: var(--widget-pad);
+  gap: var(--widget-gap);
+  overflow: hidden;
+}
+@container widget (min-aspect-ratio: 1) and (max-height: 149px) {
+  .glasshome-widget-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+}
+.glasshome-widget-content [class*="ml-auto"] {
+  position: relative;
+  z-index: 30;
+}
+
+/* === Slot: icon === */
 .glasshome-widget-icon {
+  width: var(--widget-icon-box);
+  height: var(--widget-icon-box);
+  border-radius: var(--radius-sm, 12px);
   background: var(--widget-icon-color, var(--widget-color));
   box-shadow: 0 0 calc(var(--widget-glow-strength) * 30px)
     color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 50%, transparent);
-  /* Glyph keeps icon-bg hue but flips to L extreme via sign() step + damps chroma.
-     bg L > 0.5 -> glyph L=0.09 (dark); bg L < 0.5 -> glyph L=0.95 (light).
-     Chroma 0.2x of bg keeps subtle hue tint without competing with bg saturation.
-     Requires CSS relative color (Chromium 119+, Safari 16.4+, Firefox 128+) and
-     sign() (Chromium 111+, Safari 18.2+, Firefox 118+). */
   color: oklch(from var(--widget-icon-color, var(--widget-color)) calc(0.52 + sign(0.5 - l) * 0.43) calc(c * 0.2) h);
 }
+.glasshome-widget-icon-glyph {
+  font-size: var(--widget-icon-glyph);
+  line-height: 1;
+}
+.glasshome-widget-icon-stack {
+  position: absolute;
+  width: 102%;
+  height: 102%;
+  border-radius: var(--radius-sm, 12px);
+}
+.glasshome-widget-icon-stack-2 { bottom: -14%; right: -10%; opacity: 0.45; z-index: -2; }
+.glasshome-widget-icon-stack-3 { bottom: -28%; right: -20%; opacity: 0.20; z-index: -3; }
 
-/* D-13 loading overlay tint */
+/* === Slot: text === */
+.glasshome-widget-title {
+  font-size: var(--widget-title-size);
+  line-height: 1.2;
+  color: color-mix(in oklch, var(--color-foreground, currentColor) 60%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glasshome-widget-subtitle {
+  font-size: var(--widget-subtitle);
+  color: color-mix(in oklch, var(--color-foreground, currentColor) 60%, transparent);
+}
+.glasshome-widget-status {
+  font-size: var(--widget-status-size);
+  font-weight: 700;
+  color: var(--color-foreground, currentColor);
+  line-height: 1.1;
+}
+.glasshome-widget-value {
+  font-size: var(--widget-value-size);
+  font-weight: 700;
+  color: var(--color-foreground, currentColor);
+  line-height: 1.05;
+}
+.glasshome-widget-badge {
+  font-size: var(--widget-badge-size);
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--color-foreground, currentColor) 20%, transparent);
+  color: var(--color-foreground, currentColor);
+}
+
 .glasshome-widget-loading {
   background: color-mix(in oklch, var(--widget-color) 20%, transparent);
 }
 
-/* === Phase 27 additions === */
-
-/* VIS-P04 slider fill channel rendering (D-05, D-06, D-08).
-   Mirrors .glasshome-widget-icon precedent: --widget-icon-color override
-   with --widget-color fallback. Glow rendered via box-shadow on the same
-   fill element (D-07). 30% bg opacity preserves prior 0.3 default; 40px
-   blur approximates prior blur-2xl on the deleted glow div; glow radius
-   modulated by --widget-glow-strength to track the per-mode envelope. */
+/* === Slider fill ===
+ * Value flows in via --widget-fill-value (0-100). Vertical orientation auto-
+ * detected via container query. */
 .glasshome-widget-slider-fill {
+  --widget-fill-value: 0;
   background: color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 30%, transparent);
   box-shadow: 0 0 calc(var(--widget-glow-strength) * 40px)
     color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 40%, transparent);
+  clip-path: inset(0 calc((100 - var(--widget-fill-value)) * 1%) 0 0);
+}
+@container widget (max-aspect-ratio: 1) {
+  .glasshome-widget-slider-fill {
+    clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0);
+  }
 }

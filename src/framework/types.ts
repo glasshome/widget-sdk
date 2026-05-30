@@ -2,59 +2,7 @@
 
 import type { JSX } from "solid-js";
 
-/**
- * Widget size classification based on grid dimensions
- * - xs: Small widgets (1x1, 1x2)
- * - sm: Medium-small widgets (2x1, 2x2)
- * - md: Medium widgets (2x3, 2x4)
- * - lg: Large widgets (2x6, 3x6, 4x2)
- * - xl: Extra large widgets (4x4)
- */
-export type WidgetSize = "xs" | "sm" | "md" | "lg" | "xl";
-
-/**
- * Widget orientation based on aspect ratio
- * - horizontal: width > height
- * - vertical: height > width
- * - square: width === height
- */
-export type WidgetOrientation = "horizontal" | "vertical" | "square";
-
-/**
- * Widget dimensions in both pixels and grid units
- */
-export interface WidgetDimensions {
-  /** Pixel width */
-  width: number;
-  /** Pixel height */
-  height: number;
-  /** Grid columns (1-4) */
-  gridWidth: number;
-  /** Grid rows (1-6) */
-  gridHeight: number;
-}
-
-/**
- * Widget context provided to all child components.
- * Values are plain (not accessors) -- the context provider
- * will supply reactive accessors wrapping these.
- */
-export interface WidgetContextValue {
-  /** Widget size classification */
-  size: WidgetSize;
-  /** Widget orientation (for gestures - pure aspect ratio) */
-  orientation: WidgetOrientation;
-  /** Content layout direction (for UI arrangement - considers height) */
-  contentLayout: WidgetOrientation;
-  /** Widget dimensions */
-  dimensions: WidgetDimensions;
-  /** Whether widget is in edit mode */
-  isEditMode: boolean;
-}
-
-/**
- * Slide gesture configuration
- */
+/** Slide gesture configuration */
 export interface SlideGestureConfig {
   /** Current value */
   value: number;
@@ -91,11 +39,6 @@ export interface GestureConfig {
   /** Slide gesture configuration */
   slide?: SlideGestureConfig;
 }
-
-/**
- * Spacing scale
- */
-export type SpacingScale = "S1" | "S2" | "S3" | "S4";
 
 // ============================================================================
 // Variant System Types (CSS Variables + Discriminated Unions)

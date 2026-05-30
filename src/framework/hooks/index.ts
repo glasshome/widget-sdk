@@ -6,8 +6,6 @@
 
 // Context
 export {
-  type BridgeableWidgetContext,
-  type BridgeFns,
   type ReactiveWidgetContext,
   useWidgetContext,
   WidgetCtx,

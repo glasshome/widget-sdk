@@ -64,8 +64,6 @@ export { WidgetDialog, type WidgetDialogProps, type WidgetDialogTab } from "./di
 
 export {
   type AggregationPreset,
-  type BridgeableWidgetContext,
-  type BridgeFns,
   type ReactiveWidgetContext,
   type UseWidgetEntityGroupOptions,
   type UseWidgetEntityGroupResult,
@@ -119,10 +117,6 @@ export {
 
 export type {
   EntityView,
-  WidgetContextValue,
-  WidgetDimensions,
-  WidgetOrientation,
-  WidgetSize,
   WidgetStyles,
   WidgetVariantConfig,
 } from "./types";

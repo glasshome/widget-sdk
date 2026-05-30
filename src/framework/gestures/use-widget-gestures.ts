@@ -19,7 +19,9 @@
  * + bluetooth mouse) gets the right grammar based on which input fired.
  */
 
-import type { GestureConfig, WidgetOrientation } from "../types";
+import type { GestureConfig } from "../types";
+
+type GestureOrientation = "horizontal" | "vertical" | "square";
 import { cursors } from "./cursors";
 import { haptics } from "./haptics";
 
@@ -61,7 +63,7 @@ interface GestureState {
 
 export function useWidgetGestures(
   config: () => GestureConfig,
-  orientation?: () => WidgetOrientation,
+  orientation?: () => GestureOrientation,
 ): GestureHandlers {
   const HOLD_DELAY = 500; // ms — long-press standard
   const TAP_THRESHOLD = 10; // px — movement above this means not-a-tap
