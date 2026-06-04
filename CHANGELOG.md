@@ -5,6 +5,24 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-06-04
+
+Additive groundwork for the upcoming energy widget suite. No breaking
+changes; all existing API is untouched.
+
+### Added
+
+- `svgColors`: seven energy color tokens (`solar`, `grid`, `battery`, `ev`,
+  `home`, `positive`, `negative`) as OKLCH strings, each with `fill`
+  (20% color-mix for area fills), `stroke`, and `solid` channels, plus the
+  `SvgColorKey` union type.
+- `useReducedMotion()`: reactive accessor over the
+  `prefers-reduced-motion` media query. SSR-safe.
+- `useIntersectionPause(el)`: accessor that turns `true` while the element
+  is outside the viewport, for pausing animations offscreen. SSR-safe.
+- `monotoneCubicPath(points)`: the monotone cubic Hermite spline previously
+  duplicated inside widgets, now exported from a single shared module.
+
 ## [0.5.0] - 2026-05-30
 
 Visual scale moves to pure CSS. The widget shell already declared
