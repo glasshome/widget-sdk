@@ -67,6 +67,8 @@ export {
   type ReactiveWidgetContext,
   type UseWidgetEntityGroupOptions,
   type UseWidgetEntityGroupResult,
+  useIntersectionPause,
+  useReducedMotion,
   useWidgetContext,
   useWidgetDialog,
   useWidgetEntityGroup,
@@ -86,6 +88,8 @@ export { type GestureHandlers, useWidgetGestures } from "./gestures/use-widget-g
 
 export {
   injectTokens,
+  type SvgColorKey,
+  svgColors,
   type Tone,
   ToneSchema,
 } from "./theming";
