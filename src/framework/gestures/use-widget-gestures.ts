@@ -1,24 +1,12 @@
 /**
- * Widget Gestures Hook — Mobile-aware
+ * Widget Gestures Hook — tap, hold, and slide on every pointer type.
  *
- * Two grammars by pointer type:
- *
- *   TOUCH (phone, tablet):
- *     - tap    → primary action
- *     - hold   → detail dialog (with haptic bump)
- *     - slide  → DISABLED. Fine control lives in the detail dialog instead.
- *     This eliminates the slide-vs-page-scroll conflict that makes mobile
- *     gestures fragile. `touch-action: manipulation` ensures the browser
- *     handles scroll natively without our interference.
- *
- *   MOUSE / PEN (desktop, hybrid devices):
- *     - tap, hold, slide all active. Slide arms immediately on pointerdown —
- *     no scroll conflict to worry about (mouse uses wheel for scroll).
- *
- * Pointer type is decided per press at pointerdown. A hybrid device (tablet
- * + bluetooth mouse) gets the right grammar based on which input fired.
+ * Touch slide vs page scroll is split per axis: `touch-action` cedes the
+ * cross axis to the browser, and a press only commits to sliding when
+ * movement is dominantly on the slide axis.
  */
 
+import { createSignal } from "solid-js";
 import type { GestureConfig } from "../types";
 
 type GestureOrientation = "horizontal" | "vertical" | "square";
@@ -38,11 +26,7 @@ export interface GestureHandlers {
    * receives the pointer handlers.
    */
   bindElement: (el: HTMLElement) => void;
-  /**
-   * CSS `touch-action` for the gesture root. Always `manipulation` when any
-   * gesture is configured — mobile slide is intentionally dropped, so the
-   * browser owns scroll completely on touch surfaces.
-   */
+  /** CSS `touch-action` for the gesture root. */
   touchAction: () => string;
   /** Cancel any pending hold timer. Call on component unmount via onCleanup. */
   dispose: () => void;
@@ -84,6 +68,7 @@ export function useWidgetGestures(
   let cachedRect: { width: number; height: number } | null = null;
   let observedElement: HTMLElement | null = null;
   let resizeObserver: ResizeObserver | null = null;
+  const [measuredVertical, setMeasuredVertical] = createSignal<boolean | null>(null);
 
   function observeElement(el: HTMLElement): void {
     if (el === observedElement) return;
@@ -97,11 +82,13 @@ export function useWidgetGestures(
         } else {
           cachedRect = { width: entry.contentRect.width, height: entry.contentRect.height };
         }
+        setMeasuredVertical(cachedRect.height > cachedRect.width);
       }
     });
     observedElement = el;
     resizeObserver.observe(el);
     cachedRect = { width: el.clientWidth, height: el.clientHeight };
+    setMeasuredVertical(cachedRect.height > cachedRect.width);
   }
 
   const clearHold = () => {
@@ -117,7 +104,6 @@ export function useWidgetGestures(
     state.sliding = false;
   };
 
-  // Slide orientation — only consulted on mouse/pen path.
   const getSlideOrientation = (el?: HTMLElement): "horizontal" | "vertical" => {
     const cfg = config();
     const slide = cfg.slide;
@@ -159,8 +145,7 @@ export function useWidgetGestures(
       }, holdDelay);
     }
 
-    // Mouse/pen slide path captures pointer so we keep events outside element.
-    // Touch path NEVER captures — browser handles scroll naturally.
+    // Touch pointers are implicitly captured; mouse/pen needs it explicit.
     if (!state.isTouch && cfg.slide) {
       try {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -183,15 +168,16 @@ export function useWidgetGestures(
       state.hasMoved = true;
     }
 
-    // Touch path: no slide. Once moved past tap threshold the press is dead —
-    // user is scrolling or has just changed their mind. Stay passive so the
-    // browser can scroll. We don't release capture because we never took it.
-    if (state.isTouch) return;
-
-    // Mouse/pen slide path.
     if (cfg.slide && state.hasMoved) {
       const el = e.currentTarget as HTMLElement;
       const slideOrientation = getSlideOrientation(el);
+
+      // Cross-axis touch swipes belong to the browser (page scroll).
+      if (state.isTouch && !state.sliding) {
+        const axis = Math.abs(slideOrientation === "vertical" ? deltaY : deltaX);
+        const cross = Math.abs(slideOrientation === "vertical" ? deltaX : deltaY);
+        if (axis < cross) return;
+      }
       state.sliding = true;
 
       const min = cfg.slide.min ?? 0;
@@ -279,12 +265,17 @@ export function useWidgetGestures(
     observeElement(el);
   };
 
-  // `manipulation` lets the browser handle scroll/pinch but suppresses the
-  // double-tap-to-zoom delay. Safe for tap/hold widgets. Mouse users are
-  // unaffected — touch-action is a no-op for non-touch input.
   const touchAction = (): string => {
     const cfg = config();
-    if (cfg.tap || cfg.hold || cfg.slide) return "manipulation";
+    if (cfg.slide) {
+      const o = cfg.slide.orientation;
+      const vertical =
+        o === "vertical" ||
+        (o !== "horizontal" &&
+          (measuredVertical() ?? (orientation?.() ?? "horizontal") !== "horizontal"));
+      return vertical ? "pan-x" : "pan-y";
+    }
+    if (cfg.tap || cfg.hold) return "manipulation";
     return "auto";
   };
 
