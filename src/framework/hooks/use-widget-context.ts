@@ -23,6 +23,9 @@ export interface ReactiveWidgetContext {
   updateConfig: (config: Record<string, unknown>) => void;
   /** Measured shell dimensions in CSS px. (0,0) before first layout. */
   dimensions: () => WidgetDimensions;
+  /** Host RPC: `useWidgetDialog` registers its opener here so the host can
+      open the widget's dialog on a chosen tab. Called with `null` on cleanup. */
+  registerDialogOpener?: (open: ((tab?: string) => void) | null) => void;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();

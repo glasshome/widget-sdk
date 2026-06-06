@@ -52,6 +52,9 @@ export interface WidgetDialogProps {
   class?: string;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
   defaultTab?: string;
+  /** Controlled active tab (pair with `onActiveTabChange`); overrides `defaultTab`. */
+  activeTab?: string;
+  onActiveTabChange?: (tab: string) => void;
   headerActions?: JSX.Element;
   // Schema-driven config editing (optional — replaces editContent when provided)
   configSchema?: ZodType;
@@ -91,6 +94,8 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "class",
     "maxWidth",
     "defaultTab",
+    "activeTab",
+    "onActiveTabChange",
     "headerActions",
     "configSchema",
     "config",
@@ -142,7 +147,16 @@ export function WidgetDialog(props: WidgetDialogProps) {
     local.onConfigSave?.(draftConfig());
   };
 
-  const [activeTab, setActiveTab] = createSignal(local.defaultTab ?? "controls");
+  // Controlled when `activeTab`/`onActiveTabChange` provided; internal signal otherwise.
+  const [internalTab, setInternalTab] = createSignal(local.defaultTab ?? "controls");
+  const activeTab = () => local.activeTab ?? internalTab();
+  const setActiveTab = (tab: string) => {
+    if (local.onActiveTabChange) {
+      local.onActiveTabChange(tab);
+    } else {
+      setInternalTab(tab);
+    }
+  };
 
   const maxWidthClass = () => {
     const mw = local.maxWidth ?? "3xl";

@@ -65,7 +65,7 @@ export function useWidgetGestures(
   config: () => GestureConfig,
   orientation?: () => GestureOrientation,
 ): GestureHandlers {
-  const HOLD_DELAY = 500; // ms — long-press standard
+  const HOLD_DELAY = 300; // ms
   const TAP_THRESHOLD = 10; // px — movement above this means not-a-tap
 
   const state: GestureState = {

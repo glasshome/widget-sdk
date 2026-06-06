@@ -75,6 +75,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const contextValue: ReactiveWidgetContext = {
     isEditMode: () => props.isEditMode ?? false,
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
+    registerDialogOpener: parentCtx?.registerDialogOpener,
     dimensions: () => ({
       width: measured.width ?? 0,
       height: measured.height ?? 0,
