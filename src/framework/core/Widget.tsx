@@ -63,14 +63,22 @@ interface WidgetComponent {
 }
 
 function WidgetBase(props: WidgetProps): JSX.Element {
-  onMount(() => {
-    injectTokens();
-  });
-
   const parentCtx = useContext(WidgetCtx);
 
   const [shellEl, setShellEl] = createSignal<HTMLDivElement | undefined>();
   const measured = createElementSize(shellEl);
+
+  // Tokens must land in the widget's own root: the host renders widgets
+  // inside closed shadow roots, where document-level styles can't reach.
+  onMount(() => {
+    const rootNode = shellEl()?.getRootNode();
+    injectTokens(
+      (typeof ShadowRoot !== "undefined" && rootNode instanceof ShadowRoot) ||
+        (typeof Document !== "undefined" && rootNode instanceof Document)
+        ? rootNode
+        : undefined,
+    );
+  });
 
   const contextValue: ReactiveWidgetContext = {
     isEditMode: () => props.isEditMode ?? false,

@@ -1,6 +1,8 @@
 // Core widget API
 
 export { defineWidget } from "./define-widget";
+// Home Assistant data & service hooks (host-provided sync-layer instance)
+export * from "./data";
 // Framework (widget composition API)
 // Re-exports framework components, hooks, design tokens, theming, and types
 export * from "./framework";

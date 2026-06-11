@@ -1,3 +1,4 @@
+import type { CapabilityGrant } from "@glasshome/widget-contract";
 import type { ZodType } from "zod";
 
 /**
@@ -23,6 +24,8 @@ export interface WidgetManifest {
   schema?: object;                         // Backward compat; auto-populated by vite plugin from configSchema
   defaultConfig?: Record<string, unknown>; // Backward compat; replaced by Zod .default() values
   configVersion?: number;                  // Per D-11: integer, bumped on breaking config changes
+  capabilities?: CapabilityGrant[];        // HA access the widget requests; enforced by the host
+  cssUrl?: string;                         // Set by the build when the widget emits a CSS file
 }
 
 /**

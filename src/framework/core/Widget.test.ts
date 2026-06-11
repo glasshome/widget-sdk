@@ -27,8 +27,9 @@ describe("Widget.tsx token injection wiring (Phase 25 Plan 02)", () => {
     expect(solidImportLine).toContain("onMount");
   });
 
-  test("calls injectTokens inside onMount in WidgetBase", () => {
-    expect(COLLAPSED).toMatch(/onMount\(\(\)\s*=>\s*\{\s*injectTokens\(\)/);
+  test("calls injectTokens inside onMount in WidgetBase with the shell's root node", () => {
+    expect(COLLAPSED).toMatch(/onMount\(\(\)\s*=>\s*\{[^}]*injectTokens\(/);
+    expect(SRC).toContain("getRootNode()");
   });
 
   test("outer div has glasshome-widget class as first cn arg", () => {

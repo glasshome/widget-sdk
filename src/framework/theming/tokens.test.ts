@@ -22,7 +22,9 @@ function makeStub() {
     }),
   };
   return {
-    stub,
+    // injectTokens types the legacy document path as Document; the stub
+    // satisfies the InjectTokensRoot shape it actually uses.
+    stub: stub as unknown as Document,
     appended,
     setQuerySelector(v: unknown) {
       querySelectorReturns = v;

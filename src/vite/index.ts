@@ -8,8 +8,11 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { formatSchemaError, widgetManifestSchema } from "@glasshome/widget-contract";
+import tailwindcss from "@tailwindcss/vite";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
 
 export interface GlasshomeWidgetOptions {
@@ -56,10 +59,125 @@ export function isWidgetExternal(id: string): boolean {
     id === "@glasshome/widget-sdk" ||
     id.startsWith("@glasshome/widget-sdk/") ||
     id === "@glasshome/ui" ||
-    id.startsWith("@glasshome/ui/") ||
-    id === "@glasshome/sync-layer" ||
-    id.startsWith("@glasshome/sync-layer/")
+    id.startsWith("@glasshome/ui/")
   );
+}
+
+/**
+ * Fails the build when a widget imports @glasshome/sync-layer directly.
+ * The single store instance lives in the host; bundling a second copy would
+ * silently disconnect the widget from live state. Widgets must use the
+ * hooks re-exported by @glasshome/widget-sdk (capability-routed by the host).
+ */
+function syncLayerImportGuard(): Plugin {
+  return {
+    name: "glasshome-widget:sync-layer-guard",
+    apply: "build",
+    enforce: "pre",
+    resolveId(id: string, importer?: string) {
+      if (id === "@glasshome/sync-layer" || id.startsWith("@glasshome/sync-layer/")) {
+        throw new Error(
+          `Widgets must not import "${id}" directly` +
+            (importer ? ` (imported by ${importer})` : "") +
+            `. Import the equivalent hook from "@glasshome/widget-sdk" instead ` +
+            `(e.g. useEntity, useEntities, useService).`,
+        );
+      }
+      return undefined;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Per-widget Tailwind entry
+// ---------------------------------------------------------------------------
+
+const BUILD_CACHE_DIR = "node_modules/.cache/glasshome-widgets";
+
+/** Resolve an exported subpath to its on-disk file; null when not installed. */
+function resolveExported(specifier: string): string | null {
+  try {
+    const require = createRequire(join(process.cwd(), "package.json"));
+    return require.resolve(specifier);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Widgets render inside a closed shadow root in the host, which cuts them off
+ * from the host document stylesheet. Every widget bundle must therefore carry
+ * its own complete CSS: the ui theme + component styles, the SDK shell
+ * classes, and the Tailwind utilities its own JSX uses. This writes a
+ * generated css entry (a Tailwind pass over exactly those sources) plus a
+ * wrapper module that imports it ahead of the real widget entry, so Vite lib
+ * mode emits it as the widget's `<name>.css`.
+ *
+ * `source(none)` disables Tailwind's automatic project-root scan — without it
+ * every widget in a multi-widget repo gets the superset of all widgets'
+ * classes. The dark variant is redefined shadow-aware: `.dark *` cannot match
+ * across a shadow boundary, so the host mirrors the document's `dark` class
+ * onto the shadow host element and `:host(.dark)` picks it up.
+ */
+function createWidgetBuildEntry(root: string, name: string, widgetEntry: string): string {
+  const cacheDir = resolve(root, BUILD_CACHE_DIR);
+  mkdirSync(cacheDir, { recursive: true });
+
+  // "@glasshome/ui/styles" resolves to src/styles/globals.css, so the package
+  // root is two levels up; "tailwind-sources" sits at the SDK package root.
+  const uiStyles = resolveExported("@glasshome/ui/styles");
+  if (!uiStyles) {
+    throw new Error(
+      "[widget-sdk] @glasshome/ui is required to build widgets (it provides the theme " +
+        "every GlassHome widget ships with). Add it to your widget's dependencies.",
+    );
+  }
+  const uiDir = resolve(dirname(uiStyles), "../..");
+  const sdkSources = resolveExported("@glasshome/widget-sdk/tailwind-sources");
+  const sdkDir = sdkSources ? dirname(sdkSources) : null;
+
+  const scanDirs = [
+    join(uiDir, "src"),
+    join(uiDir, "dist"),
+    ...(sdkDir ? [join(sdkDir, "src"), join(sdkDir, "dist")] : []),
+    dirname(widgetEntry),
+  ].filter((dir) => existsSync(dir));
+
+  const cssPath = resolve(cacheDir, `${name}.tailwind.css`);
+  writeFileSync(
+    cssPath,
+    [
+      `@import "tailwindcss" source(none);`,
+      `@import "tw-animate-css";`,
+      `@import "@glasshome/ui/styles/theme";`,
+      ...scanDirs.map((dir) => `@source "${normalizePath(dir)}";`),
+      `@custom-variant dark {`,
+      `  &:is(.dark *) { @slot }`,
+      `  :host(.dark) & { @slot }`,
+      `}`,
+      "",
+    ].join("\n"),
+  );
+
+  const entryPath = resolve(cacheDir, `${name}.entry.ts`);
+  writeFileSync(
+    entryPath,
+    [
+      `import "${normalizePath(cssPath)}";`,
+      `export { default } from "${normalizePath(widgetEntry)}";`,
+      "",
+    ].join("\n"),
+  );
+  return entryPath;
+}
+
+/** Tailwind's vite plugin, constrained to build so dev-server setups that already run it don't double-process. */
+function buildOnlyTailwind(): Plugin[] {
+  const plugins = tailwindcss() as Plugin[];
+  for (const p of plugins) {
+    p.apply ??= "build";
+  }
+  return plugins;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,7 +206,7 @@ export function discoverWidgets(srcDir: string): DiscoveredWidget[] {
   return widgets;
 }
 
-/** Generate registry.json from widget manifests. */
+/** Generate registry.json from widget manifests, validated against the contract schema. */
 export function generateRegistry(srcDir: string, outDir: string): void {
   const widgets: unknown[] = [];
 
@@ -96,12 +214,21 @@ export function generateRegistry(srcDir: string, outDir: string): void {
     for (const dir of readdirSync(srcDir)) {
       if (!statSync(join(srcDir, dir)).isDirectory()) continue;
       const manifestPath = join(srcDir, dir, "manifest.json");
-      try {
-        const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-        widgets.push({ ...manifest, bundleUrl: `./${dir}.js` });
-      } catch {
-        // skip dirs without manifest
+      if (!existsSync(manifestPath)) continue;
+      const parsed = widgetManifestSchema.safeParse(
+        JSON.parse(readFileSync(manifestPath, "utf-8")),
+      );
+      if (!parsed.success) {
+        throw new Error(
+          `[registry] Invalid manifest for "${dir}": ${formatSchemaError(parsed.error)}`,
+        );
       }
+      const hasCss = existsSync(join(outDir, `${dir}.css`));
+      widgets.push({
+        ...parsed.data,
+        bundleUrl: `./${dir}.js`,
+        ...(hasCss ? { cssUrl: `./${dir}.css` } : {}),
+      });
     }
   }
 
@@ -173,13 +300,16 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
     await build({
       configFile: false,
       root,
-      plugins: options?.plugins ?? [],
+      plugins: [...buildOnlyTailwind(), ...(options?.plugins ?? []), syncLayerImportGuard()],
       ...options?.viteConfig,
       build: {
         lib: {
-          entry: widget.entry,
+          entry: createWidgetBuildEntry(root, widget.name, widget.entry),
           formats: ["es"],
           fileName: widget.name,
+          // Widget CSS ships as a separate asset (adopted by the host's
+          // shadow root), never inlined into the JS bundle.
+          cssFileName: widget.name,
         },
         rollupOptions: {
           external: isWidgetExternal,
@@ -215,12 +345,14 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     name: "glasshome-widget:build",
     apply: "build",
     config() {
+      const root = process.cwd();
       return {
         build: {
           lib: {
-            entry,
+            entry: createWidgetBuildEntry(root, "index", resolve(root, entry)),
             formats: ["es"] as const,
             fileName: "index",
+            cssFileName: "index",
           },
           rollupOptions: {
             external: isWidgetExternal,
@@ -335,7 +467,7 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     },
   };
 
-  return [buildPlugin, schemaPlugin, devPlugin];
+  return [...buildOnlyTailwind(), buildPlugin, syncLayerImportGuard(), schemaPlugin, devPlugin];
 }
 
 // ---------------------------------------------------------------------------
