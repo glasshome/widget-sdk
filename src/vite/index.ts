@@ -104,6 +104,42 @@ function resolveExported(specifier: string): string | null {
   }
 }
 
+// Theme variables (these and the household's runtime overrides) inherit into a
+// widget's shadow root from the document — that is HOW theming reaches widgets.
+// Defining them on :host inside the widget CSS freezes them at build-time
+// values and overrides the inherited (themed) value, so widgets stop reacting
+// to the theme. Only utility class *rules* and the SDK's own :host tokens
+// belong in widget CSS; document theme variables must be left to inherit.
+const FORBIDDEN_HOST_THEME_VARS = [
+  "--radius",
+  "--background",
+  "--foreground",
+  "--card",
+  "--primary",
+  "--border",
+  "--muted",
+  "--accent",
+];
+
+function assertNoHostThemeVars(outDir: string, name: string): void {
+  const cssFile = join(outDir, `${name}.css`);
+  if (!existsSync(cssFile)) return;
+  const css = readFileSync(cssFile, "utf-8");
+  // Theme vars under :root are inert in a shadow root (harmless); only :host
+  // definitions override inheritance.
+  for (const match of css.matchAll(/:host[^{]*\{([^}]*)\}/g)) {
+    const body = match[1] ?? "";
+    const offender = FORBIDDEN_HOST_THEME_VARS.find((v) => body.includes(`${v}:`));
+    if (offender) {
+      throw new Error(
+        `[glasshome-widget] "${name}.css" defines theme variable "${offender}" on :host. ` +
+          `Theme variables must inherit from the document so widgets follow the household ` +
+          `theme — never re-scope them into the widget's shadow root.`,
+      );
+    }
+  }
+}
+
 /**
  * Widgets render inside a closed shadow root in the host, which cuts them off
  * from the host document stylesheet. Every widget bundle must therefore carry
@@ -179,6 +215,7 @@ function buildOnlyTailwind(): Plugin[] {
   }
   return plugins;
 }
+
 
 // ---------------------------------------------------------------------------
 // Widget discovery & registry generation
@@ -321,6 +358,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       },
       logLevel: "warn",
     });
+    assertNoHostThemeVars(outDir, widget.name);
   }
 
   // Generate registry
@@ -425,6 +463,8 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     name: "glasshome-widget:schema",
     apply: "build",
     async closeBundle() {
+      assertNoHostThemeVars(resolve(process.cwd(), "dist"), "index");
+
       // After the widget bundle is written, attempt to dynamically import it
       // to extract configSchema and generate a JSON Schema for the manifest.
       const outFile = resolve(process.cwd(), "dist", "index.js");
