@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-sdk",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
     "glasshome",
@@ -45,7 +45,7 @@
     "dev": "vite build --watch"
   },
   "peerDependencies": {
-    "@glasshome/sync-layer": "0.1.16",
+    "@glasshome/sync-layer": "0.2.0",
     "solid-js": "^1.9.11"
   },
   "dependencies": {

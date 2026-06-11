@@ -29,10 +29,9 @@ export {
   useForecast,
   useHassConfig,
   useLocale,
-  useService,
   useStore,
   useTemperatureUnit,
-  useToggle,
-  useTurnOn,
   useUnitSystem,
 } from "@glasshome/sync-layer/solid";
+// Capability-routed inside a host-mounted widget; direct fallback elsewhere.
+export { useService, useToggle, useTurnOff, useTurnOn } from "./framework/hooks/use-service";

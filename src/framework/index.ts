@@ -65,6 +65,7 @@ export { WidgetDialog, type WidgetDialogProps, type WidgetDialogTab } from "./di
 export {
   type AggregationPreset,
   type ReactiveWidgetContext,
+  type ServiceCallFn,
   type UseWidgetEntityGroupOptions,
   type UseWidgetEntityGroupResult,
   useIntersectionPause,

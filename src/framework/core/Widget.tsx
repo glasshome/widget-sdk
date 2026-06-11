@@ -84,6 +84,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     isEditMode: () => props.isEditMode ?? false,
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
     registerDialogOpener: parentCtx?.registerDialogOpener,
+    callService: parentCtx?.callService,
     dimensions: () => ({
       width: measured.width ?? 0,
       height: measured.height ?? 0,

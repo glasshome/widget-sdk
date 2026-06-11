@@ -7,6 +7,7 @@
 // Context
 export {
   type ReactiveWidgetContext,
+  type ServiceCallFn,
   useWidgetContext,
   WidgetCtx,
 } from "./use-widget-context";
