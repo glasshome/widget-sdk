@@ -14,15 +14,27 @@ export const widgetFields = {
 			.meta({ title: "Title", description: "Optional display name override" }),
 
 	/** Multi-select entity picker for a HA domain */
-	entityIds: (domain: string) =>
-		z.array(z.string()).default([]).meta({ domain, title: "Entities" }),
-
-	/** Single-select entity picker for a HA domain */
-	singleEntity: (domain: string) =>
+	entityIds: (domain: string, options?: { deviceClass?: string }) =>
 		z
 			.array(z.string())
 			.default([])
-			.meta({ domain, title: "Entity", singleSelect: true }),
+			.meta({
+				domain,
+				title: "Entities",
+				...(options?.deviceClass ? { deviceClass: options.deviceClass } : {}),
+			}),
+
+	/** Single-select entity picker for a HA domain */
+	singleEntity: (domain: string, options?: { deviceClass?: string }) =>
+		z
+			.array(z.string())
+			.default([])
+			.meta({
+				domain,
+				title: "Entity",
+				singleSelect: true,
+				...(options?.deviceClass ? { deviceClass: options.deviceClass } : {}),
+			}),
 
 	/** Area picker dropdown */
 	areaId: () =>
