@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-sdk",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
     "glasshome",
@@ -62,8 +62,8 @@
     "@types/bun": "latest",
     "@types/node": "^25.2.2",
     "typescript": "^5",
-    "vite": "^7.3.1",
-    "vite-plugin-solid": "^2.11.10"
+    "vite": "^8.1.0",
+    "vite-plugin-solid": "^2.11.12"
   },
   "repository": {
     "type": "git",
