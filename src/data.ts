@@ -9,6 +9,7 @@ export {
   getForecasts,
   getStream,
   getWebRtcClientConfig,
+  hassMediaUrl,
   sendWebRtcCandidate,
   startWebRtcSession,
   state,
