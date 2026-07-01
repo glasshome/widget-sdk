@@ -21,3 +21,8 @@ export type {
 } from "./types";
 // Version constant
 export { SDK_VERSION } from "./version";
+// Deprecation registry (single source of truth for warn-once, CLI lint, docs table)
+export { type DeprecationEntry, deprecations, formatDeprecation } from "./deprecations";
+// Advanced escape hatch: raw zod, deduped via the external SDK vendor chunk.
+// Prefer the SDK config API; only reach for `z` for refinements/unions it can't express.
+export { z } from "zod";

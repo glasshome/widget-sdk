@@ -5,6 +5,32 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Config API: declare widget config without importing zod.** `defineConfig` +
+  `field.*` (`title`, `text`, `number`, `toggle`, `choice`, `entities`, `entity`,
+  `area`, `stringList`, `group`) plus the `Infer<>` type. zod becomes a hidden
+  implementation detail deduped in the SDK vendor chunk (~55KB off every widget).
+- `z` is re-exported from the SDK (`import { z } from "@glasshome/widget-sdk"`) as a
+  permanent advanced escape hatch for schemas the config API can't express.
+- Deprecation registry (`@glasshome/widget-sdk/deprecations`) drives runtime
+  warn-once, the `bun widget build` source lint, and the generated deprecations table.
+
+### Deprecated
+
+- `widgetFields.*` and building a widget's `configSchema` with raw `z.object({...})`
+  are deprecated (removed in 2.0.0). Migrate to `defineConfig` + `field.*`.
+  `bun widget build`/`connect` warns on each usage; `bun widget migrate config`
+  auto-migrates most cases. Deprecated helpers keep working until 2.0.0.
+
+### Upcoming — v2 (breaking)
+
+- **2.0.0 removes `widgetFields` and the raw-zod config path.** `field.*` /
+  `defineConfig` become the only way to declare config. The `z` re-export is NOT
+  removed: it stays a permanent escape hatch. Migrate before 2.0.0 using the codemod.
+
 ## [1.2.0] - 2026-06-14
 
 ### Added

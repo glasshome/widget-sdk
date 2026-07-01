@@ -27,6 +27,11 @@
       "types": "./dist/schemas.d.ts",
       "import": "./dist/schemas.js"
     },
+    "./deprecations": {
+      "@glasshome/source": "./src/deprecations.ts",
+      "types": "./dist/deprecations.d.ts",
+      "import": "./dist/deprecations.js"
+    },
     "./vite": {
       "@glasshome/source": "./src/vite/index.ts",
       "types": "./dist/vite/index.d.ts",
@@ -42,7 +47,9 @@
   ],
   "scripts": {
     "build": "vite build && tsc",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch",
+    "test": "bun test",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
   },
   "peerDependencies": {
     "@glasshome/sync-layer": "0.3.0",

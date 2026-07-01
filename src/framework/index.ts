@@ -100,6 +100,13 @@ export {
 // ============================================================================
 
 export { widgetFields } from "./fields";
+export {
+  type ConfigShape,
+  defineConfig,
+  field,
+  type Field,
+  type Infer,
+} from "./config";
 
 // ============================================================================
 // Utilities
