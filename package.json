@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-sdk",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
     "glasshome",
@@ -58,7 +58,6 @@
   "dependencies": {
     "@glasshome/widget-contract": "0.1.0",
     "@modular-forms/solid": "^0.25.1",
-    "@solid-primitives/resize-observer": "^2.1.5",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.1.13",

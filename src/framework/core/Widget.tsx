@@ -9,8 +9,7 @@
  * any JS measurement.
  */
 
-import { createElementSize } from "@solid-primitives/resize-observer";
-import { type JSX, createMemo, createSignal, onMount, useContext } from "solid-js";
+import { type JSX, createEffect, createMemo, createSignal, onCleanup, onMount, useContext } from "solid-js";
 import type { WidgetSliderFill as WidgetSliderFillType } from "../backgrounds/WidgetSliderFill";
 import type { WidgetContent as WidgetContentType } from "../components/WidgetContent";
 import type { WidgetIcon as WidgetIconType } from "../components/WidgetIcon";
@@ -66,7 +65,28 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const parentCtx = useContext(WidgetCtx);
 
   const [shellEl, setShellEl] = createSignal<HTMLDivElement | undefined>();
-  const measured = createElementSize(shellEl);
+
+  // Measure the untransformed layout box. getBoundingClientRect (what
+  // createElementSize uses) folds in ancestor transforms, so the grid's
+  // fade-scale entry animation reports a scaled-down size — and since the
+  // layout box itself never changes, the observer never fires again to
+  // correct it. borderBoxSize is the transform-free layout box.
+  const [measured, setMeasured] = createSignal({ width: 0, height: 0 });
+  createEffect(() => {
+    const el = shellEl();
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const box = entry.borderBoxSize?.[0];
+      setMeasured(
+        box
+          ? { width: box.inlineSize, height: box.blockSize }
+          : { width: entry.contentRect.width, height: entry.contentRect.height },
+      );
+    });
+    ro.observe(el);
+    onCleanup(() => ro.disconnect());
+  });
 
   // Tokens must land in the widget's own root: the host renders widgets
   // inside closed shadow roots, where document-level styles can't reach.
@@ -85,10 +105,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
     registerDialogOpener: parentCtx?.registerDialogOpener,
     callService: parentCtx?.callService,
-    dimensions: () => ({
-      width: measured.width ?? 0,
-      height: measured.height ?? 0,
-    }),
+    dimensions: () => measured(),
   };
 
   const variantConfig = createMemo((): WidgetVariantConfig | undefined => {
