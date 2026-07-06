@@ -2,7 +2,7 @@
 
 SDK for building GlassHome dashboard widgets with SolidJS.
 
-Provides `defineWidget`, reactive entity bindings, framework components/hooks, a Vite plugin for widget development, and Tailwind v4 source paths — everything you need to build, preview, and ship dashboard widgets.
+Provides `defineWidget`, reactive entity bindings, framework components/hooks, a Vite plugin for widget development, and Tailwind v4 source paths — everything you need to build, preview, and ship widgets for [GlassHome](https://glasshome.app), the local-first dashboard for Home Assistant. Start with the [widget development guide](https://glasshome.app/docs/widget-development).
 
 ## Install
 
