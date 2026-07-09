@@ -1,4 +1,14 @@
-import { type Component, createEffect, createSignal, type JSX, on, Show, splitProps } from "solid-js";
+import {
+  type Component,
+  createEffect,
+  createMemo,
+  createSignal,
+  type JSX,
+  on,
+  Show,
+  splitProps,
+  untrack,
+} from "solid-js";
 import type { ZodType } from "zod";
 import { toFormSchema } from "../to-form-schema";
 import { cn } from "../utils/cn";
@@ -196,7 +206,10 @@ export function WidgetDialog(props: WidgetDialogProps) {
         (schemaMode() && formSchema() ? (
           <SchemaFormEdit
             schema={formSchema()!}
-            data={draftConfig()}
+            // Untracked: SchemaForm seeds its own state from this once and owns
+            // edits thereafter (via onChange). Tracking draftConfig here would
+            // rebuild the whole form on every keystroke.
+            data={untrack(draftConfig)}
             onChange={setDraftConfig}
           />
         ) : (
@@ -285,7 +298,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   };
 
   const activeTabContent = () => {
-    const tabs = resolvedTabs();
+    const tabs = builtTabs();
     const active = tabs.find((t) => t.id === activeTab());
     return active?.content ?? tabs[0]?.content;
   };
@@ -301,6 +314,13 @@ export function WidgetDialog(props: WidgetDialogProps) {
     data: Record<string, unknown>;
     onChange: (data: Record<string, unknown>) => void;
   }>;
+
+  const builtTabs = createMemo(
+    on(
+      [() => local.open, formSchema, () => local.config, () => local.tabs],
+      () => resolvedTabs(),
+    ),
+  );
 
   const effectiveOnOpenChange = (open: boolean) =>
     schemaMode() ? handleSchemaClose(open) : local.onOpenChange(open);
@@ -321,7 +341,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <div class="flex items-center gap-2">
             {/* Tab buttons */}
             <div class="flex h-8 items-center rounded-lg border border-border/50 bg-muted/30 p-0.5">
-              {resolvedTabs().map((tab) => (
+              {builtTabs().map((tab) => (
                 <TabButton
                   icon={tab.icon}
                   label={tab.label}
