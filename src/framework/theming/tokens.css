@@ -39,17 +39,19 @@
 }
 
 /* === Widget shell ===
- * Fluid scale tokens — tied to the shell's own container box (cqmin/cqi/cqb).
- * Same input box → same output, so two widgets at the same grid cell match
- * exactly. Tune multipliers / clamps to adjust density. */
+ * Fluid scale tokens — tied to the shell's own container box (cqb=height, cqi=width).
+ * Icon/pad/gap track HEIGHT (cqb) not the shortest side: two widgets of equal
+ * height match regardless of width (a 2×2 and a 4×2 get the same icon). cqmin
+ * starved portrait tiles by pinning the icon to the narrow width. Tune
+ * multipliers / clamps to adjust density. */
 .glasshome-widget {
   --widget-color: var(--tone-neutral);
   --widget-glow-strength: var(--widget-glow-default);
 
-  --widget-icon-box:    clamp(28px, 22cqmin, 64px);
-  --widget-icon-glyph:  clamp(16px, 13cqmin, 36px);
-  --widget-pad:         clamp(8px,  4cqmin,  24px);
-  --widget-gap:         clamp(6px,  2cqmin,  16px);
+  --widget-icon-box:    clamp(44px, 25cqb, 58px);
+  --widget-icon-glyph:  clamp(24px, 14cqb, 33px);
+  --widget-pad:         clamp(8px,  3.5cqb, 22px);
+  --widget-gap:         clamp(6px,  2cqb,  14px);
   --widget-title-size:  clamp(12px, 2cqi,    18px);
   --widget-subtitle:    clamp(12px, 2.5cqi,  20px);
   --widget-status-size: clamp(14px, 5cqi,    36px);
@@ -87,6 +89,30 @@
     align-items: center;
     justify-content: flex-start;
   }
+}
+
+/* === Compact 1×1 ===
+ * Small in BOTH axes → stack the tile: icon on top, label + status centered
+ * under it. Icon stays moderate (not a hero) so the text keeps room. Wide
+ * tiles (2×1) fail the width test and keep the row layout above. Placed after
+ * the row-flip so it wins. */
+@container widget (max-width: 189px) and (max-height: 189px) {
+  .glasshome-widget-content {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: clamp(4px, 2.5cqmin, 8px);
+  }
+  .glasshome-widget-content > * { align-items: center; text-align: center; }
+  .glasshome-widget-icon {
+    --widget-icon-box:   clamp(36px, 30cqmin, 56px);
+    --widget-icon-glyph: clamp(20px, 17cqmin, 32px);
+  }
+  .glasshome-widget-title  { font-size: clamp(11px, 6cqmin, 14px); max-width: 100%; }
+  .glasshome-widget-status,
+  .glasshome-widget-value  { font-size: clamp(13px, 7cqmin, 17px); }
+  .glasshome-widget-content [class*="ml-auto"] { margin-left: 0 !important; }
 }
 .glasshome-widget-content [class*="ml-auto"] {
   position: relative;
