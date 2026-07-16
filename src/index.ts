@@ -17,6 +17,7 @@ export type {
   GridSize,
   WidgetContext,
   WidgetDefinition,
+  WidgetExample,
   WidgetManifest,
 } from "./types";
 // Version constant

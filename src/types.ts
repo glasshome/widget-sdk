@@ -10,10 +10,23 @@ export interface GridSize {
 }
 
 /**
+ * A curated showcase state for preview-image generation. Config references
+ * demo-fixture entity ids; the preview harness renders it at `size` and
+ * screenshots light + dark. `examples[0]` is the thumbnail.
+ *
+ * @template C - Widget configuration type
+ */
+export interface WidgetExample<C = Record<string, unknown>> {
+  config: C;
+  size: GridSize;
+  label?: string;
+}
+
+/**
  * Widget manifest — declarative metadata about a widget.
  * Framework-agnostic: no SolidJS imports.
  */
-export interface WidgetManifest {
+export interface WidgetManifest<C = Record<string, unknown>> {
   name: string;
   description?: string;
   minSize: GridSize;
@@ -26,6 +39,7 @@ export interface WidgetManifest {
   configVersion?: number;                  // Per D-11: integer, bumped on breaking config changes
   capabilities?: CapabilityGrant[];        // HA access the widget requests; enforced by the host
   cssUrl?: string;                         // Set by the build when the widget emits a CSS file
+  examples?: WidgetExample<C>[];           // Curated showcase states for auto-generated preview images
 }
 
 /**
@@ -53,7 +67,7 @@ export interface WidgetContext {
  * @template C - Widget configuration type
  */
 export interface WidgetDefinition<C = Record<string, unknown>> {
-  manifest: WidgetManifest;
+  manifest: WidgetManifest<C>;
   configSchema?: ZodType<C, unknown>;  // Per D-10: Zod schema as single source of truth
   migrate?: (config: Record<string, unknown>, fromConfigVersion: number) => Record<string, unknown>; // Per D-13: optional migration function
   component: (props: { config: C }) => any;
