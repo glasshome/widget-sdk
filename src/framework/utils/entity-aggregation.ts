@@ -134,6 +134,9 @@ export function calculateLightGroup(
         }
         if (entity.attributes?.rgb_color) {
           colors.push(entity.attributes.rgb_color);
+        } else if (entity.attributes?.hs_color) {
+          const [h, s] = entity.attributes.hs_color;
+          colors.push(hsColorToRgb(h, s));
         }
         break;
       case "off":
@@ -400,6 +403,26 @@ export function calculateSensorGroup(
   };
 }
 
+/** HA `hs_color` ([hue 0-360, saturation 0-100]) to RGB at full value; the
+ *  caller applies brightness. HA reports hs_color for many color lights that
+ *  never carry rgb_color, so light widgets must handle it too. */
+function hsColorToRgb(h: number, s: number): [number, number, number] {
+  const sat = s / 100;
+  const c = sat;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = 1 - c;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (h < 60) [r, g] = [c, x];
+  else if (h < 120) [r, g] = [x, c];
+  else if (h < 180) [g, b] = [c, x];
+  else if (h < 240) [g, b] = [x, c];
+  else if (h < 300) [r, b] = [x, c];
+  else [r, b] = [c, x];
+  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+}
+
 /**
  * Get RGB color for a light entity
  */
@@ -411,6 +434,12 @@ function getLightColor(entity: EntityView): string {
 
   if (entity.attributes?.rgb_color) {
     const [r, g, b] = entity.attributes.rgb_color;
+    return `rgb(${Math.round(r * brightnessMultiplier)}, ${Math.round(g * brightnessMultiplier)}, ${Math.round(b * brightnessMultiplier)})`;
+  }
+
+  if (entity.attributes?.hs_color) {
+    const [h, s] = entity.attributes.hs_color;
+    const [r, g, b] = hsColorToRgb(h, s);
     return `rgb(${Math.round(r * brightnessMultiplier)}, ${Math.round(g * brightnessMultiplier)}, ${Math.round(b * brightnessMultiplier)})`;
   }
 
