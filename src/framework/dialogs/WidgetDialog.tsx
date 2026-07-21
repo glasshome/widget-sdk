@@ -330,9 +330,9 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   return (
     <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
-      <RDContent class={cn(maxWidthClass(), local.class)}>
+      <RDContent class={cn(maxWidthClass(), "px-0", local.class)}>
         {/* Header: title on left, tabs + actions on right */}
-        <RDHeader class="flex flex-row items-center justify-between gap-3">
+        <RDHeader class="flex flex-row items-center justify-between gap-3 px-6">
           <div class="min-w-0 shrink-0">
             <RDTitle class="truncate leading-tight">{local.title}</RDTitle>
             <RDDescription class="sr-only">Widget configuration dialog</RDDescription>
@@ -357,9 +357,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
         </RDHeader>
 
         {/* Tab content */}
-        <div class="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
-          {activeTabContent()}
-        </div>
+        <div class="gh-scroll min-h-0 flex-1 overflow-y-auto px-6">{activeTabContent()}</div>
 
         <Show
           when={
@@ -367,7 +365,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
             (activeTab() === "debug" && local.debugData !== undefined)
           }
         >
-          <div class="flex shrink-0 items-center justify-end gap-2 border-border/50 border-t pt-3">
+          <div class="flex shrink-0 items-center justify-end gap-2 border-border/50 border-t px-6 pt-3">
             <Show when={activeTab() === "edit" && local.onDelete}>
               <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
                 Delete
