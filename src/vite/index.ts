@@ -11,7 +11,11 @@ import {
 import { createRequire } from "node:module";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { formatSchemaError, widgetManifestSchema } from "@glasshome/widget-contract";
+import {
+  formatSchemaError,
+  isHostProvidedModule,
+  widgetManifestSchema,
+} from "@glasshome/widget-contract";
 import tailwindcss from "@tailwindcss/vite";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
 
@@ -51,16 +55,15 @@ function getPreviewDir(): string {
 // Shared externals
 // ---------------------------------------------------------------------------
 
-/** Packages provided by the host import map — widgets must not bundle these. */
+/**
+ * Packages provided by the host import map — widgets must not bundle these.
+ * Delegates to the shared list in @glasshome/widget-contract so the host's
+ * import map and the widget build can never disagree again. Exact match only:
+ * a specifier the import map does not serve (e.g. "@glasshome/ui/tokens")
+ * must be bundled, because leaving it external is a runtime 404.
+ */
 export function isWidgetExternal(id: string): boolean {
-  return (
-    id === "solid-js" ||
-    id.startsWith("solid-js/") ||
-    id === "@glasshome/widget-sdk" ||
-    id.startsWith("@glasshome/widget-sdk/") ||
-    id === "@glasshome/ui" ||
-    id.startsWith("@glasshome/ui/")
-  );
+  return isHostProvidedModule(id);
 }
 
 /**
