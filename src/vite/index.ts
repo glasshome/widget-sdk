@@ -37,6 +37,94 @@ function hashSchema(jsonSchema: object): string {
   return createHash("sha256").update(stable).digest("hex").slice(0, 16);
 }
 
+interface SchemaGuardRecord {
+  hash: string;
+  configVersion: number | null;
+}
+
+/**
+ * Configuration-drift guard (D-11). Imports the built bundle, derives the JSON
+ * Schema from its configSchema, and compares against the recorded
+ * `.schema-hash`. A shape change without a configVersion bump fails the build:
+ * tsc cannot catch this class of break because the old persisted config still
+ * parses, only its meaning shifts. Legacy plain-hash records (written by
+ * pre-1.7 builds) cannot prove a missing bump, so they only warn, then upgrade
+ * to the JSON record format.
+ *
+ * When `manifestPath` is given (single-widget projects), the generated JSON
+ * Schema is also written into `manifest.json` as `schema`.
+ */
+export async function runSchemaGuard(args: {
+  outFile: string;
+  hashFile: string;
+  widgetName: string;
+  manifestPath?: string;
+}): Promise<void> {
+  if (!existsSync(args.outFile)) return;
+
+  let def: {
+    configSchema?: unknown;
+    manifest?: { name?: string; configVersion?: number };
+  };
+  try {
+    // Cache-busting timestamp: Node caches ESM imports by URL, and the bundle
+    // is rewritten on every build.
+    def = (await import(`${args.outFile}?t=${Date.now()}`)).default;
+  } catch {
+    // Non-fatal: externalized deps (solid-js, host modules) can make the
+    // bundle un-importable outside a real widget project.
+    return;
+  }
+  if (!def?.configSchema) return;
+
+  let jsonSchema: object;
+  try {
+    const { z } = await import("zod");
+    jsonSchema = z.toJSONSchema(def.configSchema as Parameters<typeof z.toJSONSchema>[0], {
+      unrepresentable: "any",
+    });
+  } catch {
+    return;
+  }
+
+  if (args.manifestPath && existsSync(args.manifestPath)) {
+    const manifest = JSON.parse(readFileSync(args.manifestPath, "utf-8"));
+    manifest.schema = jsonSchema;
+    writeFileSync(args.manifestPath, JSON.stringify(manifest, null, 2));
+  }
+
+  const hash = hashSchema(jsonSchema);
+  const configVersion = def.manifest?.configVersion ?? null;
+  const widgetName = def.manifest?.name ?? args.widgetName;
+
+  if (existsSync(args.hashFile)) {
+    const raw = readFileSync(args.hashFile, "utf-8").trim();
+    let recorded: SchemaGuardRecord | null = null;
+    if (raw.startsWith("{")) {
+      try {
+        recorded = JSON.parse(raw) as SchemaGuardRecord;
+      } catch {
+        recorded = null;
+      }
+    }
+    if (recorded) {
+      if (recorded.hash !== hash && recorded.configVersion === configVersion) {
+        throw new Error(
+          `[widget-sdk] Config schema shape changed for "${widgetName}" without a configVersion bump. ` +
+            `Bump configVersion in defineWidget (currently ${configVersion ?? "unset"}) or revert the schema change, ` +
+            `then rebuild. Recorded in ${args.hashFile}`,
+        );
+      }
+    } else if (raw !== hash) {
+      console.warn(
+        `[widget-sdk] Schema shape changed for "${widgetName}" — verify configVersion was bumped`,
+      );
+    }
+  }
+
+  writeFileSync(args.hashFile, `${JSON.stringify({ hash, configVersion })}\n`);
+}
+
 const VIRTUAL_WIDGET_ID = "virtual:glasshome-widget";
 const RESOLVED_VIRTUAL_WIDGET_ID = "\0virtual:glasshome-widget";
 const PREVIEW_ROUTE_ID = "/@glasshome/preview";
@@ -362,6 +450,11 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       logLevel: "warn",
     });
     assertNoHostThemeVars(outDir, widget.name);
+    await runSchemaGuard({
+      outFile: join(outDir, `${widget.name}.js`),
+      hashFile: join(dirname(widget.entry), ".schema-hash"),
+      widgetName: widget.name,
+    });
   }
 
   // Generate registry
@@ -467,46 +560,12 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     apply: "build",
     async closeBundle() {
       assertNoHostThemeVars(resolve(process.cwd(), "dist"), "index");
-
-      // After the widget bundle is written, attempt to dynamically import it
-      // to extract configSchema and generate a JSON Schema for the manifest.
-      const outFile = resolve(process.cwd(), "dist", "index.js");
-      if (!existsSync(outFile)) return;
-
-      try {
-        // Dynamic import with cache-busting timestamp to avoid Node module cache
-        const mod = await import(`${outFile}?t=${Date.now()}`);
-        const def = mod.default;
-        if (!def?.configSchema) return;
-
-        const { z } = await import("zod");
-        const jsonSchema = z.toJSONSchema(def.configSchema, { unrepresentable: "any" });
-
-        // Write generated JSON Schema into manifest.json
-        const manifestPath = resolve(process.cwd(), "manifest.json");
-        if (existsSync(manifestPath)) {
-          const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-          manifest.schema = jsonSchema;
-          writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-        }
-
-        // Schema hash guard: warn when schema shape changes without a configVersion bump
-        const hash = hashSchema(jsonSchema);
-        const hashFile = resolve(process.cwd(), ".schema-hash");
-        if (existsSync(hashFile)) {
-          const oldHash = readFileSync(hashFile, "utf-8").trim();
-          if (oldHash !== hash) {
-            const widgetName = def.manifest?.name ?? "unknown";
-            console.warn(
-              `[widget-sdk] Schema shape changed for "${widgetName}" — verify configVersion was bumped`,
-            );
-          }
-        }
-        writeFileSync(hashFile, hash);
-      } catch {
-        // Non-fatal: widget may not have configSchema, or dynamic import may fail
-        // due to externalized dependencies (solid-js, etc.)
-      }
+      await runSchemaGuard({
+        outFile: resolve(process.cwd(), "dist", "index.js"),
+        hashFile: resolve(process.cwd(), ".schema-hash"),
+        widgetName: "index",
+        manifestPath: resolve(process.cwd(), "manifest.json"),
+      });
     },
   };
 
