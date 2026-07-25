@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-sdk",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
     "glasshome",
@@ -31,6 +31,11 @@
       "@glasshome/source": "./src/deprecations.ts",
       "types": "./dist/deprecations.d.ts",
       "import": "./dist/deprecations.js"
+    },
+    "./host": {
+      "@glasshome/source": "./src/host/index.ts",
+      "types": "./dist/host/index.d.ts",
+      "import": "./dist/host/index.js"
     },
     "./vite": {
       "@glasshome/source": "./src/vite/index.ts",

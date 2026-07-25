@@ -9,6 +9,7 @@ export default defineConfig({
         index: "src/index.ts",
         schemas: "src/schemas.ts",
         deprecations: "src/deprecations.ts",
+        "host/index": "src/host/index.ts",
         "vite/index": "src/vite/index.ts",
       },
       formats: ["es"],
