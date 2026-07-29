@@ -132,6 +132,17 @@ function area(o?: { title?: string }): z.ZodOptional<z.ZodString> {
     .meta({ formType: "area-picker", title: o?.title ?? "Area" });
 }
 
+/**
+ * Icon name (e.g. "mdi:lightbulb"). The host renders its icon picker; the
+ * widget only declares that this field is an icon.
+ */
+function icon(o: { title?: string; default: string }): z.ZodDefault<z.ZodString>;
+function icon(o?: { title?: string }): z.ZodOptional<z.ZodString>;
+function icon(o?: { title?: string; default?: string }) {
+  const base = z.string().meta({ formType: "icon-picker", title: o?.title ?? "Icon" });
+  return o?.default !== undefined ? base.default(o.default) : base.optional();
+}
+
 function stringList(o: { title: string; description?: string }): z.ZodDefault<z.ZodArray<z.ZodString>> {
   return z
     .array(z.string())
@@ -165,6 +176,7 @@ export const field = {
   entities,
   entity,
   area,
+  icon,
   stringList,
   group,
 };

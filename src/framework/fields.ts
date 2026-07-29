@@ -6,7 +6,7 @@ import { deprecate } from "../deprecations";
  *
  * @deprecated since 1.4.0, removed in 2.0.0. Use the config API instead:
  * `defineConfig` + `field.*` (`field.title()`, `field.entities()`, `field.entity()`,
- * `field.area()`). See https://glasshome.app/docs/widget-sdk/config
+ * `field.area()`, `field.icon()`). See https://glasshome.app/docs/widget-sdk/config
  */
 export const widgetFields = {
 	/**

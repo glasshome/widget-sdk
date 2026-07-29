@@ -59,6 +59,17 @@ export const deprecations: readonly DeprecationEntry[] = [
     sourcePattern: "widgetFields\\.areaId\\b",
   },
   {
+    // No wrappable runtime symbol: the host used to infer an area picker from the
+    // property name alone, so a raw `areaId` string field got one by accident and
+    // any other name silently rendered a text input.
+    id: "area-by-field-name",
+    since: "1.8.0",
+    removeIn: "2.0.0",
+    replacement: "field.area()",
+    docsUrl: DOCS_URL,
+    sourcePattern: "\\bareaId\\s*:\\s*z\\.string\\(",
+  },
+  {
     // No wrappable runtime symbol: `z` stays a permanent escape hatch, so this is
     // flagged only when `z.object(...)` is used to build a widget's configSchema.
     id: "raw-zod-config",
