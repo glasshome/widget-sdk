@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -94,8 +95,53 @@ async function assertExamplesValid(examples: unknown, widgetName: string): Promi
   );
 }
 
+interface WidgetIntrospection {
+  manifest: { name?: string; configVersion?: number; examples?: unknown } | null;
+  jsonSchema: object | null;
+}
+
+type IntrospectResult =
+  | { ok: true; value: WidgetIntrospection }
+  | { ok: false; reason: string };
+
 /**
- * Configuration-drift guard (D-11). Imports the built bundle, derives the JSON
+ * Read a built bundle's definition, in a subprocess.
+ *
+ * A widget bundle cannot be imported by the build process: `solid-js/web`
+ * resolves to its server build under Node's conditions and throws the moment
+ * the module initialises, and browser conditions then need a DOM for the
+ * templates Solid creates at import time. So this spawns the runtime again
+ * with `--conditions browser`, where introspect.js installs a DOM first.
+ */
+function introspect(outFile: string): IntrospectResult {
+  // .js when running from dist, .ts when running from source (tests), so the
+  // tests exercise the same subprocess the build uses rather than a stand-in.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const probe = [join(here, "introspect.js"), join(here, "introspect.ts")].find((p) =>
+    existsSync(p),
+  );
+  if (!probe) return { ok: false, reason: `introspect not found next to ${here}` };
+
+  const run = spawnSync(process.execPath, ["--conditions", "browser", probe, outFile], {
+    encoding: "utf-8",
+    // A widget that loops at import time must not hang the build.
+    timeout: 30_000,
+  });
+
+  if (run.error) return { ok: false, reason: run.error.message };
+  if (run.status !== 0) {
+    const detail = (run.stderr || "").trim().split("\n")[0] || `exit ${run.status}`;
+    return { ok: false, reason: detail };
+  }
+  try {
+    return { ok: true, value: JSON.parse(run.stdout) as WidgetIntrospection };
+  } catch {
+    return { ok: false, reason: "introspect returned unparseable output" };
+  }
+}
+
+/**
+ * Configuration-drift guard (D-11). Reads the built bundle, derives the JSON
  * Schema from its configSchema, and compares against the recorded
  * `.schema-hash`. A shape change without a configVersion bump fails the build:
  * tsc cannot catch this class of break because the old persisted config still
@@ -114,32 +160,23 @@ export async function runSchemaGuard(args: {
 }): Promise<void> {
   if (!existsSync(args.outFile)) return;
 
-  let def: {
-    configSchema?: unknown;
-    manifest?: { name?: string; configVersion?: number; examples?: unknown };
-  };
-  try {
-    // Cache-busting timestamp: Node caches ESM imports by URL, and the bundle
-    // is rewritten on every build.
-    def = (await import(`${args.outFile}?t=${Date.now()}`)).default;
-  } catch {
-    // Non-fatal: externalized deps (solid-js, host modules) can make the
-    // bundle un-importable outside a real widget project.
+  const read = introspect(args.outFile);
+  if (!read.ok) {
+    // Loud on purpose. This used to be a silent `return`, and it meant the
+    // guard did nothing for every widget on every build for months without
+    // anyone noticing. A guard that cannot run has to say so.
+    console.warn(
+      `[widget-sdk] Could not read "${args.widgetName}" to check it: ${read.reason}\n` +
+        "  Its examples and config schema were NOT validated.",
+    );
     return;
   }
-  await assertExamplesValid(def?.manifest?.examples, def?.manifest?.name ?? args.widgetName);
 
-  if (!def?.configSchema) return;
+  const def = read.value;
+  await assertExamplesValid(def.manifest?.examples, def.manifest?.name ?? args.widgetName);
 
-  let jsonSchema: object;
-  try {
-    const { z } = await import("zod");
-    jsonSchema = z.toJSONSchema(def.configSchema as Parameters<typeof z.toJSONSchema>[0], {
-      unrepresentable: "any",
-    });
-  } catch {
-    return;
-  }
+  const jsonSchema = def.jsonSchema;
+  if (!jsonSchema) return;
 
   if (args.manifestPath && existsSync(args.manifestPath)) {
     const manifest = JSON.parse(readFileSync(args.manifestPath, "utf-8"));

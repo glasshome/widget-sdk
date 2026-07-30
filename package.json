@@ -63,11 +63,12 @@
   "dependencies": {
     "@glasshome/widget-contract": "0.2.0",
     "@modular-forms/solid": "^0.25.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.5.0",
-    "zod": "^4.1.13",
     "@tailwindcss/vite": "^4.1.13",
-    "tailwindcss": "^4.1.13"
+    "clsx": "^2.1.1",
+    "happy-dom": "^20.0.0",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.1.13",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/bun": "latest",
