@@ -43,6 +43,58 @@ interface SchemaGuardRecord {
 }
 
 /**
+ * Most previews anyone will look at, and the ceiling the hub renders to.
+ *
+ * Declaring more than this used to mean the extras were quietly not rendered:
+ * the gallery looked complete and was not. Failing the build instead makes the
+ * author decide which states matter rather than discovering the loss never.
+ */
+export const MAX_EXAMPLES = 20;
+
+/**
+ * Validate `examples` at build time.
+ *
+ * Runs before the `configSchema` early return, because a widget can declare
+ * examples without a config schema and still deserves the check.
+ */
+async function assertExamplesValid(examples: unknown, widgetName: string): Promise<void> {
+  if (examples === undefined) return;
+
+  let z: typeof import("zod").z;
+  try {
+    ({ z } = await import("zod"));
+  } catch {
+    return;
+  }
+
+  const tile = z.number().int().positive();
+  const schema = z
+    .array(
+      z.object({
+        config: z.record(z.string(), z.unknown()),
+        size: z.object({ w: tile, h: tile }),
+        label: z.string().optional(),
+      }),
+    )
+    .max(MAX_EXAMPLES);
+
+  const result = schema.safeParse(examples);
+  if (result.success) return;
+
+  const detail = result.error.issues
+    .map((issue) => {
+      const at = issue.path.length ? `[${issue.path.join("][")}]` : "";
+      return `  examples${at}: ${issue.message}`;
+    })
+    .join("\n");
+  throw new Error(
+    `[widget-sdk] Invalid \`examples\` for "${widgetName}":\n${detail}\n` +
+      `Each example needs a \`config\` object and a \`size\` of whole positive tiles, ` +
+      `and at most ${MAX_EXAMPLES} are rendered.`,
+  );
+}
+
+/**
  * Configuration-drift guard (D-11). Imports the built bundle, derives the JSON
  * Schema from its configSchema, and compares against the recorded
  * `.schema-hash`. A shape change without a configVersion bump fails the build:
@@ -64,7 +116,7 @@ export async function runSchemaGuard(args: {
 
   let def: {
     configSchema?: unknown;
-    manifest?: { name?: string; configVersion?: number };
+    manifest?: { name?: string; configVersion?: number; examples?: unknown };
   };
   try {
     // Cache-busting timestamp: Node caches ESM imports by URL, and the bundle
@@ -75,6 +127,8 @@ export async function runSchemaGuard(args: {
     // bundle un-importable outside a real widget project.
     return;
   }
+  await assertExamplesValid(def?.manifest?.examples, def?.manifest?.name ?? args.widgetName);
+
   if (!def?.configSchema) return;
 
   let jsonSchema: object;
