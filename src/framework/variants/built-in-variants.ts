@@ -26,8 +26,11 @@ export const classicGlass: WidgetVariantConfig = {
       "--widget-blur": "12px",
       "--widget-shadow": "0 8px 32px rgba(0, 0, 0, 0.2)",
       "--widget-padding": "1.5rem",
+      // Shared glass recipe (ui CARD_BLUR): blur + saturate. A cssVar, not a
+      // Tailwind class, so the material comes from the host-injected tokens.css
+      // instead of each widget's own compiled utilities.
+      "--widget-backdrop": "blur(var(--glass-blur, 24px)) saturate(1.8)",
     },
-    class: "backdrop-blur-xl",
   },
   layout: {
     type: "flex",
@@ -95,8 +98,9 @@ export const compactHorizontal: WidgetVariantConfig = {
       "--widget-blur": "10px",
       "--widget-padding": "1rem",
       "--widget-icon-size": "2.5rem",
+      // Same recipe as classic-glass at this variant's lighter blur radius.
+      "--widget-backdrop": "blur(16px) saturate(1.8)",
     },
-    class: "backdrop-blur-lg",
   },
   layout: {
     type: "flex",

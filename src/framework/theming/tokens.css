@@ -59,13 +59,27 @@
   --widget-badge-size:  clamp(11px, 1.6cqi,  14px);
 }
 
+/* Shell material. Two channels, both host/variant-driven:
+ * - `--widget-backdrop`: the live backdrop filter (the shared glass recipe is
+ *   blur + saturate, matching ui's CARD_BLUR). Default none — a variant opts
+ *   in (classic-glass), and a performant-blur host disables it via override
+ *   sheet when it paints a precomputed frost instead.
+ * - `--glass-frost`: one full background layer (image + position / size +
+ *   repeat) composited at the BOTTOM, under the accent gradient — the same
+ *   frost slot ui's `.glass` formula ends its background list with. Unset →
+ *   none. A performant-blur host sets it per shell with the viewport-aligned
+ *   slice of its pre-blurred bitmap. */
 .glasshome-widget {
-  background: var(--widget-gradient,
-    linear-gradient(135deg,
-      color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent),
-      color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)
-    )
-  );
+  background:
+    var(--widget-gradient,
+      linear-gradient(135deg,
+        color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent),
+        color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)
+      )
+    ),
+    var(--glass-frost, none);
+  backdrop-filter: var(--widget-backdrop, none);
+  -webkit-backdrop-filter: var(--widget-backdrop, none);
   box-shadow: inset 0 1px 0 var(--widget-border-highlight);
 }
 

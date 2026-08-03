@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   formatSchemaError,
@@ -19,6 +19,7 @@ import {
 } from "@glasshome/widget-contract";
 import tailwindcss from "@tailwindcss/vite";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
+import { deprecations, formatDeprecation } from "../deprecations";
 
 export interface GlasshomeWidgetOptions {
   /** Entry file for the widget (default: "src/index.tsx") */
@@ -266,6 +267,57 @@ function syncLayerImportGuard(): Plugin {
         );
       }
       return undefined;
+    },
+  };
+}
+
+const WIDGET_SOURCE_RE = /\.(ts|tsx|js|jsx)$/;
+
+/**
+ * True when a widget source file imports `@glasshome/ui` directly. The regex is
+ * the registry's `sourcePattern` for `direct-ui-import`, so the build warning and
+ * the widget-cli lint can never disagree on what counts as a direct import.
+ * node_modules is excluded: dependencies and the SDK's own generated entries in
+ * BUILD_CACHE_DIR (the theme `@import`) are the SDK's business, not the widget's.
+ */
+export function isDirectUiImportSource(id: string, code: string): boolean {
+  const file = normalizePath(id).split("?")[0] ?? "";
+  if (file.includes("/node_modules/")) return false;
+  if (!WIDGET_SOURCE_RE.test(file)) return false;
+  const entry = deprecations.find((d) => d.id === "direct-ui-import");
+  if (!entry?.sourcePattern) return false;
+  return new RegExp(entry.sourcePattern).test(code);
+}
+
+/**
+ * Warns (never fails) when widget source imports @glasshome/ui directly.
+ * Warn-only counterpart to syncLayerImportGuard: direct imports keep working
+ * until 2.0, but they bypass the sdkVersion gate, so ui can drift against
+ * published widgets with nothing checking compatibility. Detection scans
+ * module source in `transform` because externalized specifiers never reach
+ * `resolveId` (rollup consults `external` for the bare id first). One warning
+ * per widget build, listing the offending files and the SDK replacement.
+ */
+function uiImportGuard(): Plugin {
+  const offenders = new Set<string>();
+  return {
+    name: "glasshome-widget:ui-import-guard",
+    apply: "build",
+    enforce: "pre",
+    transform(code: string, id: string) {
+      if (isDirectUiImportSource(id, code)) {
+        offenders.add(normalizePath(relative(process.cwd(), id.split("?")[0] ?? id)));
+      }
+      return null;
+    },
+    buildEnd() {
+      if (offenders.size === 0) return;
+      const entry = deprecations.find((d) => d.id === "direct-ui-import");
+      const notice = entry
+        ? formatDeprecation(entry)
+        : '[@glasshome/widget-sdk] Direct @glasshome/ui imports are deprecated; import the same export from "@glasshome/widget-sdk".';
+      const files = [...offenders].map((f) => `    ${f}`).join("\n");
+      console.warn(`${notice}\n  Direct @glasshome/ui import(s) in:\n${files}`);
     },
   };
 }
@@ -519,7 +571,12 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
     await build({
       configFile: false,
       root,
-      plugins: [...buildOnlyTailwind(), ...(options?.plugins ?? []), syncLayerImportGuard()],
+      plugins: [
+        ...buildOnlyTailwind(),
+        ...(options?.plugins ?? []),
+        syncLayerImportGuard(),
+        uiImportGuard(),
+      ],
       ...options?.viteConfig,
       build: {
         lib: {
@@ -660,7 +717,14 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     },
   };
 
-  return [...buildOnlyTailwind(), buildPlugin, syncLayerImportGuard(), schemaPlugin, devPlugin];
+  return [
+    ...buildOnlyTailwind(),
+    buildPlugin,
+    syncLayerImportGuard(),
+    uiImportGuard(),
+    schemaPlugin,
+    devPlugin,
+  ];
 }
 
 // ---------------------------------------------------------------------------

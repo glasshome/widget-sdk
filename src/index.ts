@@ -8,6 +8,8 @@ export * from "./data";
 export * from "./framework";
 // Shared chart helpers
 export { monotoneCubicPath } from "./shared/spline";
+// Host UI primitives (re-exported from @glasshome/ui/solid, gated by sdkVersion)
+export * from "./ui";
 // Runtime validation schemas (legacy re-exports; prefer "@glasshome/widget-sdk/schemas")
 export { formatSchemaError, WidgetManifestSchema } from "./schemas";
 // Theme utilities (framework-agnostic)

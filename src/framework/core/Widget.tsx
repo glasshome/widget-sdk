@@ -2,8 +2,8 @@
  * Widget — main container component.
  *
  * Renders the shell (gradient, border highlight, channel vars) and provides
- * a minimal context (isEditMode, updateConfig) for slot components and host
- * RPC. All visual scale (icon size, text size, padding, gap, content layout
+ * a minimal context (updateConfig, host RPC) plus the measured-size context
+ * for `useWidgetDimensions()`. All visual scale (icon size, text size, padding, gap, content layout
  * direction, slider fill orientation) lives in pure CSS via container queries
  * on `.glasshome-widget`. The widget reacts to its own rendered box without
  * any JS measurement.
@@ -18,7 +18,9 @@ import type { WidgetTitle as WidgetTitleType } from "../components/WidgetTitle";
 import type { WidgetValue as WidgetValueType } from "../components/WidgetValue";
 import { WIDGET_Z } from "../design-system/z-index";
 import type { GestureHandlers } from "../gestures/use-widget-gestures";
+import { deprecate } from "../../deprecations";
 import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
+import { WidgetSizeCtx } from "../hooks/use-widget-dimensions";
 import type { Tone } from "../theming/tone";
 import { injectTokens } from "../theming/tokens";
 import type { WidgetVariantConfig } from "../types";
@@ -101,11 +103,10 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   });
 
   const contextValue: ReactiveWidgetContext = {
-    isEditMode: () => props.isEditMode ?? false,
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
     registerDialogOpener: parentCtx?.registerDialogOpener,
     callService: parentCtx?.callService,
-    dimensions: () => measured(),
+    dimensions: deprecate(() => measured(), "ctx.dimensions"),
   };
 
   const variantConfig = createMemo((): WidgetVariantConfig | undefined => {
@@ -140,45 +141,47 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   return (
     <WidgetCtx.Provider value={contextValue}>
-      <div
-        ref={(el) => {
-          setShellEl(el);
-          // Gesture lib has its own size observer (used for "auto" slide
-          // orientation); we just hand it the element.
-          props.gestures?.bindElement(el);
-        }}
-        class={cn(
-          "glasshome-widget",
-          "relative h-full w-full select-none overflow-hidden rounded-xl border border-border/50",
-          variantConfig()?.styles?.class,
-          props.class,
-        )}
-        style={channelStyle()}
-        on:pointerenter={onPointerEnter}
-        on:pointerdown={onPointerDown}
-        on:pointermove={onPointerMove}
-        on:pointerup={onPointerUp}
-        on:pointercancel={onPointerCancel}
-      >
-        <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
-          {props.emptyState ? (
-            <WidgetEmptyStateInner
-              icon={props.emptyState.icon}
-              title={props.emptyState.title}
-              message={props.emptyState.message}
+      <WidgetSizeCtx.Provider value={measured}>
+        <div
+          ref={(el) => {
+            setShellEl(el);
+            // Gesture lib has its own size observer (used for "auto" slide
+            // orientation); we just hand it the element.
+            props.gestures?.bindElement(el);
+          }}
+          class={cn(
+            "glasshome-widget",
+            "relative h-full w-full select-none overflow-hidden rounded-xl border border-border/50",
+            variantConfig()?.styles?.class,
+            props.class,
+          )}
+          style={channelStyle()}
+          on:pointerenter={onPointerEnter}
+          on:pointerdown={onPointerDown}
+          on:pointermove={onPointerMove}
+          on:pointerup={onPointerUp}
+          on:pointercancel={onPointerCancel}
+        >
+          <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
+            {props.emptyState ? (
+              <WidgetEmptyStateInner
+                icon={props.emptyState.icon}
+                title={props.emptyState.title}
+                message={props.emptyState.message}
+              />
+            ) : (
+              props.children
+            )}
+          </div>
+
+          {props.loading && (
+            <div
+              class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
+              style={{ "z-index": WIDGET_Z.OVERLAY }}
             />
-          ) : (
-            props.children
           )}
         </div>
-
-        {props.loading && (
-          <div
-            class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
-            style={{ "z-index": WIDGET_Z.OVERLAY }}
-          />
-        )}
-      </div>
+      </WidgetSizeCtx.Provider>
     </WidgetCtx.Provider>
   );
 }

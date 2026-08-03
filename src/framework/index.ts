@@ -72,9 +72,13 @@ export {
   useReducedMotion,
   useWidgetContext,
   useWidgetDialog,
+  useWidgetDimensions,
   useWidgetEntityGroup,
   WidgetCtx,
   type WidgetDialogReturn,
+  type WidgetDimensions,
+  type WidgetDimensionsAccessor,
+  WidgetSizeCtx,
 } from "./hooks";
 
 // ============================================================================

@@ -32,6 +32,7 @@ export default defineConfig({
         "@glasshome/sync-layer",
         "@glasshome/sync-layer/solid",
         "@glasshome/ui",
+        "@glasshome/ui/solid",
         "@glasshome/widget-contract",
         "@tailwindcss/vite",
         "@modular-forms/solid",

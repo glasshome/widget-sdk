@@ -70,6 +70,27 @@ export const deprecations: readonly DeprecationEntry[] = [
     sourcePattern: "\\bareaId\\s*:\\s*z\\.string\\(",
   },
   {
+    // The stub context outside <Widget> returns (0,0) forever; three widgets
+    // shipped frozen in their smallest scene before a user noticed.
+    id: "ctx.dimensions",
+    since: "1.9.0",
+    removeIn: "2.0.0",
+    replacement: "useWidgetDimensions()",
+    docsUrl: "https://glasshome.app/docs/widget-api-reference",
+    sourcePattern: "\\.dimensions\\(\\)",
+  },
+  {
+    // No wrappable runtime symbol: the host serves @glasshome/ui/solid through its
+    // import map with no compat gate, so direct imports drift ungated across the Hub
+    // auto-update boundary. The SDK re-exports the same primitives behind sdkVersion.
+    id: "direct-ui-import",
+    since: "1.9.0",
+    removeIn: "2.0.0",
+    replacement: 'the same export from "@glasshome/widget-sdk"',
+    docsUrl: "https://glasshome.app/docs/widget-styling",
+    sourcePattern: "from\\s+[\"']@glasshome/ui(/[^\"']*)?[\"']",
+  },
+  {
     // No wrappable runtime symbol: `z` stays a permanent escape hatch, so this is
     // flagged only when `z.object(...)` is used to build a widget's configSchema.
     id: "raw-zod-config",

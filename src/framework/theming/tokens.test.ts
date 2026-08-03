@@ -116,7 +116,7 @@ describe("injection idempotent", () => {
 
 describe("Phase 26 shell gradient (VIS-P01)", () => {
   test("shell gradient — color-mix oklch formula at 135deg with 22%/11% asymmetric stops modulated by --widget-grad-strength", () => {
-    expect(css).toContain("background: var(--widget-gradient,");
+    expect(css).toContain("var(--widget-gradient,");
     expect(css).toContain("linear-gradient(135deg,");
     expect(css).toContain(
       "color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent)",
@@ -124,6 +124,14 @@ describe("Phase 26 shell gradient (VIS-P01)", () => {
     expect(css).toContain(
       "color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)",
     );
+  });
+
+  test("shell material — frost slot composited below the gradient, backdrop var-driven", () => {
+    // Bottom background layer is the shared --glass-frost slot (ui .glass parity).
+    expect(css).toMatch(/background:\s*\n?\s*var\(--widget-gradient,[\s\S]*?\),\s*\n?\s*var\(--glass-frost, none\);/);
+    // Dynamic backdrop rides the --widget-backdrop channel, default none.
+    expect(css).toContain("backdrop-filter: var(--widget-backdrop, none)");
+    expect(css).toContain("-webkit-backdrop-filter: var(--widget-backdrop, none)");
   });
 });
 

@@ -12,6 +12,7 @@ import {
 import type { ZodType } from "zod";
 import { toFormSchema } from "../to-form-schema";
 import { cn } from "../utils/cn";
+import { validateConfigDraft } from "./validate-config";
 
 interface TabButtonProps {
   icon: JSX.Element;
@@ -124,6 +125,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     !!local.configSchema && !!local.config && !!local.onConfigSave && !!local.SchemaForm;
   const [draftConfig, setDraftConfig] = createSignal<Record<string, unknown>>({});
   const [formSchema, setFormSchema] = createSignal<object | null>(null);
+  const [configErrors, setConfigErrors] = createSignal<string[]>([]);
 
   // Reset draft when config changes or dialog opens
   createEffect(
@@ -149,11 +151,25 @@ export function WidgetDialog(props: WidgetDialogProps) {
     schemaMode() && JSON.stringify(draftConfig()) !== JSON.stringify(local.config);
 
   const handleSchemaClose = (open: boolean) => {
-    if (!open && local.config) setDraftConfig({ ...local.config });
+    if (!open && local.config) {
+      setDraftConfig({ ...local.config });
+      setConfigErrors([]);
+    }
     local.onOpenChange(open);
   };
 
+  // Invalid drafts must not reach onConfigSave: the host's resolveConfig
+  // falls back to defaults on parse failure, silently wiping the config.
   const handleSchemaSave = () => {
+    const schema = local.configSchema;
+    if (schema) {
+      const errors = validateConfigDraft(schema, draftConfig());
+      if (errors) {
+        setConfigErrors(errors);
+        return;
+      }
+    }
+    setConfigErrors([]);
     local.onConfigSave?.(draftConfig());
   };
 
@@ -202,21 +218,28 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
       ),
-      content: local.editContent ??
-        (schemaMode() && formSchema() ? (
-          <SchemaFormEdit
-            schema={formSchema()!}
-            // Untracked: SchemaForm seeds its own state from this once and owns
-            // edits thereafter (via onChange). Tracking draftConfig here would
-            // rebuild the whole form on every keystroke.
-            data={untrack(draftConfig)}
-            onChange={setDraftConfig}
-          />
-        ) : (
-          <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
-            <p class="text-muted-foreground text-sm">No edit options available</p>
-          </div>
-        )),
+      content:
+        local.editContent ??
+        (() => {
+          const schema = schemaMode() ? formSchema() : undefined;
+          if (!schema) {
+            return (
+              <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
+                <p class="text-muted-foreground text-sm">No edit options available</p>
+              </div>
+            );
+          }
+          return (
+            <SchemaFormEdit
+              schema={schema}
+              // Untracked: reads stay off the graph so draft keystrokes never
+              // rebuild the form; each lazy prop access still sees the current draft.
+              data={untrack(draftConfig)}
+              onChange={setDraftConfig}
+              errors={configErrors()}
+            />
+          );
+        })(),
     });
 
     tabs.push({
@@ -313,6 +336,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     schema: object;
     data: Record<string, unknown>;
     onChange: (data: Record<string, unknown>) => void;
+    errors?: string[];
   }>;
 
   const builtTabs = createMemo(
