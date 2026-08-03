@@ -15,7 +15,9 @@ import { extractDefaults } from "../to-form-schema";
  * key is optional. Erasing it silently diverges `Infer` from raw `z.infer` (a key
  * becomes `x: T | undefined` instead of `x?: T`), so the concrete types are load-bearing.
  *
- * SchemaForm renders a FLAT object only; `field.group` is the sole nested exception.
+ * SchemaForm renders a flat object plus the nested shapes declared here:
+ * `field.group` (one level), `field.list` (array of items, depth 1), and
+ * `field.variants` (discriminated union, legal top-level or inside a list).
  */
 
 /** A single config field. Structurally a zod schema producing `T`. */
@@ -26,6 +28,10 @@ export type ConfigShape = Record<string, ZodType>;
 
 /** Infer a widget's config type from its schema, without naming zod. */
 export type Infer<C extends ZodType> = z.infer<C>;
+
+/** Hard ceiling for `field.list` max: each item is a rendered subtree and,
+ * typically, an entity subscription (same class of reason previews cap examples). */
+const LIST_MAX_ITEMS = 24;
 
 type TextOpts = { title: string; description?: string; default?: string };
 type NumberOpts = {
@@ -167,6 +173,197 @@ function group<S extends ConfigShape>(
     .meta({ title: o.title }) as Field<{ [K in keyof S]: Infer<S[K]> }>;
 }
 
+type ListOpts = {
+  title: string;
+  description?: string;
+  min?: number;
+  max: number;
+  addLabel?: string;
+  /** Field name whose value captions the collapsed item row. Must exist in
+   * every item (for variants: in `shared` or common to all variants). A name,
+   * not a function: it has to survive JSON serialization. */
+  labelField?: string;
+};
+
+type VariantShapes = Record<string, ConfigShape>;
+
+type VariantsOpts<V extends VariantShapes, S extends ConfigShape> = {
+  title: string;
+  description?: string;
+  /** Display names for the discriminator Select, keyed by variant kind. */
+  labels?: { [K in keyof V]?: string };
+  /** Fields merged into every variant (variant-specific fields win on collision). */
+  shared?: S;
+};
+
+type VariantsOutput<D extends string, V extends VariantShapes, S extends ConfigShape> = {
+  [K in keyof V & string]: z.output<z.ZodObject<{ [P in D]: z.ZodLiteral<K> } & S & V[K]>>;
+}[keyof V & string];
+
+/** Structural view of a zod def, for walking nested field trees. */
+type WalkableDef = {
+  shape?: Record<string, ZodType>;
+  options?: readonly ZodType[];
+  element?: ZodType;
+  innerType?: ZodType;
+};
+
+function walkableDef(schema: ZodType): WalkableDef {
+  return schema.def as WalkableDef;
+}
+
+function containsListField(schema: ZodType): boolean {
+  const schemaMeta = z.globalRegistry.get(schema);
+  if (schemaMeta?.formType === "list") return true;
+  const def = walkableDef(schema);
+  if (def.shape) return Object.values(def.shape).some(containsListField);
+  if (def.options) return def.options.some(containsListField);
+  if (def.element) return containsListField(def.element);
+  if (def.innerType) return containsListField(def.innerType);
+  return false;
+}
+
+function unwrap(schema: ZodType): ZodType {
+  let current = schema;
+  let inner = walkableDef(current).innerType;
+  while (inner) {
+    current = inner;
+    inner = walkableDef(current).innerType;
+  }
+  return current;
+}
+
+/** Field names present in every possible item shape, or null when the item is
+ * not an object/union of objects. */
+function itemFieldNames(item: ZodType): ReadonlySet<string> | null {
+  const def = walkableDef(unwrap(item));
+  if (def.shape) return new Set(Object.keys(def.shape));
+  if (def.options) {
+    const sets: Array<ReadonlySet<string>> = [];
+    for (const option of def.options) {
+      const names = itemFieldNames(option);
+      if (!names) return null;
+      sets.push(names);
+    }
+    const [first, ...rest] = sets;
+    if (!first) return null;
+    const common = new Set<string>();
+    for (const name of first) {
+      if (rest.every((s) => s.has(name))) common.add(name);
+    }
+    return common;
+  }
+  return null;
+}
+
+/** Defaults for one variant: seed the discriminator, let the object fill field
+ * defaults. `extractDefaults` alone parses `{}`, which a discriminated union
+ * rejects (no discriminator), so the union carries this as its `.default()`. */
+function variantDefaults(
+  option: ZodType,
+  discriminator: string,
+  kind: string,
+): Record<string, unknown> {
+  const seed = { [discriminator]: kind };
+  try {
+    return option.parse(seed) as Record<string, unknown>;
+  } catch {
+    return seed;
+  }
+}
+
+function list<Item extends ZodType>(item: Item, o: ListOpts): Field<Array<z.output<Item>>> {
+  if (!Number.isInteger(o.max) || o.max < 1) {
+    throw new Error(`field.list: max must be a positive integer, got ${o.max}`);
+  }
+  if (o.max > LIST_MAX_ITEMS) {
+    throw new Error(`field.list: max ${o.max} exceeds the ceiling of ${LIST_MAX_ITEMS}`);
+  }
+  if (o.min !== undefined && (!Number.isInteger(o.min) || o.min < 0 || o.min > o.max)) {
+    throw new Error(`field.list: min must be an integer between 0 and max, got ${o.min}`);
+  }
+  if (containsListField(item)) {
+    throw new Error("field.list: a list item cannot contain another field.list (depth 1 only)");
+  }
+  if (o.labelField !== undefined) {
+    const names = itemFieldNames(item);
+    if (!names?.has(o.labelField)) {
+      throw new Error(
+        `field.list: labelField "${o.labelField}" must name a field present in every item`,
+      );
+    }
+  }
+  let arr = z.array(item);
+  if (o.min !== undefined) arr = arr.min(o.min);
+  arr = arr.max(o.max);
+  const base: ZodType = arr;
+  return base.default([]).meta(
+    meta({
+      formType: "list",
+      title: o.title,
+      description: o.description,
+      addLabel: o.addLabel,
+      labelField: o.labelField,
+    }),
+  ) as Field<Array<z.output<Item>>>;
+}
+
+function variants<
+  D extends string,
+  V extends VariantShapes,
+  S extends ConfigShape = Record<never, never>,
+>(discriminator: D, variantShapes: V, o: VariantsOpts<V, S>): Field<VariantsOutput<D, V, S>> {
+  const kinds = Object.keys(variantShapes);
+  const firstKind = kinds[0];
+  if (firstKind === undefined) {
+    throw new Error("field.variants: at least one variant is required");
+  }
+  if (o.shared && discriminator in o.shared) {
+    throw new Error(`field.variants: shared fields cannot redefine the discriminator "${discriminator}"`);
+  }
+  for (const [kind, shape] of Object.entries(variantShapes)) {
+    if (discriminator in shape) {
+      throw new Error(
+        `field.variants: variant "${kind}" cannot redefine the discriminator "${discriminator}"`,
+      );
+    }
+  }
+  if (o.labels) {
+    for (const labelKind of Object.keys(o.labels)) {
+      if (!(labelKind in variantShapes)) {
+        throw new Error(`field.variants: labels names unknown variant "${labelKind}"`);
+      }
+    }
+  }
+  // The literal comes last so no spread can shadow it (guards above make that a
+  // hard error anyway, with a better message).
+  const optionSchemas = Object.entries(variantShapes).map(([kind, shape]) =>
+    z.object({ ...(o.shared ?? {}), ...shape, [discriminator]: z.literal(kind) }),
+  );
+  // Options are built with computed keys, so TS cannot see the discriminator
+  // literal statically; the guards above make it a runtime invariant.
+  const union = z.discriminatedUnion(
+    discriminator,
+    optionSchemas as unknown as readonly [
+      z.core.$ZodTypeDiscriminable<D>,
+      ...z.core.$ZodTypeDiscriminable<D>[],
+    ],
+  );
+  const firstOption = optionSchemas[0];
+  const base: ZodType = union;
+  return base
+    .default(firstOption ? variantDefaults(firstOption, discriminator, firstKind) : {})
+    .meta(
+      meta({
+        formType: "variants",
+        discriminator,
+        title: o.title,
+        description: o.description,
+        labels: o.labels,
+      }),
+    ) as Field<VariantsOutput<D, V, S>>;
+}
+
 export const field = {
   title,
   text,
@@ -179,6 +376,8 @@ export const field = {
   icon,
   stringList,
   group,
+  list,
+  variants,
 };
 
 export function defineConfig<S extends ConfigShape>(shape: S) {
