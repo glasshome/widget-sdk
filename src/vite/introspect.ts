@@ -23,6 +23,62 @@ interface Introspection {
   } | null;
   /** JSON Schema derived from the widget's configSchema, when it has one. */
   jsonSchema: object | null;
+  /** Examples whose config the widget's own configSchema rejects. */
+  exampleConfigIssues: ExampleConfigIssue[];
+}
+
+export interface ExampleConfigIssue {
+  index: number;
+  label?: string;
+  problems: string[];
+}
+
+interface ZodLike {
+  safeParse: (value: unknown) => {
+    success: boolean;
+    error?: { issues: Array<{ path: PropertyKey[]; message: string }> };
+  };
+}
+
+function isZodLike(value: unknown): value is ZodLike {
+  return typeof (value as ZodLike | undefined)?.safeParse === "function";
+}
+
+/**
+ * Parse every example's config against the widget's real `configSchema`.
+ *
+ * Done here rather than in the build process because this is the only place the
+ * live zod schema exists: the build only ever sees the JSON Schema derived from
+ * it, which loses refinements. `WidgetExample<C>.config` is checked by tsc
+ * against the config *type*, but the type and the schema can disagree and only
+ * the schema carries runtime constraints, so an example can typecheck and still
+ * render an empty widget.
+ */
+function collectExampleConfigIssues(
+  configSchema: unknown,
+  examples: unknown,
+): ExampleConfigIssue[] {
+  if (!isZodLike(configSchema) || !Array.isArray(examples)) return [];
+
+  const issues: ExampleConfigIssue[] = [];
+  for (const [index, entry] of examples.entries()) {
+    const config = (entry as { config?: unknown } | null)?.config;
+    // A missing or non-object config is the shape guard's error to report.
+    if (typeof config !== "object" || config === null) continue;
+
+    const result = configSchema.safeParse(config);
+    if (result.success) continue;
+
+    issues.push({
+      index,
+      label: (entry as { label?: string }).label,
+      problems: (result.error?.issues ?? []).map((issue) => {
+        const path = issue.path.map(String).join(".");
+        return path ? `${path}: ${issue.message}` : issue.message;
+      }),
+    });
+  }
+  return issues;
 }
 
 async function installDom(): Promise<void> {
@@ -74,7 +130,11 @@ async function main(): Promise<void> {
     });
   }
 
-  const out: Introspection = { manifest: def?.manifest ?? null, jsonSchema };
+  const out: Introspection = {
+    manifest: def?.manifest ?? null,
+    jsonSchema,
+    exampleConfigIssues: collectExampleConfigIssues(def?.configSchema, def?.manifest?.examples),
+  };
   process.stdout.write(JSON.stringify(out));
 }
 

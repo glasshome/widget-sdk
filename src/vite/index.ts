@@ -96,9 +96,46 @@ async function assertExamplesValid(examples: unknown, widgetName: string): Promi
   );
 }
 
+interface ExampleConfigIssue {
+  index: number;
+  label?: string;
+  problems: string[];
+}
+
+/**
+ * Fail the build when an example's config does not satisfy the widget's own
+ * `configSchema`. The parse happens in the introspection subprocess, which is
+ * where the live schema is; this only turns its findings into an error.
+ *
+ * Worth failing on: such an example renders a broken or empty widget, and the
+ * preview publishes anyway, so the storefront shows a picture of the widget not
+ * working. A wrong preview is worse than no preview.
+ */
+function assertExampleConfigsValid(
+  issues: ExampleConfigIssue[] | undefined,
+  widgetName: string,
+): void {
+  if (!issues?.length) return;
+
+  const detail = issues
+    .map((issue) => {
+      const name = issue.label ? `"${issue.label}"` : `#${issue.index}`;
+      return [`  examples[${issue.index}] ${name}:`, ...issue.problems.map((p) => `    ${p}`)].join(
+        "\n",
+      );
+    })
+    .join("\n");
+  throw new Error(
+    `[widget-sdk] Example config rejected by "${widgetName}"'s own configSchema:\n${detail}\n` +
+      "Each example's `config` must be a config the widget would actually accept, " +
+      "or its preview renders empty.",
+  );
+}
+
 interface WidgetIntrospection {
   manifest: { name?: string; configVersion?: number; examples?: unknown } | null;
   jsonSchema: object | null;
+  exampleConfigIssues?: ExampleConfigIssue[];
 }
 
 type IntrospectResult =
@@ -174,7 +211,11 @@ export async function runSchemaGuard(args: {
   }
 
   const def = read.value;
-  await assertExamplesValid(def.manifest?.examples, def.manifest?.name ?? args.widgetName);
+  const declaredName = def.manifest?.name ?? args.widgetName;
+  // Shape first: a malformed entry would otherwise be reported as a schema
+  // rejection, which points the author at the wrong thing.
+  await assertExamplesValid(def.manifest?.examples, declaredName);
+  assertExampleConfigsValid(def.exampleConfigIssues, declaredName);
 
   const jsonSchema = def.jsonSchema;
   if (!jsonSchema) return;
