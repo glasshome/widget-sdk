@@ -4,7 +4,7 @@ import { toFormSchema } from "../to-form-schema";
 import { defineConfig, field } from "./index";
 
 /**
- * Serialization spike (sdk-2.md D.2, plan step 2): does `.meta()` survive zod's
+ * Serialization spike (sdk-contract-hardening.md D.2, plan step 2): does `.meta()` survive zod's
  * JSON Schema conversion inside `oneOf` branches and array `items`, in BOTH
  * serializers?
  *
