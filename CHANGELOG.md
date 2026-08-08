@@ -5,6 +5,60 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-08-08
+
+### Added
+
+- `field.list(item, opts)` renders an add/remove/reorder list of sub-forms.
+  `max` is required (hard ceiling 24, since every item is a rendered subtree and
+  usually an entity subscription), nesting is depth 1 only (a list inside a
+  list throws at definition time, including one hidden in a `variants` branch),
+  and `labelField` must name a field present in every item shape.
+- `field.variants(discriminator, variants, opts)` builds a discriminated union,
+  with optional shared fields merged into every variant and labels for the
+  form's kind selector.
+- `useWidgetDimensions()`: measured shell dimensions from a context only
+  `<Widget>` provides. It throws when called from the top-level widget scope
+  instead of silently reading the host stub's (0,0).
+- 21 `@glasshome/ui` primitives are re-exported through the main SDK barrel, so
+  `sdkVersion` gates them. `@glasshome/ui` stays a host singleton via vite
+  externals.
+- The build writes the bundle-only facts (config schema, `defaultConfig`,
+  `examples`, `configVersion`) into the manifest. Strictly additive: nothing the
+  manifest already declares is overwritten. Until now every build derived a
+  widget's config schema and threw it away, so no widget had ever published its
+  config shape.
+- Widget shells wear the shared glass material: variants carry the `CARD_BLUR`
+  recipe via `--widget-backdrop`, and `tokens.css` consumes `var(--glass-frost)`
+  natively, replacing the bespoke `--gh-pb-*` channel.
+
+### Fixed
+
+- `WidgetDialog` validates the draft against the widget's schema before saving.
+  An invalid config used to reach the host and fall back to defaults, silently
+  wiping the user's configuration; failures now feed the injected `SchemaForm`'s
+  errors instead.
+- `examples` entries are validated against the widget's `configSchema`, not just
+  shape-checked. An example that satisfies the TypeScript type can still violate
+  the runtime constraints the type cannot express (enum members, min/max,
+  required fields), which published a storefront picture of a broken widget.
+- A failed introspection is fatal. It was a silent return, then a warning, both
+  of which left a green build with examples and config schema unvalidated.
+
+### Deprecated
+
+- `ctx.dimensions` (removed in 2.0.0). Use `useWidgetDimensions()`.
+- Direct `@glasshome/ui` imports (removed in 2.0.0). Import the same export from
+  `@glasshome/widget-sdk`. They keep working but warn at build.
+
+### Removed
+
+- The dead `isEditMode` field on `ReactiveWidgetContext`. Nothing read it.
+
+### Changed
+
+- `@glasshome/sync-layer` peer bumped to 0.5.0.
+
 ## [1.4.0] - 2026-07-02
 
 ### Added
