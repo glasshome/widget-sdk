@@ -58,6 +58,7 @@
   },
   "peerDependencies": {
     "@glasshome/sync-layer": "0.5.0",
+    "@glasshome/ui": "1.3.0",
     "solid-js": "^1.9.11"
   },
   "dependencies": {
