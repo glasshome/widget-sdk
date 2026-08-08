@@ -133,7 +133,9 @@ function assertExampleConfigsValid(
 }
 
 interface WidgetIntrospection {
-  manifest: { name?: string; configVersion?: number; examples?: unknown } | null;
+  manifest:
+    | ({ name?: string; configVersion?: number; examples?: unknown } & Record<string, unknown>)
+    | null;
   jsonSchema: object | null;
   exampleConfigIssues?: ExampleConfigIssue[];
 }
@@ -187,9 +189,58 @@ function introspect(outFile: string): IntrospectResult {
  * pre-1.7 builds) cannot prove a missing bump, so they only warn, then upgrade
  * to the JSON record format.
  *
- * When `manifestPath` is given (single-widget projects), the generated JSON
- * Schema is also written into `manifest.json` as `schema`.
+ * When `manifestPath` is given, the build also writes the generated manifest
+ * (see writeGeneratedManifest).
  */
+/**
+ * Facts only the bundle knows, so only these are written to disk.
+ *
+ * The inverse list (everything the file already holds) stays authoritative on
+ * purpose. `sdkVersion` is the case that proves it: the disk value is the one
+ * that ships and is gated twice, while the value inside `defineWidget` has
+ * drifted to a stale range in 17 of 19 official widgets. Generating from the
+ * bundle would publish the dead one. `defaultSize` and `capabilities` are
+ * similar: they exist only on disk today, so a bundle-wins merge would delete
+ * them.
+ *
+ * So phase 1 is strictly additive. Authors migrate a field by moving it into
+ * `defineWidget` and deleting it from the file; until then the file wins.
+ */
+const BUNDLE_OWNED_MANIFEST_KEYS = [
+  "schema",
+  "defaultConfig",
+  "examples",
+  "configVersion",
+] as const;
+
+/**
+ * Write the manifest the publish pipeline reads.
+ *
+ * Adds the facts that only exist inside the bundle (the derived config schema,
+ * its defaults, the examples, the config generation) to the file the author
+ * already maintains. Nothing the file declares is touched, so this cannot lose
+ * data and cannot change what an existing widget publishes.
+ *
+ * Skipped when the result is byte-identical, so a no-op build leaves a clean
+ * tree.
+ */
+function writeGeneratedManifest(
+  manifestPath: string,
+  def: WidgetIntrospection,
+  jsonSchema: object,
+): void {
+  const current = readFileSync(manifestPath, "utf-8");
+  const manifest = JSON.parse(current);
+  const fromBundle: Record<string, unknown> = { ...(def.manifest ?? {}), schema: jsonSchema };
+
+  for (const key of BUNDLE_OWNED_MANIFEST_KEYS) {
+    if (fromBundle[key] !== undefined) manifest[key] = fromBundle[key];
+  }
+
+  const next = `${JSON.stringify(manifest, null, 2)}\n`;
+  if (next !== current) writeFileSync(manifestPath, next);
+}
+
 export async function runSchemaGuard(args: {
   outFile: string;
   hashFile: string;
@@ -200,14 +251,15 @@ export async function runSchemaGuard(args: {
 
   const read = introspect(args.outFile);
   if (!read.ok) {
-    // Loud on purpose. This used to be a silent `return`, and it meant the
-    // guard did nothing for every widget on every build for months without
-    // anyone noticing. A guard that cannot run has to say so.
-    console.warn(
+    // Fatal on purpose. This was a silent `return` for months, then a warning.
+    // A warning is still wrong: the build stays green while the examples and
+    // config schema go unvalidated, and publish reads what this step produces,
+    // so the same failure ships an unchecked widget on the irreversible step.
+    throw new Error(
       `[widget-sdk] Could not read "${args.widgetName}" to check it: ${read.reason}\n` +
-        "  Its examples and config schema were NOT validated.",
+        "  Its examples and config schema could not be validated, so the build cannot continue.\n" +
+        "  This usually means the bundle throws while being imported.",
     );
-    return;
   }
 
   const def = read.value;
@@ -221,9 +273,7 @@ export async function runSchemaGuard(args: {
   if (!jsonSchema) return;
 
   if (args.manifestPath && existsSync(args.manifestPath)) {
-    const manifest = JSON.parse(readFileSync(args.manifestPath, "utf-8"));
-    manifest.schema = jsonSchema;
-    writeFileSync(args.manifestPath, JSON.stringify(manifest, null, 2));
+    writeGeneratedManifest(args.manifestPath, def, jsonSchema);
   }
 
   const hash = hashSchema(jsonSchema);
@@ -643,6 +693,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       outFile: join(outDir, `${widget.name}.js`),
       hashFile: join(dirname(widget.entry), ".schema-hash"),
       widgetName: widget.name,
+      manifestPath: join(dirname(widget.entry), "manifest.json"),
     });
   }
 
