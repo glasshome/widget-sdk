@@ -28,6 +28,11 @@ export default defineConfig({
         "node:module",
         "node:path",
         "node:url",
+        // This package, by its own name. `src/host/instantiate-widget.ts`
+        // self-references so `WidgetCtx` keeps a single address across every
+        // build shape; inlining it here would defeat that and restore the
+        // duplicate-context bug (finding 45).
+        "@glasshome/widget-sdk",
         // Peer/workspace dependencies -- not bundled
         "@glasshome/sync-layer",
         "@glasshome/sync-layer/solid",

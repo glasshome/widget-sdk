@@ -386,28 +386,46 @@ export function isDirectUiImportSource(id: string, code: string): boolean {
  * until 2.0, but they bypass the sdkVersion gate, so ui can drift against
  * published widgets with nothing checking compatibility. Detection scans
  * module source in `transform` because externalized specifiers never reach
- * `resolveId` (rollup consults `external` for the bare id first). One warning
- * per widget build, listing the offending files and the SDK replacement.
+ * `resolveId` (rollup consults `external` for the bare id first).
+ *
+ * `warned` carries the files already reported across every build in one run, so
+ * a module shared by N widgets is named once and not once per bundle it lands in.
  */
-function uiImportGuard(): Plugin {
+export function createUiImportTracker(warned: Set<string> = new Set()) {
   const offenders = new Set<string>();
+  return {
+    scan(id: string, code: string): void {
+      if (isDirectUiImportSource(id, code)) {
+        offenders.add(normalizePath(relative(process.cwd(), id.split("?")[0] ?? id)));
+      }
+    },
+    /** Offending files this run has not reported yet; marks them reported. */
+    take(): string[] {
+      const fresh = [...offenders].filter((f) => !warned.has(f));
+      for (const f of fresh) warned.add(f);
+      return fresh;
+    },
+  };
+}
+
+function uiImportGuard(warned?: Set<string>): Plugin {
+  const tracker = createUiImportTracker(warned);
   return {
     name: "glasshome-widget:ui-import-guard",
     apply: "build",
     enforce: "pre",
     transform(code: string, id: string) {
-      if (isDirectUiImportSource(id, code)) {
-        offenders.add(normalizePath(relative(process.cwd(), id.split("?")[0] ?? id)));
-      }
+      tracker.scan(id, code);
       return null;
     },
     buildEnd() {
-      if (offenders.size === 0) return;
+      const fresh = tracker.take();
+      if (fresh.length === 0) return;
       const entry = deprecations.find((d) => d.id === "direct-ui-import");
       const notice = entry
         ? formatDeprecation(entry)
         : '[@glasshome/widget-sdk] Direct @glasshome/ui imports are deprecated; import the same export from "@glasshome/widget-sdk".';
-      const files = [...offenders].map((f) => `    ${f}`).join("\n");
+      const files = fresh.map((f) => `    ${f}`).join("\n");
       console.warn(`${notice}\n  Direct @glasshome/ui import(s) in:\n${files}`);
     },
   };
@@ -657,6 +675,9 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
     mkdirSync(outDir, { recursive: true });
   }
 
+  // Shared by every build below: a file that N widgets import is warned about once.
+  const uiImportWarned = new Set<string>();
+
   // Build each widget independently
   for (const widget of widgets) {
     await build({
@@ -666,7 +687,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
         ...buildOnlyTailwind(),
         ...(options?.plugins ?? []),
         syncLayerImportGuard(),
-        uiImportGuard(),
+        uiImportGuard(uiImportWarned),
       ],
       ...options?.viteConfig,
       build: {

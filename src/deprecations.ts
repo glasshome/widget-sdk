@@ -86,8 +86,9 @@ export const deprecations: readonly DeprecationEntry[] = [
     id: "direct-ui-import",
     since: "1.9.0",
     removeIn: "2.0.0",
-    replacement: 'the same export from "@glasshome/widget-sdk"',
-    docsUrl: "https://glasshome.app/docs/widget-styling",
+    replacement:
+      'the same export from "@glasshome/widget-sdk" (keep @glasshome/ui installed: its styles stay in the build)',
+    docsUrl: "https://glasshome.app/docs/widget-styling#importing-ui-components",
     sourcePattern: "from\\s+[\"']@glasshome/ui(/[^\"']*)?[\"']",
   },
   {

@@ -1,9 +1,24 @@
+// Self-referenced by package name, deliberately, not by relative path.
+//
+// `WidgetCtx` is the one piece of this package that must be a singleton: the
+// host writes the widget's context into it and the widget reads it back out. A
+// relative import travels with whoever bundles this file, so a host that
+// bundles `/host` would get a private `WidgetCtx` while widgets resolve the
+// bare specifier through the import map to the shared copy — two Symbols, and
+// the handshake silently fails (finding 45; `useWidgetContext` threw and every
+// widget service call no-opped, live on edge and demo for two weeks).
+//
+// The bare specifier is the singleton's one address. Every host build already
+// externalizes it, so this resolves to the shared instance whether `/host` is
+// bundled or served, and no host has to remember to serve `/host` at all. This
+// is what dash did before the mount code moved into this package.
+//
+// `injectTokens` is here for the same reason: it holds module-level state
+// tracking which roots it has already styled.
+import { injectTokens, WidgetCtx } from "@glasshome/widget-sdk";
+import type { ReactiveWidgetContext, WidgetDefinition } from "@glasshome/widget-sdk";
 import { type Accessor, createComponent, ErrorBoundary } from "solid-js";
 import { render } from "solid-js/web";
-import { injectTokens } from "../framework/theming";
-import { WidgetCtx } from "../framework/hooks/use-widget-context";
-import type { ReactiveWidgetContext } from "../framework/hooks/use-widget-context";
-import type { WidgetDefinition } from "../types";
 
 export interface WidgetInstanceHandle {
   dispose: () => void;
