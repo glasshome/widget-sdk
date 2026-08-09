@@ -5,6 +5,32 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-08-10
+
+### Fixed
+
+- `syncLayerImportGuard` enforces its contract again. It detected direct
+  `@glasshome/sync-layer` imports in `resolveId`, but rollup consults
+  `rollupOptions.external` before plugin resolve hooks, so an externalized
+  specifier never reached it: under Vite 8 a widget importing the store directly
+  built clean. Detection moved to a `transform` source scan, the same approach
+  `uiImportGuard` uses. A widget that bundles its own store copy is disconnected
+  from live state, which is why this fails the build rather than warning.
+- `@glasshome/ui` is an **optional** peer. It is served by the host, so requiring
+  it told every widget project to install a package it never needs; 1.9.0
+  declared it as a hard peer to make the SDK's own types resolve.
+
+## [1.9.1] - 2026-08-10
+
+### Fixed
+
+- The host entry reaches `WidgetCtx` by package name rather than a relative
+  path, so a host and its widgets share one context instance
+  (`scripts/check-host-singleton.ts` gates it).
+- The direct-`@glasshome/ui`-import build warning names each offending file once
+  per run instead of once per widget bundle. A module shared by every widget was
+  restated in every build: 49 widgets meant 55 warnings for 6 files.
+
 ## [1.9.0] - 2026-08-08
 
 ### Added

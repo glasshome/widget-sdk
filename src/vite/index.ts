@@ -337,32 +337,52 @@ export function isWidgetExternal(id: string): boolean {
   return isHostProvidedModule(id);
 }
 
+const WIDGET_SOURCE_RE = /\.(ts|tsx|js|jsx)$/;
+
+const SYNC_LAYER_IMPORT_RE = /from\s+["']@glasshome\/sync-layer(\/[^"']*)?["']/;
+
+/**
+ * True when a widget source file imports `@glasshome/sync-layer` directly.
+ * Same file filters as `isDirectUiImportSource`: node_modules is the SDK's own
+ * business, and non-script assets are not scanned.
+ */
+export function isDirectSyncLayerImportSource(id: string, code: string): boolean {
+  const file = normalizePath(id).split("?")[0] ?? "";
+  if (file.includes("/node_modules/")) return false;
+  if (!WIDGET_SOURCE_RE.test(file)) return false;
+  return SYNC_LAYER_IMPORT_RE.test(code);
+}
+
 /**
  * Fails the build when a widget imports @glasshome/sync-layer directly.
  * The single store instance lives in the host; bundling a second copy would
  * silently disconnect the widget from live state. Widgets must use the
  * hooks re-exported by @glasshome/widget-sdk (capability-routed by the host).
+ *
+ * Detection is a `transform` source scan, not `resolveId`. Rollup consults
+ * `rollupOptions.external` before plugin `resolveId` hooks, so an externalized
+ * specifier never reaches them: under Vite 8 this guard threw on nothing at all
+ * and a seeded direct import built clean. A hard-error contract enforcing
+ * nothing is worse than no contract, because the green build is read as proof.
  */
 function syncLayerImportGuard(): Plugin {
   return {
     name: "glasshome-widget:sync-layer-guard",
     apply: "build",
     enforce: "pre",
-    resolveId(id: string, importer?: string) {
-      if (id === "@glasshome/sync-layer" || id.startsWith("@glasshome/sync-layer/")) {
+    transform(code: string, id: string) {
+      if (isDirectSyncLayerImportSource(id, code)) {
         throw new Error(
-          `Widgets must not import "${id}" directly` +
-            (importer ? ` (imported by ${importer})` : "") +
-            `. Import the equivalent hook from "@glasshome/widget-sdk" instead ` +
+          `Widgets must not import "@glasshome/sync-layer" directly ` +
+            `(imported by ${normalizePath(relative(process.cwd(), id.split("?")[0] ?? id))}). ` +
+            `Import the equivalent hook from "@glasshome/widget-sdk" instead ` +
             `(e.g. useEntity, useEntities, useService).`,
         );
       }
-      return undefined;
+      return null;
     },
   };
 }
-
-const WIDGET_SOURCE_RE = /\.(ts|tsx|js|jsx)$/;
 
 /**
  * True when a widget source file imports `@glasshome/ui` directly. The regex is
