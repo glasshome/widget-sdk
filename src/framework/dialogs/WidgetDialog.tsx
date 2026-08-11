@@ -7,7 +7,6 @@ import {
   on,
   Show,
   splitProps,
-  untrack,
 } from "solid-js";
 import type { ZodType } from "zod";
 import { toFormSchema } from "../to-form-schema";
@@ -232,9 +231,10 @@ export function WidgetDialog(props: WidgetDialogProps) {
           return (
             <SchemaFormEdit
               schema={schema}
-              // Untracked: reads stay off the graph so draft keystrokes never
-              // rebuild the form; each lazy prop access still sees the current draft.
-              data={untrack(draftConfig)}
+              // Tracked: SchemaForm is controlled, so a Select/Switch only
+              // repaints when its data prop is a live read. builtTabs does not
+              // depend on the draft, so this updates fields without a rebuild.
+              data={draftConfig()}
               onChange={setDraftConfig}
               errors={configErrors()}
             />

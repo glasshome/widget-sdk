@@ -29,6 +29,14 @@ describe("WidgetDialog validates on schema save", () => {
     expect(COLLAPSED).toContain("errors={configErrors()}");
   });
 
+  // SchemaForm is controlled (props.data is its only source of truth), so an
+  // untracked snapshot froze Select/Switch at their opened-with values while the
+  // draft moved underneath: edits saved, but the controls never repainted.
+  test("feeds the draft to SchemaForm as a tracked read", () => {
+    expect(COLLAPSED).toContain("data={draftConfig()}");
+    expect(SRC).not.toContain("untrack(draftConfig)");
+  });
+
   test("closing the dialog resets the draft and clears stale errors", () => {
     const close = COLLAPSED.match(/const handleSchemaClose = \(open: boolean\) => \{.*?\};/)?.[0] ?? "";
     expect(close).toContain("setConfigErrors([])");
