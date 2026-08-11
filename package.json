@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-sdk",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
     "glasshome",
