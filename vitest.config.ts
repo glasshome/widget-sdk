@@ -18,5 +18,9 @@ export default defineConfig({
     // without globals every mount leaks into the next test's document.
     globals: true,
     include: ["tests/dom/**/*.test.{ts,tsx}"],
+    // Bound workers and per-worker heap: a leaking suite must fail with a heap
+    // error, not exhaust system memory (unbounded forks each default to ~4GB).
+    maxWorkers: 2,
+    execArgv: ["--max-old-space-size=2048"],
   },
 });
