@@ -1,5 +1,14 @@
+import type {
+  Button as UIButton,
+  ResponsiveDialog as UIResponsiveDialog,
+  ResponsiveDialogContent as UIResponsiveDialogContent,
+  ResponsiveDialogDescription as UIResponsiveDialogDescription,
+  ResponsiveDialogHeader as UIResponsiveDialogHeader,
+  ResponsiveDialogTitle as UIResponsiveDialogTitle,
+  SchemaForm as UISchemaForm,
+} from "@glasshome/ui/solid";
 import {
-  type Component,
+  type ComponentProps,
   createEffect,
   createMemo,
   createSignal,
@@ -12,6 +21,16 @@ import type { ZodType } from "zod";
 import { toFormSchema } from "../to-form-schema";
 import { cn } from "../utils/cn";
 import { validateConfigDraft } from "./validate-config";
+
+/** The JSON Schema dialect ui's SchemaForm accepts, sourced from ui itself. */
+type SchemaFormSchema = ComponentProps<typeof UISchemaForm>["schema"];
+
+/**
+ * `toFormSchema` returns `object` (zod's JSON Schema output is untyped here).
+ * The single narrowing point where that meets ui's declared schema type.
+ */
+const asFormSchema = (schema: ZodType): SchemaFormSchema =>
+  toFormSchema(schema) as SchemaFormSchema;
 
 interface TabButtonProps {
   icon: JSX.Element;
@@ -71,21 +90,15 @@ export interface WidgetDialogProps {
   config?: Record<string, unknown>;
   onConfigSave?: (config: Record<string, unknown>) => void;
 
-  // Injected UI components — typed permissively so any compatible component satisfies the contract
-  // biome-ignore lint/suspicious/noExplicitAny: injected UI components with varying prop signatures
-  ResponsiveDialog: Component<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
-  ResponsiveDialogContent: Component<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
-  ResponsiveDialogHeader: Component<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
-  ResponsiveDialogTitle: Component<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
-  ResponsiveDialogDescription: Component<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: injected UI component
-  Button: Component<any>;
-  // biome-ignore lint/suspicious/noExplicitAny: injected form renderer component
-  SchemaForm?: Component<any>;
+  // Injected UI primitives. Typed as the real @glasshome/ui components so a
+  // prop-signature change in ui breaks tsc here instead of only at runtime.
+  ResponsiveDialog: typeof UIResponsiveDialog;
+  ResponsiveDialogContent: typeof UIResponsiveDialogContent;
+  ResponsiveDialogHeader: typeof UIResponsiveDialogHeader;
+  ResponsiveDialogTitle: typeof UIResponsiveDialogTitle;
+  ResponsiveDialogDescription: typeof UIResponsiveDialogDescription;
+  Button: typeof UIButton;
+  SchemaForm?: typeof UISchemaForm;
 }
 
 export function WidgetDialog(props: WidgetDialogProps) {
@@ -123,7 +136,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const schemaMode = () =>
     !!local.configSchema && !!local.config && !!local.onConfigSave && !!local.SchemaForm;
   const [draftConfig, setDraftConfig] = createSignal<Record<string, unknown>>({});
-  const [formSchema, setFormSchema] = createSignal<object | null>(null);
+  const [formSchema, setFormSchema] = createSignal<SchemaFormSchema | null>(null);
   const [configErrors, setConfigErrors] = createSignal<string[]>([]);
 
   // Reset draft when config changes or dialog opens
@@ -141,7 +154,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     on(
       () => local.configSchema,
       (schema) => {
-        if (schema) setFormSchema(toFormSchema(schema));
+        if (schema) setFormSchema(asFormSchema(schema));
       },
     ),
   );
@@ -220,8 +233,9 @@ export function WidgetDialog(props: WidgetDialogProps) {
       content:
         local.editContent ??
         (() => {
+          const SchemaFormEdit = local.SchemaForm;
           const schema = schemaMode() ? formSchema() : undefined;
-          if (!schema) {
+          if (!schema || !SchemaFormEdit) {
             return (
               <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
                 <p class="text-muted-foreground text-sm">No edit options available</p>
@@ -332,12 +346,6 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const RDTitle = local.ResponsiveDialogTitle;
   const RDDescription = local.ResponsiveDialogDescription;
   const Btn = local.Button;
-  const SchemaFormEdit = local.SchemaForm as Component<{
-    schema: object;
-    data: Record<string, unknown>;
-    onChange: (data: Record<string, unknown>) => void;
-    errors?: string[];
-  }>;
 
   const builtTabs = createMemo(
     on(
