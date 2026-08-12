@@ -199,11 +199,12 @@ function introspect(outFile: string): IntrospectResult {
  * purpose. `sdkVersion` is the case that proves it: the disk value is the one
  * that ships and is gated twice, while the value inside `defineWidget` has
  * drifted to a stale range in 17 of 19 official widgets. Generating from the
- * bundle would publish the dead one. `defaultSize` and `capabilities` are
- * similar: they exist only on disk today, so a bundle-wins merge would delete
- * them.
+ * bundle would publish the dead one. `version` is a release fact the publish
+ * CLI owns, never the bundle.
  *
- * So phase 1 is strictly additive. Authors migrate a field by moving it into
+ * The write is per-key and only fires when the bundle declares the key, so a
+ * widget that has not moved `defaultSize`/`capabilities` into `defineWidget`
+ * keeps its file values. Authors migrate a field by moving it into
  * `defineWidget` and deleting it from the file; until then the file wins.
  */
 const BUNDLE_OWNED_MANIFEST_KEYS = [
@@ -211,6 +212,8 @@ const BUNDLE_OWNED_MANIFEST_KEYS = [
   "defaultConfig",
   "examples",
   "configVersion",
+  "defaultSize",
+  "capabilities",
 ] as const;
 
 /**
