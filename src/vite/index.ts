@@ -214,6 +214,11 @@ const BUNDLE_OWNED_MANIFEST_KEYS = [
   "configVersion",
   "defaultSize",
   "capabilities",
+  "name",
+  "description",
+  "icon",
+  "minSize",
+  "maxSize",
 ] as const;
 
 /**
