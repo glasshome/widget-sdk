@@ -23,8 +23,13 @@ function entityDomain(entityId: string | string[]): string {
 }
 
 function shortcut(call: ServiceCallFn, service: "turn_on" | "turn_off" | "toggle") {
-  return (entityId: string | string[], serviceData: Record<string, unknown> = {}) =>
-    call(entityDomain(entityId), service, serviceData, { entity_id: entityId });
+  // Commands have no response; keep the shortcut signatures Promise<void>.
+  return async (
+    entityId: string | string[],
+    serviceData: Record<string, unknown> = {},
+  ): Promise<void> => {
+    await call(entityDomain(entityId), service, serviceData, { entity_id: entityId });
+  };
 }
 
 export function useService(): {

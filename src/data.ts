@@ -16,10 +16,16 @@ export {
   trackEntityHistory,
   untrackEntityHistory,
 } from "@glasshome/sync-layer";
-export type { AreaView } from "@glasshome/sync-layer";
+export type {
+  AreaView,
+  CalendarEvent,
+  CalendarEventsData,
+  CalendarWindowOptions,
+} from "@glasshome/sync-layer";
 export {
   byDomain,
   useArea,
+  useCalendarEvents,
   useCamera,
   useConnection,
   useCurrency,

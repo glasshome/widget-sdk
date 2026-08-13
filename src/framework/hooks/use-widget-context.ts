@@ -15,13 +15,17 @@ export interface WidgetDimensions {
 }
 
 /** Capability-routed service call: an RPC into the host's HA bridge worker,
-    validated there against the widget's granted capabilities. */
+    validated there against the widget's granted capabilities. Pass
+    `{ returnResponse: true }` for services that return data (e.g.
+    `todo.get_items`); the resolved value is the HA service response, else
+    `undefined`. */
 export type ServiceCallFn = (
   domain: string,
   service: string,
   serviceData?: Record<string, unknown>,
   target?: Record<string, unknown>,
-) => Promise<void>;
+  options?: { returnResponse?: boolean },
+) => Promise<unknown>;
 
 export interface ReactiveWidgetContext {
   updateConfig: (config: Record<string, unknown>) => void;
