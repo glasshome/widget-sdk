@@ -5,6 +5,37 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-08-13
+
+### Added
+
+- `useCalendarEvents(entityId, options?)` — live events for a Home Assistant
+  calendar entity, with `CalendarEvent`, `CalendarEventsData` and
+  `CalendarWindowOptions` types. Backed by `calendar/event/subscribe`,
+  ref-counted per entity and resubscribed after a reconnect. This restores
+  calendar access for widgets, which lost it when `state.conn` left
+  sync-layer's widget-reachable entry in 0.6.0; the hook is read-only and
+  cannot reach service calls, so it is a narrower path than the raw
+  connection it replaces.
+- Service calls can request Home Assistant's service response. Pass
+  `{ returnResponse: true }` as the fifth argument to the `callService` from
+  `useWidgetContext()`, for services such as `todo.get_items` that return
+  data. Capability checks are unchanged: the flag only asks HA to include its
+  response.
+
+### Changed
+
+- `ServiceCallFn` returns `Promise<unknown>` instead of `Promise<void>`, to
+  carry the service response above. `await callService(...)` is unaffected,
+  and the `useService()` shortcuts (`turnOn`, `turnOff`, `toggle`) still
+  return `Promise<void>` since commands have no response. Only code that
+  assigns `callService` somewhere a `Promise<void>`-returning function is
+  required needs a change.
+
+### Note
+
+- Requires `@glasshome/sync-layer` 0.7.0.
+
 ## [1.9.2] - 2026-08-10
 
 ### Fixed
