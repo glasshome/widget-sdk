@@ -15,6 +15,8 @@
  * Prints: { manifest, jsonSchema } on stdout, or exits non-zero with a reason.
  */
 
+import { pathToFileURL } from "node:url";
+
 interface Introspection {
   manifest: {
     name?: string;
@@ -117,7 +119,8 @@ async function main(): Promise<void> {
 
   await installDom();
 
-  const mod = (await import(bundlePath)) as {
+  // Windows drive paths ("C:\\…") parse as a URL scheme under Node's ESM loader.
+  const mod = (await import(pathToFileURL(bundlePath).href)) as {
     default?: { manifest?: Introspection["manifest"]; configSchema?: unknown };
   };
   const def = mod.default;
