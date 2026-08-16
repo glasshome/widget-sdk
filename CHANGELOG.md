@@ -5,6 +5,20 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.3] - 2026-08-16
+
+### Fixed
+
+- Builds on Windows failed at validation with "Only URLs with a scheme in:
+  file, data, and node are supported ... Received protocol 'c:'": the
+  introspection step imported the built bundle by filesystem path, which
+  Node's ESM loader reads as a URL scheme on drive-letter paths. It now
+  imports a `file://` URL.
+- `@glasshome/ui` is a required peer again. 1.10.0 marked it optional, so a
+  fresh project no longer received it on `bun install` and every build failed
+  with "@glasshome/ui is required to build widgets". The runtime is still
+  host-provided; the build reads its theme styles and types.
+
 ## [1.10.0] - 2026-08-13
 
 ### Added
