@@ -12,6 +12,7 @@ export default defineConfig({
         "host/index": "src/host/index.ts",
         "vite/index": "src/vite/index.ts",
         "vite/introspect": "src/vite/introspect.ts",
+        "vite/introspect-worker": "src/vite/introspect-worker.ts",
       },
       formats: ["es"],
     },

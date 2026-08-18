@@ -19,7 +19,7 @@ import { defineConfig, field } from "./index";
  *    - `defineWidget` calls `toFormSchema` (the override wrapper in
  *      ../to-form-schema.ts) to fill `manifest.schema`, which dash's
  *      SchemaForm consumes directly.
- *    - the vite build's introspection step (`src/vite/introspect.ts`) calls raw
+ *    - the vite build's introspection step (`src/vite/introspect-core.ts`) calls raw
  *      `z.toJSONSchema(schema, { unrepresentable: "any" })` for the manifest
  *      payload the Hub stores.
  *
@@ -61,7 +61,7 @@ function flowConfig() {
   });
 }
 
-/** The introspect serializer, verbatim from src/vite/introspect.ts. */
+/** The introspect serializer, verbatim from src/vite/introspect-core.ts. */
 function introspectSerialize(schema: z.ZodType): object {
   return z.toJSONSchema(schema, { unrepresentable: "any" });
 }

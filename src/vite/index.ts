@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -20,6 +19,21 @@ import {
 import tailwindcss from "@tailwindcss/vite";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
 import { deprecations, formatDeprecation } from "../deprecations";
+import type { ExampleConfigIssue, WidgetIntrospection } from "./introspect-core";
+import {
+  createIntrospectSession,
+  type IntrospectSession,
+  type IntrospectSessionOptions,
+  introspectOnce,
+} from "./introspect-session";
+
+export { createIntrospectSession, introspectOnce };
+export type {
+  ExampleConfigIssue,
+  IntrospectSession,
+  IntrospectSessionOptions,
+  WidgetIntrospection,
+};
 
 export interface GlasshomeWidgetOptions {
   /** Entry file for the widget (default: "src/index.tsx") */
@@ -96,12 +110,6 @@ async function assertExamplesValid(examples: unknown, widgetName: string): Promi
   );
 }
 
-interface ExampleConfigIssue {
-  index: number;
-  label?: string;
-  problems: string[];
-}
-
 /**
  * Fail the build when an example's config does not satisfy the widget's own
  * `configSchema`. The parse happens in the introspection subprocess, which is
@@ -130,54 +138,6 @@ function assertExampleConfigsValid(
       "Each example's `config` must be a config the widget would actually accept, " +
       "or its preview renders empty.",
   );
-}
-
-interface WidgetIntrospection {
-  manifest:
-    | ({ name?: string; configVersion?: number; examples?: unknown } & Record<string, unknown>)
-    | null;
-  jsonSchema: object | null;
-  exampleConfigIssues?: ExampleConfigIssue[];
-}
-
-type IntrospectResult =
-  | { ok: true; value: WidgetIntrospection }
-  | { ok: false; reason: string };
-
-/**
- * Read a built bundle's definition, in a subprocess.
- *
- * A widget bundle cannot be imported by the build process: `solid-js/web`
- * resolves to its server build under Node's conditions and throws the moment
- * the module initialises, and browser conditions then need a DOM for the
- * templates Solid creates at import time. So this spawns the runtime again
- * with `--conditions browser`, where introspect.js installs a DOM first.
- */
-function introspect(outFile: string): IntrospectResult {
-  // .js when running from dist, .ts when running from source (tests), so the
-  // tests exercise the same subprocess the build uses rather than a stand-in.
-  const here = dirname(fileURLToPath(import.meta.url));
-  const probe = [join(here, "introspect.js"), join(here, "introspect.ts")].find((p) =>
-    existsSync(p),
-  );
-  if (!probe) return { ok: false, reason: `introspect not found next to ${here}` };
-
-  const run = spawnSync(process.execPath, ["--conditions", "browser", probe, outFile], {
-    encoding: "utf-8",
-    // A widget that loops at import time must not hang the build.
-    timeout: 30_000,
-  });
-
-  if (run.error) return { ok: false, reason: run.error.message };
-  if (run.status !== 0) {
-    const detail = (run.stderr || "").trim().split("\n")[0] || `exit ${run.status}`;
-    return { ok: false, reason: detail };
-  }
-  try {
-    return { ok: true, value: JSON.parse(run.stdout) as WidgetIntrospection };
-  } catch {
-    return { ok: false, reason: "introspect returned unparseable output" };
-  }
 }
 
 /**
@@ -254,10 +214,14 @@ export async function runSchemaGuard(args: {
   hashFile: string;
   widgetName: string;
   manifestPath?: string;
+  /** Persistent worker to reuse. Only `bun widget connect`'s watch loop passes one. */
+  session?: IntrospectSession;
 }): Promise<void> {
   if (!existsSync(args.outFile)) return;
 
-  const read = introspect(args.outFile);
+  const read = args.session
+    ? await args.session.introspect(args.outFile)
+    : introspectOnce(args.outFile);
   if (!read.ok) {
     // Fatal on purpose. This was a silent `return` for months, then a warning.
     // A warning is still wrong: the build stays green while the examples and
@@ -669,6 +633,8 @@ export interface BuildWidgetsOptions {
   viteConfig?: InlineConfig;
   /** Build only these widget names (subdirectory names). Skips full clean. */
   only?: string[];
+  /** Persistent introspection worker to reuse across rebuilds. */
+  session?: IntrospectSession;
 }
 
 /**
@@ -743,6 +709,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       hashFile: join(dirname(widget.entry), ".schema-hash"),
       widgetName: widget.name,
       manifestPath: join(dirname(widget.entry), "manifest.json"),
+      session: options?.session,
     });
   }
 
