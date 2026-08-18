@@ -86,6 +86,12 @@ The `area` widget renders quick-glance metric pills (CO2 traffic-light, humidity
 
 If your widget needs full visual control (a chart, a video stream, a custom animated surface), follow these patterns: keep the `<Widget>` shell neutral (no `tone`/`color`), place your custom DOM inside `<Widget.Content>`, and document the choice in the widget's README.
 
+## Troubleshooting
+
+| Variable                     | Effect                                                                                                                             |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `GLASSHOME_WIDGET_NO_WORKER` | Set to `1` to make `bun widget connect` check each rebuild in a fresh process again, instead of reusing one worker for the session. |
+
 ## Peer Dependencies
 
 | Package    | Required | Notes                                       |

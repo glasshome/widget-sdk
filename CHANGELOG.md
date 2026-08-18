@@ -5,6 +5,21 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-08-18
+
+### Changed
+
+- `bun widget connect` rebuilds faster and no longer fails with `spawnSync ...
+  ETIMEDOUT` after the editor has been sitting idle. Every save used to start a
+  fresh process to read the built bundle; the session now keeps one running and
+  reuses it. A widget that hangs or crashes while being read still fails that
+  save, and no longer takes the rest of the session with it.
+
+### Added
+
+- `GLASSHOME_WIDGET_NO_WORKER=1` restores the old one-process-per-save
+  behaviour, in case the reused worker misbehaves.
+
 ## [1.10.3] - 2026-08-16
 
 ### Fixed
