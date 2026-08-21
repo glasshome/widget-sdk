@@ -78,7 +78,7 @@
     "@solidjs/testing-library": "^0.8.10",
     "@types/bun": "latest",
     "@types/node": "^25.2.2",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.1.0",
     "vite-plugin-solid": "^2.11.12",
     "vitest": "^4.1.10"
