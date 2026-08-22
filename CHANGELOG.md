@@ -5,6 +5,16 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.1] - 2026-08-23
+
+### Fixed
+
+- Widget CSS no longer contains hex colors with alpha (`#0000`, `#rrggbbaa`).
+  Some embedded WebViews (Shelly Wall Display) drop those declarations, which
+  left the native gray button box visible behind every raw `<button>` in a
+  widget and silently removed translucent shadows. Both `glasshomeWidgets()`
+  and `glasshomeWidget()` now keep `transparent` / `rgba()` in the built CSS.
+
 ## [1.11.0] - 2026-08-18
 
 ### Changed

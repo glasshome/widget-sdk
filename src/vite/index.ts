@@ -17,6 +17,7 @@ import {
   widgetManifestSchema,
 } from "@glasshome/widget-contract";
 import tailwindcss from "@tailwindcss/vite";
+import type { Features as LightningFeatures } from "lightningcss";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
 import { deprecations, formatDeprecation } from "../deprecations";
 import type { ExampleConfigIssue, WidgetIntrospection } from "./introspect-core";
@@ -542,6 +543,16 @@ function createWidgetBuildEntry(root: string, name: string, widgetEntry: string)
   return entryPath;
 }
 
+/** Some embedded WebViews (Shelly Wall Display) drop hex colors with alpha, so
+ *  the minifier must keep `transparent` / `rgba()` instead of `#0000` / `#rrggbbaa`. */
+function widgetCssConfig() {
+  // Required lazily: vite bundles the consumer's vite.config with rolldown, and
+  // lightningcss's native binding cannot survive that bundle.
+  const require = createRequire(import.meta.url);
+  const { Features } = require("lightningcss") as { Features: typeof LightningFeatures };
+  return { lightningcss: { include: Features.HexAlphaColors } };
+}
+
 /** Tailwind's vite plugin, constrained to build so dev-server setups that already run it don't double-process. */
 function buildOnlyTailwind(): Plugin[] {
   const plugins = tailwindcss() as Plugin[];
@@ -684,6 +695,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
         uiImportGuard(uiImportWarned),
       ],
       ...options?.viteConfig,
+      css: { ...options?.viteConfig?.css, ...widgetCssConfig() },
       build: {
         lib: {
           entry: createWidgetBuildEntry(root, widget.name, widget.entry),
@@ -737,6 +749,7 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     config() {
       const root = process.cwd();
       return {
+        css: widgetCssConfig(),
         build: {
           lib: {
             entry: createWidgetBuildEntry(root, "index", resolve(root, entry)),
