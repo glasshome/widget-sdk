@@ -3,6 +3,9 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  # Re-publish an existing release by hand, e.g. after the auth path changed
+  # underneath a failed run.
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -15,10 +18,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: bun install
       - run: bun run build
+      # npm >= 11.5.1 (node 24) does the OIDC exchange itself; the auth is the
+      # npmjs trusted-publisher binding (org glasshome, repo widget-sdk, this
+      # file). No token involved.
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
