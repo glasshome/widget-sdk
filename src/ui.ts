@@ -20,6 +20,7 @@ export {
   type Color,
   ColorSlider,
   ColorWheel,
+  imageUrl,
   Input,
   Label,
   parseColor,

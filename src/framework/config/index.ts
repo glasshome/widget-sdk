@@ -149,6 +149,19 @@ function icon(o?: { title?: string; default?: string }) {
   return o?.default !== undefined ? base.default(o.default) : base.optional();
 }
 
+/**
+ * Image id (an opaque handle, not a URL). The host renders its picker and
+ * resolves the id with `imageUrl()`.
+ */
+function image(o: { title?: string; description?: string; default: string }): z.ZodDefault<z.ZodString>;
+function image(o?: { title?: string; description?: string }): z.ZodOptional<z.ZodString>;
+function image(o?: { title?: string; description?: string; default?: string }) {
+  const base = z
+    .string()
+    .meta(meta({ formType: "image-picker", title: o?.title ?? "Image", description: o?.description }));
+  return o?.default !== undefined ? base.default(o.default) : base.optional();
+}
+
 function stringList(o: { title: string; description?: string }): z.ZodDefault<z.ZodArray<z.ZodString>> {
   return z
     .array(z.string())
@@ -374,6 +387,7 @@ export const field = {
   entity,
   area,
   icon,
+  image,
   stringList,
   group,
   list,
