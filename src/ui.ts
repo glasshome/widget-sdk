@@ -23,6 +23,7 @@ export {
   imageUrl,
   Input,
   Label,
+  mediaUrl,
   parseColor,
   ResponsiveDialog,
   ResponsiveDialogContent,
