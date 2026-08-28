@@ -9,7 +9,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [solid()],
   resolve: {
-    conditions: ["browser", "development"],
+    // Same condition dash's seam tests use: WidgetDialog composes ui parts, so
+    // the suite must read ui source rather than a locally built dist.
+    conditions: ["@glasshome/source", "browser", "development"],
     dedupe: ["solid-js", "solid-js/web", "solid-js/store"],
   },
   test: {
