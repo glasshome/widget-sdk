@@ -1,4 +1,13 @@
+import {
+  ResponsiveDialogBody,
+  ResponsiveDialogFooter,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@glasshome/ui/solid";
 import type {
+  ModalSize,
   Button as UIButton,
   ResponsiveDialog as UIResponsiveDialog,
   ResponsiveDialogContent as UIResponsiveDialogContent,
@@ -12,6 +21,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  For,
   type JSX,
   on,
   Show,
@@ -19,7 +29,6 @@ import {
 } from "solid-js";
 import type { ZodType } from "zod";
 import { toFormSchema } from "../to-form-schema";
-import { cn } from "../utils/cn";
 import { validateConfigDraft } from "./validate-config";
 
 /** The JSON Schema dialect ui's SchemaForm accepts, sourced from ui itself. */
@@ -32,32 +41,19 @@ type SchemaFormSchema = ComponentProps<typeof UISchemaForm>["schema"];
 const asFormSchema = (schema: ZodType): SchemaFormSchema =>
   toFormSchema(schema) as SchemaFormSchema;
 
-interface TabButtonProps {
-  icon: JSX.Element;
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-}
+/** Widths a widget could name before ui's modal size scale existed. */
+type LegacyMaxWidth = "2xl" | "3xl" | "4xl";
 
-function TabButton(props: TabButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={() => props.onClick()}
-      class={cn(
-        "flex cursor-pointer items-center justify-center rounded-md px-3 py-1.5 text-xs transition-all duration-300 ease-in-out",
-        props.isActive
-          ? "gap-1.5 bg-foreground/10 font-semibold text-foreground shadow-sm"
-          : "gap-0 text-muted-foreground hover:bg-foreground/5 hover:text-foreground",
-      )}
-    >
-      <Show when={props.isActive}>
-        <span class="inline-flex size-3.5 shrink-0 items-center">{props.icon}</span>
-      </Show>
-      {props.label}
-    </button>
-  );
-}
+const PANEL_SIZE: Record<ModalSize | LegacyMaxWidth, ModalSize> = {
+  sm: "sm",
+  md: "md",
+  lg: "lg",
+  xl: "xl",
+  full: "full",
+  "2xl": "xl",
+  "3xl": "xl",
+  "4xl": "full",
+};
 
 export interface WidgetDialogTab {
   id: string;
@@ -70,6 +66,8 @@ export interface WidgetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** Rendered under the title. Omitted panels are named by the title alone. */
+  description?: JSX.Element;
   onSave?: () => void;
   hasUnsavedChanges?: boolean;
   onDelete?: () => void;
@@ -79,7 +77,8 @@ export interface WidgetDialogProps {
   debugData?: string | Record<string, unknown>;
   tabs?: WidgetDialogTab[];
   class?: string;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
+  /** Panel width on desktop. `2xl`/`3xl`/`4xl` are deprecated aliases. */
+  maxWidth?: ModalSize | LegacyMaxWidth;
   defaultTab?: string;
   /** Controlled active tab (pair with `onActiveTabChange`); overrides `defaultTab`. */
   activeTab?: string;
@@ -99,6 +98,14 @@ export interface WidgetDialogProps {
   ResponsiveDialogDescription: typeof UIResponsiveDialogDescription;
   Button: typeof UIButton;
   SchemaForm?: typeof UISchemaForm;
+  // Optional: a widget built against the older bag still mounts, and the
+  // fallback is the same host module the bag would have carried.
+  ResponsiveDialogBody?: typeof ResponsiveDialogBody;
+  ResponsiveDialogFooter?: typeof ResponsiveDialogFooter;
+  Tabs?: typeof Tabs;
+  TabsList?: typeof TabsList;
+  TabsTrigger?: typeof TabsTrigger;
+  TabsContent?: typeof TabsContent;
 }
 
 export function WidgetDialog(props: WidgetDialogProps) {
@@ -106,6 +113,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "open",
     "onOpenChange",
     "title",
+    "description",
     "onSave",
     "hasUnsavedChanges",
     "onDelete",
@@ -128,8 +136,14 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "ResponsiveDialogHeader",
     "ResponsiveDialogTitle",
     "ResponsiveDialogDescription",
+    "ResponsiveDialogBody",
+    "ResponsiveDialogFooter",
     "Button",
     "SchemaForm",
+    "Tabs",
+    "TabsList",
+    "TabsTrigger",
+    "TabsContent",
   ]);
 
   // Schema-driven config editing: draft lifecycle
@@ -196,18 +210,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     }
   };
 
-  const maxWidthClass = () => {
-    const mw = local.maxWidth ?? "3xl";
-    return {
-      sm: "max-w-sm",
-      md: "max-w-md",
-      lg: "max-w-lg",
-      xl: "max-w-xl",
-      "2xl": "max-w-2xl",
-      "3xl": "max-w-3xl",
-      "4xl": "max-w-4xl",
-    }[mw];
-  };
+  const panelSize = () => PANEL_SIZE[local.maxWidth ?? "xl"];
 
   const resolvedTabs = (): WidgetDialogTab[] => {
     if (local.tabs) return local.tabs;
@@ -334,17 +337,17 @@ export function WidgetDialog(props: WidgetDialogProps) {
     }
   };
 
-  const activeTabContent = () => {
-    const tabs = builtTabs();
-    const active = tabs.find((t) => t.id === activeTab());
-    return active?.content ?? tabs[0]?.content;
-  };
-
   const RD = local.ResponsiveDialog;
   const RDContent = local.ResponsiveDialogContent;
   const RDHeader = local.ResponsiveDialogHeader;
   const RDTitle = local.ResponsiveDialogTitle;
   const RDDescription = local.ResponsiveDialogDescription;
+  const RDBody = local.ResponsiveDialogBody ?? ResponsiveDialogBody;
+  const RDFooter = local.ResponsiveDialogFooter ?? ResponsiveDialogFooter;
+  const TabsRoot = local.Tabs ?? Tabs;
+  const TabsListPart = local.TabsList ?? TabsList;
+  const TabsTriggerPart = local.TabsTrigger ?? TabsTrigger;
+  const TabsContentPart = local.TabsContent ?? TabsContent;
   const Btn = local.Button;
 
   const builtTabs = createMemo(
@@ -360,65 +363,72 @@ export function WidgetDialog(props: WidgetDialogProps) {
     schemaMode() ? schemaDirty() : local.hasUnsavedChanges;
   const effectiveOnSave = () => (schemaMode() ? handleSchemaSave : local.onSave);
 
+  const showFooter = () =>
+    (activeTab() === "edit" && (effectiveOnSave() || local.onDelete)) ||
+    (activeTab() === "debug" && local.debugData !== undefined);
+
   return (
     <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
-      <RDContent class={cn(maxWidthClass(), "px-0", local.class)}>
-        {/* Header: title on left, tabs + actions on right */}
-        <RDHeader class="flex flex-row items-center justify-between gap-3 px-6">
-          <div class="min-w-0 shrink-0">
-            <RDTitle class="truncate leading-tight">{local.title}</RDTitle>
-            <RDDescription class="sr-only">Widget configuration dialog</RDDescription>
-          </div>
-
-          <div class="flex items-center gap-2">
-            {/* Tab buttons */}
-            <div class="flex h-8 items-center rounded-lg border border-border/50 bg-muted/30 p-0.5">
-              {builtTabs().map((tab) => (
-                <TabButton
-                  icon={tab.icon}
-                  label={tab.label}
-                  isActive={activeTab() === tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                />
-              ))}
-            </div>
-
-            {/* Context actions */}
-            <Show when={local.headerActions}>{local.headerActions}</Show>
-          </div>
-        </RDHeader>
-
-        {/* Tab content */}
-        <div class="gh-scroll min-h-0 flex-1 overflow-y-auto px-6">{activeTabContent()}</div>
-
-        <Show
-          when={
-            (activeTab() === "edit" && (effectiveOnSave() || local.onDelete)) ||
-            (activeTab() === "debug" && local.debugData !== undefined)
-          }
-        >
-          <div class="flex shrink-0 items-center justify-end gap-2 border-border/50 border-t px-6 pt-3">
-            <Show when={activeTab() === "edit" && local.onDelete}>
-              <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                Delete
-              </Btn>
+      <RDContent size={panelSize()} class={local.class}>
+        {/* display:contents: the tab context spans the panel without standing
+            between it and Header/Body/Footer. */}
+        <TabsRoot value={activeTab()} onChange={setActiveTab} class="contents">
+          {/* A phone leaves no room for the tab row beside the title, so the
+              header wraps rather than truncating it away. */}
+          <RDHeader
+            class="flex-wrap"
+            action={
+              <>
+                <TabsListPart class="w-auto">
+                  <For each={builtTabs()}>
+                    {(tab) => (
+                      <TabsTriggerPart value={tab.id}>
+                        <span class="inline-flex size-3.5 shrink-0 items-center">{tab.icon}</span>
+                        {tab.label}
+                      </TabsTriggerPart>
+                    )}
+                  </For>
+                </TabsListPart>
+                {local.headerActions}
+              </>
+            }
+          >
+            <RDTitle class="truncate">{local.title}</RDTitle>
+            <Show when={local.description}>
+              <RDDescription>{local.description}</RDDescription>
             </Show>
-            <Show when={activeTab() === "edit" && effectiveOnSave()}>
-              <Btn
-                size="sm"
-                disabled={!effectiveHasChanges()}
-                onClick={() => effectiveOnSave()?.()}
-              >
-                Save
-              </Btn>
-            </Show>
-            <Show when={activeTab() === "debug" && local.debugData !== undefined}>
-              <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                Copy
-              </Btn>
-            </Show>
-          </div>
-        </Show>
+          </RDHeader>
+
+          <RDBody>
+            <For each={builtTabs()}>
+              {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
+            </For>
+          </RDBody>
+
+          <Show when={showFooter()}>
+            <RDFooter>
+              <Show when={activeTab() === "edit" && local.onDelete}>
+                <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
+                  Delete
+                </Btn>
+              </Show>
+              <Show when={activeTab() === "edit" && effectiveOnSave()}>
+                <Btn
+                  size="sm"
+                  disabled={!effectiveHasChanges()}
+                  onClick={() => effectiveOnSave()?.()}
+                >
+                  Save
+                </Btn>
+              </Show>
+              <Show when={activeTab() === "debug" && local.debugData !== undefined}>
+                <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
+                  Copy
+                </Btn>
+              </Show>
+            </RDFooter>
+          </Show>
+        </TabsRoot>
       </RDContent>
     </RD>
   );
