@@ -130,6 +130,54 @@ describe("WidgetDialog shell", () => {
     expect(panel().className).toContain("max-w-sm");
   });
 
+  // useWidgetDialog opens on "controls", which a widget's own tab ids need not
+  // contain. The tab row falls back to the first tab, so everything keyed on the
+  // active tab must read that same fallback or the footer serves another pane.
+  it("falls back to the first tab when the active id names no tab", () => {
+    render(() => (
+      <WidgetDialog
+        {...parts}
+        open
+        onOpenChange={() => {}}
+        title="Custom"
+        activeTab="controls"
+        onSave={() => {}}
+        onDelete={() => {}}
+        tabs={[
+          { id: "edit", label: "Ex", icon: <span />, content: <p>ex pane</p> },
+          { id: "styles", label: "Why", icon: <span />, content: <p>why pane</p> },
+        ]}
+      />
+    ));
+
+    expect(document.querySelector('[data-slot="tabs-trigger"][data-selected]')?.textContent).toBe(
+      "Ex",
+    );
+    expect(slot("responsive-dialog-body")?.textContent).toContain("ex pane");
+    expect(screen.getByRole("button", { name: "Save" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeTruthy();
+  });
+
+  it("honours an active tab id that does name one of the widget's tabs", () => {
+    render(() => (
+      <WidgetDialog
+        {...parts}
+        open
+        onOpenChange={() => {}}
+        title="Custom"
+        onSave={() => {}}
+        activeTab="styles"
+        tabs={[
+          { id: "edit", label: "Ex", icon: <span />, content: <p>ex pane</p> },
+          { id: "styles", label: "Why", icon: <span />, content: <p>why pane</p> },
+        ]}
+      />
+    ));
+
+    expect(slot("responsive-dialog-body")?.textContent).toContain("why pane");
+    expect(slot("responsive-dialog-footer")).toBeNull();
+  });
+
   it("describes the panel only when the widget supplies a description", () => {
     mount();
     expect(slot("dialog-description")).toBeNull();

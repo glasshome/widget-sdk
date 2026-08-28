@@ -363,16 +363,24 @@ export function WidgetDialog(props: WidgetDialogProps) {
     schemaMode() ? schemaDirty() : local.hasUnsavedChanges;
   const effectiveOnSave = () => (schemaMode() ? handleSchemaSave : local.onSave);
 
+  // Custom `tabs` ids need not include the "controls" default useWidgetDialog
+  // starts on; the tab row falls back to the first tab, so the footer must too.
+  const tabValue = () => {
+    const tabs = builtTabs();
+    const active = activeTab();
+    return tabs.some((tab) => tab.id === active) ? active : (tabs[0]?.id ?? active);
+  };
+
   const showFooter = () =>
-    (activeTab() === "edit" && (effectiveOnSave() || local.onDelete)) ||
-    (activeTab() === "debug" && local.debugData !== undefined);
+    (tabValue() === "edit" && (effectiveOnSave() || local.onDelete)) ||
+    (tabValue() === "debug" && local.debugData !== undefined);
 
   return (
     <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
       <RDContent size={panelSize()} class={local.class}>
         {/* display:contents: the tab context spans the panel without standing
             between it and Header/Body/Footer. */}
-        <TabsRoot value={activeTab()} onChange={setActiveTab} class="contents">
+        <TabsRoot value={tabValue()} onChange={setActiveTab} class="contents">
           {/* A phone leaves no room for the tab row beside the title, so the
               header wraps rather than truncating it away. */}
           <RDHeader
@@ -407,12 +415,12 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
           <Show when={showFooter()}>
             <RDFooter>
-              <Show when={activeTab() === "edit" && local.onDelete}>
+              <Show when={tabValue() === "edit" && local.onDelete}>
                 <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
                   Delete
                 </Btn>
               </Show>
-              <Show when={activeTab() === "edit" && effectiveOnSave()}>
+              <Show when={tabValue() === "edit" && effectiveOnSave()}>
                 <Btn
                   size="sm"
                   disabled={!effectiveHasChanges()}
@@ -421,7 +429,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                   Save
                 </Btn>
               </Show>
-              <Show when={activeTab() === "debug" && local.debugData !== undefined}>
+              <Show when={tabValue() === "debug" && local.debugData !== undefined}>
                 <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
                   Copy
                 </Btn>
