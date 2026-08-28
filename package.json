@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-sdk",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
     "glasshome",
@@ -59,8 +59,8 @@
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
   },
   "peerDependencies": {
-    "@glasshome/sync-layer": "0.7.2",
-    "@glasshome/ui": "1.5.0",
+    "@glasshome/sync-layer": "0.8.0",
+    "@glasshome/ui": "1.6.0",
     "solid-js": "^1.9.11"
   },
   "dependencies": {
@@ -75,7 +75,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@glasshome/ui": "1.5.0",
+    "@glasshome/ui": "1.6.0",
     "@solidjs/testing-library": "^0.8.10",
     "@types/bun": "latest",
     "@types/node": "^25.2.2",
