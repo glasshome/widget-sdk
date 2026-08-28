@@ -378,9 +378,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   return (
     <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
       <RDContent size={panelSize()} class={local.class}>
-        {/* display:contents: the tab context spans the panel without standing
-            between it and Header/Body/Footer. */}
-        <TabsRoot value={tabValue()} onChange={setActiveTab} class="contents">
+        <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
           {/* A phone leaves no room for the tab row beside the title, so the
               header wraps rather than truncating it away. */}
           <RDHeader
