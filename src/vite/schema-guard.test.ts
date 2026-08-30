@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runSchemaGuard } from "./index";
 
@@ -71,6 +71,25 @@ describe("runSchemaGuard", () => {
     await runSchemaGuard({ outFile: writeBundle(`title: z.string()`, 1), hashFile, widgetName: "d" });
     const record = JSON.parse(readFileSync(hashFile, "utf-8"));
     expect(record.configVersion).toBe(1);
+  });
+
+  test("unchanged shape does not rewrite the hash file", async () => {
+    // Regression: an unconditional write on every build made `bun widget
+    // connect`'s fs watcher see its own output as a source change, rebuilding
+    // forever (bug 1543588417600753795).
+    const hashFile = join(tmpDir, "unchanged.schema-hash");
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string()`, 1),
+      hashFile,
+      widgetName: "unchanged",
+    });
+    const mtimeBefore = statSync(hashFile).mtimeMs;
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string()`, 1),
+      hashFile,
+      widgetName: "unchanged",
+    });
+    expect(statSync(hashFile).mtimeMs).toBe(mtimeBefore);
   });
 
   test("legacy plain-hash record only warns, then upgrades to the JSON format", async () => {

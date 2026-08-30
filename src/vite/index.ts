@@ -253,8 +253,9 @@ export async function runSchemaGuard(args: {
   const configVersion = def.manifest?.configVersion ?? null;
   const widgetName = def.manifest?.name ?? args.widgetName;
 
-  if (existsSync(args.hashFile)) {
-    const raw = readFileSync(args.hashFile, "utf-8").trim();
+  const currentRecord = existsSync(args.hashFile) ? readFileSync(args.hashFile, "utf-8") : null;
+  if (currentRecord !== null) {
+    const raw = currentRecord.trim();
     let recorded: SchemaGuardRecord | null = null;
     if (raw.startsWith("{")) {
       try {
@@ -278,7 +279,8 @@ export async function runSchemaGuard(args: {
     }
   }
 
-  writeFileSync(args.hashFile, `${JSON.stringify({ hash, configVersion })}\n`);
+  const nextRecord = `${JSON.stringify({ hash, configVersion })}\n`;
+  if (nextRecord !== currentRecord) writeFileSync(args.hashFile, nextRecord);
 }
 
 const VIRTUAL_WIDGET_ID = "virtual:glasshome-widget";
