@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.1](https://github.com/glasshome/widget-sdk/compare/v1.14.0...v1.14.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **vite:** skip schema-hash write when unchanged ([5502f44](https://github.com/glasshome/widget-sdk/commit/5502f44faa8a6d25b948eee9f62d05212c2d2df4))
+
 ## [1.14.0](https://github.com/glasshome/widget-sdk/compare/v1.13.0...v1.14.0) (2026-08-30)
 
 
