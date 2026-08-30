@@ -5,6 +5,20 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0](https://github.com/glasshome/widget-sdk/compare/v1.13.0...v1.14.0) (2026-08-30)
+
+
+### Features
+
+* **deps:** @glasshome/ui 1.7.0 ([53032d3](https://github.com/glasshome/widget-sdk/commit/53032d343e42ab31d467842b258e005f523c0d61))
+* **ui:** re-export Tabs and the ResponsiveDialog body, footer and close parts ([4379edf](https://github.com/glasshome/widget-sdk/commit/4379edf0495894481cd127421dd6e4f38cc8924f))
+
+
+### Bug Fixes
+
+* **dialogs:** the footer follows the tab the dialog actually shows ([f9267a1](https://github.com/glasshome/widget-sdk/commit/f9267a1f24228b50a4c6100f62c3ac87e1e5b28a))
+* **test:** resolve ui the way a consumer does ([7b10e4c](https://github.com/glasshome/widget-sdk/commit/7b10e4cf796fba7944e828bad85a63bacdd19c63))
+
 ## [1.11.1] - 2026-08-23
 
 ### Fixed
