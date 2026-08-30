@@ -9,9 +9,11 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [solid()],
   resolve: {
-    // Same condition dash's seam tests use: WidgetDialog composes ui parts, so
-    // the suite must read ui source rather than a locally built dist.
-    conditions: ["@glasshome/source", "browser", "development"],
+    // No "@glasshome/source" here: ui publishes dist, not src/solid, so that
+    // condition only resolves inside the monorepo. This suite runs in the
+    // standalone clone too, and reading the package entry is what a consumer
+    // of WidgetDialog actually gets.
+    conditions: ["browser", "development"],
     dedupe: ["solid-js", "solid-js/web", "solid-js/store"],
   },
   test: {
