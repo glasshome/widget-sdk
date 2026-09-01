@@ -151,7 +151,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           }}
           class={cn(
             "glasshome-widget",
-            "relative h-full w-full select-none overflow-hidden rounded-xl border border-border/50",
+            "relative h-full w-full select-none overflow-hidden rounded-[var(--widget-radius)] border border-border/50",
             variantConfig()?.styles?.class,
             props.class,
           )}

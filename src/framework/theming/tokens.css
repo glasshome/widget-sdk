@@ -47,6 +47,7 @@
 .glasshome-widget {
   --widget-color: var(--tone-neutral);
   --widget-glow-strength: var(--widget-glow-default);
+  --widget-radius: var(--radius-lg, 12px);
 
   --widget-icon-box:    clamp(44px, 25cqb, 58px);
   --widget-icon-glyph:  clamp(24px, 14cqb, 33px);
@@ -96,6 +97,7 @@
   padding: var(--widget-pad);
   gap: var(--widget-gap);
   overflow: hidden;
+  border-radius: var(--widget-radius);
 }
 @container widget (min-aspect-ratio: 1) and (max-height: 149px) {
   .glasshome-widget-content {
@@ -202,10 +204,10 @@
   background: color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 30%, transparent);
   box-shadow: 0 0 calc(var(--widget-glow-strength) * 40px)
     color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 40%, transparent);
-  clip-path: inset(0 calc((100 - var(--widget-fill-value)) * 1%) 0 0);
+  clip-path: inset(0 calc((100 - var(--widget-fill-value)) * 1%) 0 0 round var(--widget-radius));
 }
 @container widget (max-aspect-ratio: 1) {
   .glasshome-widget-slider-fill {
-    clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0);
+    clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0 round var(--widget-radius));
   }
 }
