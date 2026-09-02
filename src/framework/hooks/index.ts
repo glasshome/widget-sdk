@@ -10,8 +10,11 @@ export {
   type ServiceCallFn,
   useWidgetContext,
   WidgetCtx,
+  type WidgetDashboard,
   type WidgetDimensions,
 } from "./use-widget-context";
+// Dashboard (host-fed; empty fallback outside a host)
+export { useWidgetDashboard } from "./use-widget-dashboard";
 // Dimensions (provided only inside <Widget>)
 export {
   useWidgetDimensions,
