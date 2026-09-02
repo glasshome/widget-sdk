@@ -162,14 +162,14 @@
 .glasshome-widget-title {
   font-size: var(--widget-title-size);
   line-height: 1.2;
-  color: color-mix(in oklch, var(--color-foreground, currentColor) 60%, transparent);
+  color: var(--color-muted-foreground, currentColor);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .glasshome-widget-subtitle {
   font-size: var(--widget-subtitle);
-  color: color-mix(in oklch, var(--color-foreground, currentColor) 60%, transparent);
+  color: var(--color-muted-foreground, currentColor);
 }
 .glasshome-widget-status {
   font-size: var(--widget-status-size);
