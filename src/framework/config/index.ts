@@ -102,6 +102,23 @@ function choice<const T extends string>(
   return withDefault.meta(meta({ title: o.title, description: o.description }));
 }
 
+type ChoicesOpts<T extends string> = {
+  title: string;
+  description?: string;
+  default?: readonly T[];
+  labels?: Partial<Record<T, string>>;
+};
+
+function choices<const T extends string>(
+  values: readonly T[],
+  o: ChoicesOpts<T>,
+): z.ZodDefault<z.ZodArray<z.ZodEnum<{ [K in T]: K }>>> {
+  return z
+    .array(z.enum(values as unknown as [T, ...T[]]))
+    .default([...(o.default ?? [])])
+    .meta(meta({ title: o.title, description: o.description, labels: o.labels }));
+}
+
 function entities(domain: string, o?: EntitiesOpts): z.ZodDefault<z.ZodArray<z.ZodString>> {
   return z
     .array(z.string())
@@ -383,6 +400,7 @@ export const field = {
   number,
   toggle,
   choice,
+  choices,
   entities,
   entity,
   area,

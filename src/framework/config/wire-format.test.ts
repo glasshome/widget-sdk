@@ -164,4 +164,22 @@ describe("wire format (spec D.2)", () => {
     expect(simple?.properties.entity?.domain).toBe("sensor");
     expect(simple?.properties.entity?.singleSelect).toBe(true);
   });
+
+  test("field.choices serialises as an array of enum with labels", () => {
+    const schema = defineConfig({
+      chips: field.choices(["lights", "locks"], {
+        title: "Show",
+        default: ["lights"],
+        labels: { lights: "Lights", locks: "Locks" },
+      }),
+    });
+    const wire = toFormSchema(schema) as { properties: Record<string, Record<string, unknown>> };
+    expect(wire.properties.chips).toMatchObject({
+      type: "array",
+      items: { type: "string", enum: ["lights", "locks"] },
+      default: ["lights"],
+      title: "Show",
+      labels: { lights: "Lights", locks: "Locks" },
+    });
+  });
 });
