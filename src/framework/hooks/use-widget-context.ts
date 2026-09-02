@@ -14,6 +14,12 @@ export interface WidgetDimensions {
   height: number;
 }
 
+export interface WidgetDashboard {
+  name: string;
+  icon: string;
+  areaId: string | null;
+}
+
 /** Capability-routed service call: an RPC into the host's HA bridge worker,
     validated there against the widget's granted capabilities. Pass
     `{ returnResponse: true }` for services that return data (e.g.
@@ -41,6 +47,8 @@ export interface ReactiveWidgetContext {
   /** Present when the host mounts the widget; the service hooks route
       through it. Absent in previews/tests (direct sync-layer fallback). */
   callService?: ServiceCallFn;
+  /** The dashboard this instance sits on. Absent on hosts older than 1.15. */
+  dashboard?: () => WidgetDashboard;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();
