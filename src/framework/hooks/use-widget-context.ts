@@ -47,7 +47,7 @@ export interface ReactiveWidgetContext {
   /** Present when the host mounts the widget; the service hooks route
       through it. Absent in previews/tests (direct sync-layer fallback). */
   callService?: ServiceCallFn;
-  /** The dashboard this instance sits on. Absent on hosts older than 1.15. */
+  /** The dashboard this instance sits on. Absent on hosts that predate this field. */
   dashboard?: () => WidgetDashboard;
 }
 
