@@ -47,7 +47,7 @@
 .glasshome-widget {
   --widget-color: var(--tone-neutral);
   --widget-glow-strength: var(--widget-glow-default);
-  --widget-radius: var(--radius-lg, 12px);
+  --widget-radius: var(--radius-xl, 12px);
 
   --widget-icon-box:    clamp(44px, 25cqb, 58px);
   --widget-icon-glyph:  clamp(24px, 14cqb, 33px);

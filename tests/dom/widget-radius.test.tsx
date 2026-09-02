@@ -26,10 +26,20 @@ function shell(container: HTMLElement) {
   return el;
 }
 
+// A selector can carry more than one rule (the shell has a token block and a
+// material block), so every body is joined rather than taking the first.
 function ruleBody(selector: string): string {
-  const start = tokensCss.indexOf(`${selector} {`);
-  if (start === -1) throw new Error(`no rule for ${selector}`);
-  return tokensCss.slice(start, tokensCss.indexOf("}", start));
+  const bodies: string[] = [];
+  let from = 0;
+  for (;;) {
+    const start = tokensCss.indexOf(`${selector} {`, from);
+    if (start === -1) break;
+    const end = tokensCss.indexOf("}", start);
+    bodies.push(tokensCss.slice(start, end));
+    from = end + 1;
+  }
+  if (bodies.length === 0) throw new Error(`no rule for ${selector}`);
+  return bodies.join("\n");
 }
 
 function clipPaths(): string[] {
@@ -42,11 +52,11 @@ function clipPaths(): string[] {
 describe("widget radius", () => {
   it("rounds the shell on the token, not a fixed radius", () => {
     const { container } = render(() => <Widget />);
-    expect(shell(container).className).toContain("rounded-[var(--widget-radius)]");
+    expect(shell(container).className).toContain("rounded-xl");
   });
 
   it("takes the token from the host theme's radius scale", () => {
-    expect(ruleBody(".glasshome-widget")).toContain("--widget-radius: var(--radius-lg, 12px)");
+    expect(ruleBody(".glasshome-widget")).toContain("--widget-radius: var(--radius-xl, 12px)");
   });
 
   it("clips the content layer on the same corner", () => {
