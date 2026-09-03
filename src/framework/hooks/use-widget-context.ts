@@ -33,6 +33,11 @@ export type ServiceCallFn = (
   options?: { returnResponse?: boolean },
 ) => Promise<unknown>;
 
+export interface WidgetViewer {
+  /** The signed-in person's name, or null for a paired screen. */
+  name: string | null;
+}
+
 export interface ReactiveWidgetContext {
   updateConfig: (config: Record<string, unknown>) => void;
   /**
@@ -49,6 +54,8 @@ export interface ReactiveWidgetContext {
   callService?: ServiceCallFn;
   /** The dashboard this instance sits on. Absent on hosts that predate this field. */
   dashboard?: () => WidgetDashboard;
+  /** Who is looking. Absent on hosts that predate this field. */
+  viewer?: () => WidgetViewer;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();
