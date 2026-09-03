@@ -5,6 +5,16 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.2](https://github.com/glasshome/widget-sdk/compare/v1.14.1...v1.14.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* **deps:** widget-contract 0.2.1, sync-layer 0.8.1 ([a4fcebf](https://github.com/glasshome/widget-sdk/commit/a4fcebf90ce1c0af47374251bc769e1ad9e90007))
+* **shell:** keep the shell's radius utility, align the token to it ([127db7d](https://github.com/glasshome/widget-sdk/commit/127db7d47cb1e0eba2d388ef1dd81c4dc5216008))
+* **shell:** one radius token for shell, content and fill ([15e86bd](https://github.com/glasshome/widget-sdk/commit/15e86bd9e4d2348f4fb429f3f2fe27413583957a))
+* **shell:** widget labels read the theme's muted ink, not a fixed alpha ([e080d71](https://github.com/glasshome/widget-sdk/commit/e080d71e9d461d66a7e2a655fc2333a6d01f0d6c))
+
 ## [1.14.1](https://github.com/glasshome/widget-sdk/compare/v1.14.0...v1.14.1) (2026-08-30)
 
 
