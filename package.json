@@ -59,12 +59,12 @@
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
   },
   "peerDependencies": {
-    "@glasshome/sync-layer": "0.8.0",
+    "@glasshome/sync-layer": "0.8.1",
     "@glasshome/ui": "1.7.0",
     "solid-js": "^1.9.11"
   },
   "dependencies": {
-    "@glasshome/widget-contract": "0.2.0",
+    "@glasshome/widget-contract": "0.2.1",
     "@modular-forms/solid": "^0.25.1",
     "@tailwindcss/vite": "^4.1.13",
     "clsx": "^2.1.1",
