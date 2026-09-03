@@ -42,7 +42,13 @@ type NumberOpts = {
   default?: number;
 };
 type ToggleOpts = { title: string; description?: string; default?: boolean };
-type ChoiceOpts<T extends string> = { title: string; description?: string; default?: T };
+type ChoiceOpts<T extends string> = {
+  title: string;
+  description?: string;
+  default?: T;
+  /** Display names for the options; the raw value shows without them. */
+  labels?: Partial<Record<T, string>>;
+};
 type EntitiesOpts = { title?: string; description?: string; deviceClass?: string };
 
 /** Drop `undefined` values so meta output matches a hand-written `.meta({...})`. */
@@ -99,7 +105,7 @@ function choice<const T extends string>(
 ): z.ZodDefault<z.ZodEnum<{ [K in T]: K }>> | z.ZodOptional<z.ZodEnum<{ [K in T]: K }>> {
   const base = z.enum(values as unknown as [T, ...T[]]);
   const withDefault = o.default !== undefined ? base.default(o.default) : base.optional();
-  return withDefault.meta(meta({ title: o.title, description: o.description }));
+  return withDefault.meta(meta({ title: o.title, description: o.description, labels: o.labels }));
 }
 
 type ChoicesOpts<T extends string> = {
@@ -159,10 +165,12 @@ function area(o?: { title?: string }): z.ZodOptional<z.ZodString> {
  * Icon name (e.g. "mdi:lightbulb"). The host renders its icon picker; the
  * widget only declares that this field is an icon.
  */
-function icon(o: { title?: string; default: string }): z.ZodDefault<z.ZodString>;
-function icon(o?: { title?: string }): z.ZodOptional<z.ZodString>;
-function icon(o?: { title?: string; default?: string }) {
-  const base = z.string().meta({ formType: "icon-picker", title: o?.title ?? "Icon" });
+function icon(o: { title?: string; description?: string; default: string }): z.ZodDefault<z.ZodString>;
+function icon(o?: { title?: string; description?: string }): z.ZodOptional<z.ZodString>;
+function icon(o?: { title?: string; description?: string; default?: string }) {
+  const base = z
+    .string()
+    .meta(meta({ formType: "icon-picker", title: o?.title ?? "Icon", description: o?.description }));
   return o?.default !== undefined ? base.default(o.default) : base.optional();
 }
 
