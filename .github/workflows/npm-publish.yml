@@ -1,9 +1,11 @@
 name: Publish to npm
 
 # release-please keeps a release PR open on main; merging it creates the tag
-# and the GitHub release, and this same job publishes to npm in one hop.
-# Publishing lives here rather than in a workflow keyed on `release: published`
-# because releases created with GITHUB_TOKEN do not trigger other workflows.
+# and the GitHub release. Publishing is keyed on one fact, not on that step's
+# output: package.json's version has a tag and npm does not have it yet. So a
+# rerun after a failed publish publishes, and a plain push does not. Releases
+# created with GITHUB_TOKEN never trigger other workflows, which is why this
+# stays one job.
 on:
   push:
     branches: [main]
@@ -25,23 +27,82 @@ jobs:
           release-type: node
 
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
-      - uses: oven-sh/setup-bun@v2
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
       # npm >= 11.5.1 (node 24) does the OIDC exchange itself; auth is the
       # npmjs trusted-publisher binding (org glasshome, this repo, this file).
       - uses: actions/setup-node@v4
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      - run: bun install
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+
+      - id: gate
+        run: |
+          set -euo pipefail
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          git fetch --tags --quiet
+          if [ -z "$(git tag -l "v$version")" ]; then
+            echo "no tag v$version yet, plain push"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          elif npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version already on npm"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$name@$version tagged and not yet on npm, publishing"
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for pinned @glasshome dependencies on npm
+        if: ${{ steps.gate.outputs.go == 'true' }}
+        run: |
+          set -euo pipefail
+          deps=$(node -e '
+            const pkg = require("./package.json");
+            const all = { ...pkg.dependencies, ...pkg.devDependencies, ...pkg.peerDependencies };
+            for (const [name, version] of Object.entries(all)) {
+              if (name.startsWith("@glasshome/") && /^\d/.test(version)) {
+                console.log(`${name}@${version}`);
+              }
+            }
+          ')
+          if [ -z "$deps" ]; then
+            echo "no pinned @glasshome dependencies to wait for"
+            exit 0
+          fi
+          for dep in $deps; do
+            ok=false
+            for attempt in $(seq 1 45); do
+              tarball=$(npm view "$dep" dist.tarball 2>/dev/null || true)
+              if [ -n "$tarball" ] && curl -sfI "$tarball" >/dev/null 2>&1; then
+                ok=true
+                break
+              fi
+              echo "waiting for $dep (attempt $attempt)"
+              sleep 20
+            done
+            if [ "$ok" != true ]; then
+              echo "::error::timed out waiting for $dep on npm"
+              exit 1
+            fi
+          done
+
+      - uses: oven-sh/setup-bun@v2
+        if: ${{ steps.gate.outputs.go == 'true' }}
+      - run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if bun install; then
+              exit 0
+            fi
+            echo "bun install failed (attempt $attempt)"
+            [ "$attempt" -lt 3 ] && sleep 15
+          done
+          exit 1
+        if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run build
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+        if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run typecheck:test
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+        if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run test
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+        if: ${{ steps.gate.outputs.go == 'true' }}
       - run: npm publish --provenance --access public
-        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+        if: ${{ steps.gate.outputs.go == 'true' }}
