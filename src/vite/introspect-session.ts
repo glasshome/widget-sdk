@@ -88,29 +88,34 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const slowMs = options?.slowMs ?? DEFAULT_SLOW_MS;
 
-  let child: ChildProcess | null = null;
-  let ready: Promise<void> | null = null;
-  let needsRespawn = false;
+  type Resolve = (result: IntrospectResult) => void;
+
+  // One generation of the child process. Its requests live on it, so a worker
+  // that dies late can only ever settle its own.
+  interface Worker {
+    proc: ChildProcess;
+    ready: Promise<void>;
+    pending: Map<number, Resolve>;
+    retireAfterRequest: boolean;
+  }
+
+  let current: Worker | null = null;
   let disposed = false;
   let nextId = 0;
   let queue: Promise<unknown> = Promise.resolve();
-  const pending = new Map<number, (result: IntrospectResult) => void>();
 
-  function settleAll(why: string): void {
-    for (const resolve of pending.values()) resolve({ ok: false, reason: why });
-    pending.clear();
+  function settle(worker: Worker, why: string): void {
+    for (const resolve of worker.pending.values()) resolve({ ok: false, reason: why });
+    worker.pending.clear();
   }
 
-  function killWorker(why: string): void {
-    const dying = child;
-    child = null;
-    ready = null;
-    needsRespawn = false;
-    settleAll(why);
-    dying?.kill();
+  function retire(worker: Worker, why: string): void {
+    if (current === worker) current = null;
+    settle(worker, why);
+    worker.proc.kill();
   }
 
-  function onLine(line: string): void {
+  function onLine(worker: Worker, line: string): void {
     let msg: WorkerResponse;
     try {
       msg = JSON.parse(line) as WorkerResponse;
@@ -118,11 +123,11 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
       return;
     }
     if (typeof msg.id !== "number") return;
-    const resolve = pending.get(msg.id);
+    const resolve = worker.pending.get(msg.id);
     if (!resolve) return;
-    pending.delete(msg.id);
+    worker.pending.delete(msg.id);
 
-    if ((msg.rss ?? 0) > rssLimit) needsRespawn = true;
+    if ((msg.rss ?? 0) > rssLimit) worker.retireAfterRequest = true;
     if ((msg.importMs ?? 0) > slowMs) {
       console.warn(`[widget-sdk] introspection took ${msg.importMs}ms`);
     }
@@ -133,20 +138,19 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
     );
   }
 
-  function ensureWorker(): Promise<void> {
-    if (child && ready && !needsRespawn) return ready;
-    if (needsRespawn || child) killWorker("worker was replaced");
-
-    const probe = resolveEntry("introspect-worker");
-    if (!probe) return Promise.reject(new Error("introspect-worker not found next to the sdk"));
-
+  function spawnWorker(probe: string): Worker {
     const spawnedAt = Date.now();
     const proc = spawn(process.execPath, ["--conditions", "browser", probe], {
       stdio: ["pipe", "pipe", "inherit"],
     });
-    child = proc;
+    const worker: Worker = {
+      proc,
+      ready: Promise.resolve(),
+      pending: new Map(),
+      retireAfterRequest: false,
+    };
 
-    const booting = new Promise<void>((resolve, reject) => {
+    worker.ready = new Promise<void>((resolve, reject) => {
       let buffer = "";
       let booted = false;
 
@@ -166,7 +170,7 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
               }
               resolve();
             } else {
-              onLine(line);
+              onLine(worker, line);
             }
           }
           nl = buffer.indexOf("\n");
@@ -175,11 +179,8 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
 
       const gone = (why: string) => {
         if (!booted) reject(new Error(why));
-        // A replaced worker's exit arrives late; its requests were settled at the kill.
-        if (child !== proc) return;
-        child = null;
-        ready = null;
-        settleAll(why);
+        if (current === worker) current = null;
+        settle(worker, why);
       };
       proc.on("error", (err) => gone(err.message));
       proc.on("exit", (code, signal) =>
@@ -187,41 +188,45 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
       );
     });
 
-    ready = booting;
-    return booting;
+    return worker;
   }
 
   async function run(outFile: string): Promise<IntrospectResult> {
     if (disposed) return { ok: false, reason: "introspect session disposed" };
+    const probe = resolveEntry("introspect-worker");
+    if (!probe) return { ok: false, reason: "introspect-worker not found next to the sdk" };
+
+    if (current?.retireAfterRequest) retire(current, "worker was replaced");
+    const worker = current ?? (current = spawnWorker(probe));
     try {
-      await ensureWorker();
+      await worker.ready;
     } catch (err) {
       return { ok: false, reason: err instanceof Error ? err.message : String(err) };
     }
-
-    const proc = child;
-    if (!proc?.stdin?.writable) return { ok: false, reason: "introspect worker is not writable" };
+    if (!worker.proc.stdin?.writable) {
+      return { ok: false, reason: "introspect worker is not writable" };
+    }
 
     const id = ++nextId;
     return new Promise<IntrospectResult>((resolve) => {
       const timer = setTimeout(() => {
-        pending.delete(id);
+        worker.pending.delete(id);
         // An in-process hang cannot be cancelled; only the kill ends it.
-        killWorker(`introspection timed out after ${timeoutMs}ms`);
+        retire(worker, `introspection timed out after ${timeoutMs}ms`);
         resolve({ ok: false, reason: `introspection timed out after ${timeoutMs}ms` });
       }, timeoutMs);
 
-      pending.set(id, (result) => {
+      worker.pending.set(id, (result) => {
         clearTimeout(timer);
         resolve(result);
       });
 
       try {
-        proc.stdin?.write(`${JSON.stringify({ id, outFile })}\n`);
+        worker.proc.stdin?.write(`${JSON.stringify({ id, outFile })}\n`);
       } catch (err) {
         clearTimeout(timer);
-        pending.delete(id);
-        needsRespawn = true;
+        worker.pending.delete(id);
+        worker.retireAfterRequest = true;
         resolve({ ok: false, reason: err instanceof Error ? err.message : String(err) });
       }
     });
@@ -235,10 +240,10 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
     },
     async dispose(): Promise<void> {
       disposed = true;
-      killWorker("introspect session disposed");
+      if (current) retire(current, "introspect session disposed");
     },
     get childPid(): number | null {
-      return child?.pid ?? null;
+      return current?.proc.pid ?? null;
     },
   };
 }
