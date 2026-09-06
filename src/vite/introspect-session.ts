@@ -174,12 +174,12 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
       });
 
       const gone = (why: string) => {
-        if (child === proc) {
-          child = null;
-          ready = null;
-        }
-        settleAll(why);
         if (!booted) reject(new Error(why));
+        // A replaced worker's exit arrives late; its requests were settled at the kill.
+        if (child !== proc) return;
+        child = null;
+        ready = null;
+        settleAll(why);
       };
       proc.on("error", (err) => gone(err.message));
       proc.on("exit", (code, signal) =>
