@@ -112,7 +112,32 @@ describe("createIntrospectSession", () => {
       expect(hung.ok === false && hung.reason).toMatch(/timed out/);
 
       const next = await session.introspect(writeBundle(namedWidget("after-hang")));
-      expect(next.ok && next.value.manifest?.name).toBe("after-hang");
+      expect(next.ok ? next.value.manifest?.name : next.reason).toBe("after-hang");
+    } finally {
+      await session.dispose();
+    }
+  }, 20_000);
+
+  test("a replaced worker's late exit does not fail the successor's request", async () => {
+    const session = createIntrospectSession({ timeoutMs: 1_500 });
+    try {
+      // Hangs at import, and takes its time leaving once killed.
+      const hung = await session.introspect(
+        writeBundle(
+          `process.on("SIGTERM", () => setTimeout(() => process.exit(0), 500));\n` +
+            `await new Promise(() => {});\nexport default {};\n`,
+        ),
+      );
+      expect(hung.ok).toBe(false);
+
+      // Still in flight on the new worker when the old one finally exits.
+      const next = await session.introspect(
+        writeBundle(
+          `const until = Date.now() + 800;\nwhile (Date.now() < until) {}\n` +
+            namedWidget("after-stale-exit"),
+        ),
+      );
+      expect(next.ok ? next.value.manifest?.name : next.reason).toBe("after-stale-exit");
     } finally {
       await session.dispose();
     }
