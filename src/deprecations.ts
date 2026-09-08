@@ -92,6 +92,17 @@ export const deprecations: readonly DeprecationEntry[] = [
     sourcePattern: "from\\s+[\"']@glasshome/ui(/[^\"']*)?[\"']",
   },
   {
+    // No wrappable runtime symbol: the <iconify-icon> element lives in the host
+    // import map and only renders because dash points its API at /iconify/. 2.0
+    // drops the import-map entry, that provider, and the element's CSP policy.
+    id: "iconify-icon",
+    since: "1.15.0",
+    removeIn: "2.0.0",
+    replacement: '<Icon icon="prefix:name" /> from "@glasshome/widget-sdk"',
+    docsUrl: DOCS_URL,
+    sourcePattern: "(?:from|import)\\s+[\"']@?iconify-icon(/solid)?[\"']",
+  },
+  {
     // No wrappable runtime symbol: `z` stays a permanent escape hatch, so this is
     // flagged only when `z.object(...)` is used to build a widget's configSchema.
     id: "raw-zod-config",

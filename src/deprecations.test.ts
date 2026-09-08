@@ -90,6 +90,14 @@ describe("registry integrity", () => {
     }
     expect(ids).toContain("raw-zod-config");
   });
+
+  test("iconify-icon pattern matches both the element and its solid wrapper import", () => {
+    const entry = deprecations.find((d) => d.id === "iconify-icon");
+    const re = new RegExp(entry?.sourcePattern ?? "$^");
+    expect(re.test('import { Icon } from "@iconify-icon/solid";')).toBe(true);
+    expect(re.test("import 'iconify-icon';")).toBe(true);
+    expect(re.test('import { Icon } from "@glasshome/widget-sdk";')).toBe(false);
+  });
 });
 
 describe("widgetFields runtime is wrapped and still works", () => {

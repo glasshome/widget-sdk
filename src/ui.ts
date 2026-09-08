@@ -9,7 +9,8 @@
  *
  * The set is exactly what shipped widgets use; extending it is an additive
  * SDK minor. Direct `@glasshome/ui` imports keep working but are deprecated
- * (`direct-ui-import` in the registry), removed in 2.0.0.
+ * (`direct-ui-import` in the registry), removed in 2.0.0. `Icon` is the
+ * replacement for the `iconify-icon` element (`iconify-icon` in the registry).
  *
  * `@glasshome/ui/solid` is a vite external of this package: these re-exports
  * resolve to the host-provided singleton at runtime, never a bundled copy.
@@ -28,6 +29,7 @@ export {
   type Color,
   ColorSlider,
   ColorWheel,
+  Icon,
   imageUrl,
   Input,
   Label,
