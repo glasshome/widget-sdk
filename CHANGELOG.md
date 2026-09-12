@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1](https://github.com/glasshome/widget-sdk/compare/v1.15.0...v1.15.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **vite:** the config-shape hash reaches inside properties ([#9](https://github.com/glasshome/widget-sdk/issues/9)) ([cd2fb63](https://github.com/glasshome/widget-sdk/commit/cd2fb6366aef6c346ea7701e8a50b15380f5c1ee))
+
 ## [1.15.0](https://github.com/glasshome/widget-sdk/compare/v1.14.3...v1.15.0) (2026-09-12)
 
 
