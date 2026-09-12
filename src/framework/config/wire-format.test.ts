@@ -183,16 +183,16 @@ describe("wire format (spec D.2)", () => {
     });
   });
 
-
-    test("field.choice carries its labels to the wire", () => {
-      const schema = defineConfig({
+  test("field.choice carries its labels to the wire", () => {
+    const schema = defineConfig({
       scope: field.choice(["dashboard", "home"], {
         title: "Where",
         default: "dashboard",
         labels: { dashboard: "This dashboard's area", home: "The whole home" },
       }),
     });
-    expect(toFormSchema(schema).properties.scope).toMatchObject({
+    const wire = toFormSchema(schema) as { properties: Record<string, Record<string, unknown>> };
+    expect(wire.properties.scope).toMatchObject({
       enum: ["dashboard", "home"],
       labels: { dashboard: "This dashboard's area", home: "The whole home" },
     });
