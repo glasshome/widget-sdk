@@ -46,17 +46,37 @@ export interface GlasshomeWidgetOptions {
 // ---------------------------------------------------------------------------
 
 /**
+ * Bump when the serialiser changes. A record written under an older version is
+ * not comparable, so it is re-recorded instead of failing the build.
+ */
+const SCHEMA_HASH_VERSION = 2;
+
+/** Key-ordered at every depth; array order is preserved because `enum` order is part of the shape. */
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  if (typeof value === "object" && value !== null) {
+    const source = value as Record<string, unknown>;
+    const entries = Object.keys(source)
+      .sort()
+      .filter((key) => source[key] !== undefined)
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(source[key])}`);
+    return `{${entries.join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
+/**
  * Produces a stable 16-char hex hash of a JSON Schema object.
  * Used to detect shape changes between builds so we can warn when configVersion was not bumped.
  */
 function hashSchema(jsonSchema: object): string {
-  const stable = JSON.stringify(jsonSchema, Object.keys(jsonSchema).sort());
-  return createHash("sha256").update(stable).digest("hex").slice(0, 16);
+  return createHash("sha256").update(stableStringify(jsonSchema)).digest("hex").slice(0, 16);
 }
 
 interface SchemaGuardRecord {
   hash: string;
   configVersion: number | null;
+  hashVersion?: number;
 }
 
 /**
@@ -146,9 +166,10 @@ function assertExampleConfigsValid(
  * Schema from its configSchema, and compares against the recorded
  * `.schema-hash`. A shape change without a configVersion bump fails the build:
  * tsc cannot catch this class of break because the old persisted config still
- * parses, only its meaning shifts. Legacy plain-hash records (written by
- * pre-1.7 builds) cannot prove a missing bump, so they only warn, then upgrade
- * to the JSON record format.
+ * parses, only its meaning shifts. A record whose `hashVersion` is missing or
+ * older than SCHEMA_HASH_VERSION was hashed by a different serialiser, so it
+ * cannot prove a missing bump: it only warns, then is re-recorded under the
+ * current version.
  *
  * When `manifestPath` is given, the build also writes the generated manifest
  * (see writeGeneratedManifest).
@@ -264,7 +285,7 @@ export async function runSchemaGuard(args: {
         recorded = null;
       }
     }
-    if (recorded) {
+    if (recorded && recorded.hashVersion === SCHEMA_HASH_VERSION) {
       if (recorded.hash !== hash && recorded.configVersion === configVersion) {
         throw new Error(
           `[widget-sdk] Config schema shape changed for "${widgetName}" without a configVersion bump. ` +
@@ -272,14 +293,16 @@ export async function runSchemaGuard(args: {
             `then rebuild. Recorded in ${args.hashFile}`,
         );
       }
-    } else if (raw !== hash) {
+    } else {
       console.warn(
-        `[widget-sdk] Schema shape changed for "${widgetName}" — verify configVersion was bumped`,
+        `[widget-sdk] Schema shape record for "${widgetName}" was written by an older SDK, so it cannot be ` +
+          `compared. Re-recording it under hash format ${SCHEMA_HASH_VERSION}. This build is not checked for a ` +
+          `missing configVersion bump; the next one is. (${args.hashFile})`,
       );
     }
   }
 
-  const nextRecord = `${JSON.stringify({ hash, configVersion })}\n`;
+  const nextRecord = `${JSON.stringify({ hash, configVersion, hashVersion: SCHEMA_HASH_VERSION })}\n`;
   if (nextRecord !== currentRecord) writeFileSync(args.hashFile, nextRecord);
 }
 

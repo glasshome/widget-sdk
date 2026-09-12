@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, spyOn, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runSchemaGuard } from "./index";
@@ -102,6 +102,72 @@ describe("runSchemaGuard", () => {
     });
     const record = JSON.parse(readFileSync(hashFile, "utf-8"));
     expect(record.configVersion).toBe(1);
+  });
+
+  test("renaming an optional nested field without a configVersion bump fails the build", async () => {
+    // `required` is unchanged by an optional field's rename, so this is only
+    // visible to a serialiser that reaches inside `properties`.
+    const hashFile = join(tmpDir, "rename.schema-hash");
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string(), subtitle: z.string().optional()`, 1),
+      hashFile,
+      widgetName: "rename",
+    });
+    await expect(
+      runSchemaGuard({
+        outFile: writeBundle(`title: z.string(), caption: z.string().optional()`, 1),
+        hashFile,
+        widgetName: "rename",
+      }),
+    ).rejects.toThrow(/without a configVersion bump/);
+  });
+
+  test("changing an enum's members without a configVersion bump fails the build", async () => {
+    const hashFile = join(tmpDir, "enum.schema-hash");
+    await runSchemaGuard({
+      outFile: writeBundle(`fit: z.enum(["cover", "contain"])`, 1),
+      hashFile,
+      widgetName: "enum",
+    });
+    await expect(
+      runSchemaGuard({
+        outFile: writeBundle(`fit: z.enum(["cover", "stretch"])`, 1),
+        hashFile,
+        widgetName: "enum",
+      }),
+    ).rejects.toThrow(/without a configVersion bump/);
+  });
+
+  test("record without hashVersion warns and re-records instead of failing", async () => {
+    // A community author's .schema-hash predates the serialiser change; its
+    // hash is not comparable, so failing their build would blame them for a
+    // change they never made.
+    const hashFile = join(tmpDir, "unversioned.schema-hash");
+    writeFileSync(hashFile, `${JSON.stringify({ hash: "0123456789abcdef", configVersion: 1 })}\n`);
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await runSchemaGuard({
+        outFile: writeBundle(`title: z.string()`, 1),
+        hashFile,
+        widgetName: "unversioned",
+      });
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+
+    const record = JSON.parse(readFileSync(hashFile, "utf-8"));
+    expect(record.hashVersion).toBeGreaterThan(0);
+    expect(record.hash).not.toBe("0123456789abcdef");
+
+    // Upgraded record is comparable, so the next shape change is caught.
+    await expect(
+      runSchemaGuard({
+        outFile: writeBundle(`title: z.number()`, 1),
+        hashFile,
+        widgetName: "unversioned",
+      }),
+    ).rejects.toThrow(/without a configVersion bump/);
   });
 
   test("widget without configSchema is skipped", async () => {
