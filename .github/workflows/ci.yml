@@ -17,3 +17,6 @@ jobs:
       # `bun run test` = logic suite (bun test src) + mount suite (vitest,
       # tests/dom). Plain `bun test` would collect the JSX files it cannot compile.
       - run: bun run test
+      # Also runs at publish. Here too, or a type error in a test first appears
+      # after release-please has already cut the tag.
+      - run: bun run typecheck:test
