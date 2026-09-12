@@ -5,6 +5,24 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0](https://github.com/glasshome/widget-sdk/compare/v1.14.3...v1.15.0) (2026-09-12)
+
+
+### Features
+
+* **config:** field.choice takes labels, field.icon takes a description ([06a23d2](https://github.com/glasshome/widget-sdk/commit/06a23d2e68362dce876c13772477dafbd3d2e67e))
+* **config:** field.choices, a multi-select over a fixed set ([6e32ccd](https://github.com/glasshome/widget-sdk/commit/6e32ccdb958cf8f9a47d25b5e26af0677b77886f))
+* **context:** ctx.viewer, who is looking ([ac1e0b4](https://github.com/glasshome/widget-sdk/commit/ac1e0b4659832578846a2468416a324c67d51be3))
+* **context:** dashboard name, icon and area on the widget context ([efdb225](https://github.com/glasshome/widget-sdk/commit/efdb22505b180013c5e6cb20282f652ce1078ef2))
+* **deprecations:** iconify-icon is deprecated; Icon ships from the SDK ([129748f](https://github.com/glasshome/widget-sdk/commit/129748f5bfcbd07b747bd9f3ac497b9fa37120d0))
+* **ui:** SectionIcon, SectionTitle and CountPill join the gated barrel ([ec2869c](https://github.com/glasshome/widget-sdk/commit/ec2869cf742db723f2268e3e025e0cf91e03c9f5))
+
+
+### Bug Fixes
+
+* **deps:** pin ui 1.14.0, which resolves its own json-schema types ([6db8ebd](https://github.com/glasshome/widget-sdk/commit/6db8ebdf6465bd3751618b5c26611d59d244f0f3))
+* **vite:** a replaced introspect worker's late exit no longer fails the successor's request ([#5](https://github.com/glasshome/widget-sdk/issues/5)) ([342fb01](https://github.com/glasshome/widget-sdk/commit/342fb01b3dca7d2fda32a0084afc62c659f9542a))
+
 ## [1.14.3](https://github.com/glasshome/widget-sdk/compare/v1.14.2...v1.14.3) (2026-09-03)
 
 
