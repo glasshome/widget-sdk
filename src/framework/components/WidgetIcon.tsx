@@ -17,7 +17,7 @@ export function WidgetIcon(props: WidgetIconProps): JSX.Element {
   return (
     <div
       class={cn(
-        "glasshome-widget-icon",
+        "glasshome-widget-icon glass glass-tint",
         "relative flex shrink-0 items-center justify-center pointer-events-none transition-all",
         props.dimmed && "opacity-50",
         props.class,
@@ -25,10 +25,10 @@ export function WidgetIcon(props: WidgetIconProps): JSX.Element {
       style={props.color ? ({ "--widget-icon-color": props.color } as JSX.CSSProperties) : undefined}
     >
       <Show when={count() >= 2}>
-        <div class="glasshome-widget-icon glasshome-widget-icon-stack glasshome-widget-icon-stack-2" />
+        <div class="glasshome-widget-icon glasshome-widget-icon-stack glasshome-widget-icon-stack-2 glass glass-tint" />
       </Show>
       <Show when={count() >= 3}>
-        <div class="glasshome-widget-icon glasshome-widget-icon-stack glasshome-widget-icon-stack-3" />
+        <div class="glasshome-widget-icon glasshome-widget-icon-stack glasshome-widget-icon-stack-3 glass glass-tint" />
       </Show>
       <div class="glasshome-widget-icon-glyph flex items-center justify-center">
         {props.icon}

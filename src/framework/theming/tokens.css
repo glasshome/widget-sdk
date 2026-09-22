@@ -14,9 +14,7 @@
   --tone-neutral:  oklch(0.65 0.02 250);
   --tone-accent:   oklch(0.74 0.18 60);
 
-  --widget-grad-strength:    1;
   --widget-glow-default:     0.4;
-  --widget-border-highlight: oklch(0.98 0 0 / 0.4);
 }
 
 .dark {
@@ -27,9 +25,7 @@
   --tone-neutral:  oklch(0.69 0.02 250);
   --tone-accent:   oklch(0.78 0.18 60);
 
-  --widget-grad-strength:    1.1;
   --widget-glow-default:     0.5;
-  --widget-border-highlight: oklch(1 0 0 / 0.08);
 }
 
 @property --widget-color {
@@ -60,28 +56,31 @@
   --widget-badge-size:  clamp(11px, 1.6cqi,  14px);
 }
 
-/* Shell material. Two channels, both host/variant-driven:
- * - `--widget-backdrop`: the live backdrop filter (the shared glass recipe is
- *   blur + saturate, matching ui's CARD_BLUR). Default none — a variant opts
- *   in (classic-glass), and a performant-blur host disables it via override
- *   sheet when it paints a precomputed frost instead.
- * - `--glass-frost`: one full background layer (image + position / size +
- *   repeat) composited at the BOTTOM, under the accent gradient — the same
- *   frost slot ui's `.glass` formula ends its background list with. Unset →
- *   none. A performant-blur host sets it per shell with the viewport-aligned
- *   slice of its pre-blurred bitmap. */
+/* Shell material: ui's .glass, worn through the class Widget.tsx carries.
+ * Unlayered and class-specific, so these beat the formula's :where() defaults
+ * (wash-2 is re-declared there and cannot be set from a utility). The tone
+ * stays the formula's transparent default until Widget.tsx sets one inline:
+ * a widget without a tone is the plain card, never a neutral-grey wash. */
 .glasshome-widget {
-  background:
-    var(--widget-gradient,
-      linear-gradient(135deg,
-        color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent),
-        color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)
-      )
-    ),
-    var(--glass-frost, none);
+  --widget-wash: 22%;
+  --widget-wash-2: 11%;
+  --glass-wash: var(--widget-wash);
+  --glass-wash-2: var(--widget-wash-2);
+  --glass-wash-angle: 135deg;
+  --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
+  --glass-rim: 0.3;
+  --glass-lift: 0.45;
+  --glass-shade: 0.05;
   backdrop-filter: var(--widget-backdrop, none);
   -webkit-backdrop-filter: var(--widget-backdrop, none);
-  box-shadow: inset 0 1px 0 var(--widget-border-highlight);
+}
+/* A fill widget keeps a neutral card; the fill carries the tone, so a full fill is the toned card. */
+.glasshome-widget:has(.glasshome-widget-slider-fill) {
+  --glass-wash: 0%;
+  --glass-wash-2: 0%;
+}
+.dark .glasshome-widget {
+  --glass-shade: 0;
 }
 
 /* === Slot: content layout === */
@@ -135,15 +134,15 @@
   z-index: 30;
 }
 
-/* === Slot: icon === */
+/* === Slot: icon ===
+ * ui's tinted icon pill (ICON_PILL_TINT): the disc is .glass, so the material shapes it. */
 .glasshome-widget-icon {
   width: var(--widget-icon-box);
   height: var(--widget-icon-box);
   border-radius: var(--radius-sm, 12px);
-  background: var(--widget-icon-color, var(--widget-color));
-  box-shadow: 0 0 calc(var(--widget-glow-strength) * 30px)
-    color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 50%, transparent);
-  color: oklch(from var(--widget-icon-color, var(--widget-color)) calc(0.52 + sign(0.5 - l) * 0.43) calc(c * 0.2) h);
+  --glass-tone: var(--widget-icon-color, var(--widget-color));
+  --glass-rim: 0.4;
+  --glass-wash: 18%;
 }
 .glasshome-widget-icon-glyph {
   font-size: var(--widget-icon-glyph);
@@ -201,9 +200,18 @@
  * detected via container query. */
 .glasshome-widget-slider-fill {
   --widget-fill-value: 0;
-  background: color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 30%, transparent);
-  box-shadow: 0 0 calc(var(--widget-glow-strength) * 40px)
-    color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 40%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1)), transparent),
+    color-mix(
+      in srgb,
+      var(--widget-color-to, var(--widget-color)) calc(var(--widget-wash-2) * var(--material-tint, 1)),
+      transparent
+    )
+  );
+  /* Inset: the clip-path cuts any outer shadow. */
+  box-shadow: inset 0 0 calc(var(--material-glow, 0px) * 1.2)
+    oklch(from var(--widget-color) l c h / 0.55);
   clip-path: inset(0 calc((100 - var(--widget-fill-value)) * 1%) 0 0 round var(--widget-radius));
 }
 @container widget (max-aspect-ratio: 1) {

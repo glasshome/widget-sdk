@@ -59,22 +59,11 @@ describe("tokens.css contract", () => {
     expect(css).toContain("--widget-glow-strength: var(--widget-glow-default)");
   });
 
-  test("envelope vars per mode", () => {
+  test("icon glow default per mode", () => {
     const parts = css.split(".dark {");
     expect(parts.length).toBe(2);
-    const rootChunk = parts[0] ?? "";
-    const darkChunk = parts[1] ?? "";
-    expect(rootChunk).toContain("--widget-grad-strength:    1;");
-    expect(darkChunk).toContain("--widget-grad-strength:    1.1;");
-    // All three envelope vars present in both chunks
-    for (const v of [
-      "--widget-grad-strength",
-      "--widget-glow-default",
-      "--widget-border-highlight",
-    ]) {
-      expect(rootChunk).toContain(v);
-      expect(darkChunk).toContain(v);
-    }
+    expect(parts[0]).toContain("--widget-glow-default:     0.4;");
+    expect(parts[1]).toContain("--widget-glow-default:     0.5;");
   });
 
   test("atproperty widget-color", () => {
@@ -114,41 +103,63 @@ describe("injection idempotent", () => {
   });
 });
 
-describe("Phase 26 shell gradient (VIS-P01)", () => {
-  test("shell gradient — color-mix oklch formula at 135deg with 22%/11% asymmetric stops modulated by --widget-grad-strength", () => {
-    expect(css).toContain("var(--widget-gradient,");
-    expect(css).toContain("linear-gradient(135deg,");
-    expect(css).toContain(
-      "color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent)",
-    );
-    expect(css).toContain(
-      "color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)",
-    );
+describe("shell material is the ui glass formula", () => {
+  const shellRule = () => {
+    const start = css.indexOf(".glasshome-widget {\n  --widget-wash");
+    if (start === -1) throw new Error("no glass knob block on the shell");
+    return css.slice(start, css.indexOf("}", start));
+  };
+
+  test("the shell sets the wash strengths and leaves the tone to the widget", () => {
+    expect(shellRule()).toContain("--widget-wash: 22%");
+    expect(shellRule()).toContain("--widget-wash-2: 11%");
+    expect(shellRule()).toContain("--glass-wash: var(--widget-wash)");
+    expect(shellRule()).not.toContain("--glass-tone");
   });
 
-  test("shell material — frost slot composited below the gradient, backdrop var-driven", () => {
-    // Bottom background layer is the shared --glass-frost slot (ui .glass parity).
-    expect(css).toMatch(/background:\s*\n?\s*var\(--widget-gradient,[\s\S]*?\),\s*\n?\s*var\(--glass-frost, none\);/);
-    // Dynamic backdrop rides the --widget-backdrop channel, default none.
-    expect(css).toContain("backdrop-filter: var(--widget-backdrop, none)");
-    expect(css).toContain("-webkit-backdrop-filter: var(--widget-backdrop, none)");
+  test("the shell wears the card recipe's knobs", () => {
+    // The theme's material clarity when the host ui has it; the card recipe's 60% before ui 1.17.
+    expect(shellRule()).toContain(
+      "--glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent)",
+    );
+    expect(shellRule()).toContain("--glass-rim: 0.3");
+    expect(shellRule()).toContain("--glass-lift: 0.45");
+    expect(shellRule()).toContain("--glass-shade: 0.05");
+    expect(css).toContain(".dark .glasshome-widget {\n  --glass-shade: 0;");
+  });
+
+  test("the backdrop still rides the host-gated channel", () => {
+    expect(shellRule()).toContain("backdrop-filter: var(--widget-backdrop, none)");
+    expect(shellRule()).toContain("-webkit-backdrop-filter: var(--widget-backdrop, none)");
+  });
+
+  test("no second glass: the shell paints no gradient, rim or highlight of its own", () => {
+    expect(css).not.toContain("--widget-border-highlight");
+    expect(css).not.toContain("--widget-grad-strength");
+    expect(css).not.toContain("var(--widget-gradient");
+    expect(css).not.toContain("linear-gradient(135deg");
   });
 });
 
-describe("Phase 26 inset highlight (VIS-P02)", () => {
-  test("inset highlight — single 1px highlight using --widget-border-highlight", () => {
-    expect(css).toContain("box-shadow: inset 0 1px 0 var(--widget-border-highlight)");
-  });
-});
+describe("the icon disc and slider fill follow the material", () => {
+  const rule = (selector: string) => {
+    const start = css.indexOf(`\n${selector} {`);
+    return css.slice(start, css.indexOf("\n}", start));
+  };
 
-describe("Phase 26 icon glow rule (VIS-P03)", () => {
-  test("glasshome-widget-icon — bg + glow with calc(--widget-glow-strength * 30px) and color-mix at 50% transparent", () => {
-    expect(css).toContain(".glasshome-widget-icon {");
-    expect(css).toContain("background: var(--widget-icon-color, var(--widget-color))");
-    expect(css).toContain("box-shadow: 0 0 calc(var(--widget-glow-strength) * 30px)");
-    expect(css).toContain(
-      "color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 50%, transparent)",
-    );
+  test("the disc is ui's tinted icon pill: its tone and the pill knobs, no paint of its own", () => {
+    const icon = rule(".glasshome-widget-icon");
+    expect(icon).toContain("--glass-tone: var(--widget-icon-color, var(--widget-color))");
+    expect(icon).toContain("--glass-rim: 0.4");
+    expect(icon).toContain("--glass-wash: 18%");
+    expect(icon).not.toContain("background:");
+    expect(icon).not.toContain("box-shadow:");
+  });
+
+  test("the slider fill is the card's own wash, so a full fill matches a toned card", () => {
+    const fill = rule(".glasshome-widget-slider-fill");
+    expect(fill).toContain("var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1))");
+    expect(fill).not.toContain("--widget-icon-color");
   });
 
   test("glasshome-widget-loading — color-mix tint at 20% of widget-color", () => {

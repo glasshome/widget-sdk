@@ -43,19 +43,50 @@ describe("Widget shell", () => {
     expect(channel(container, "--widget-color")).toBe("oklch(0.7 0.2 195)");
   });
 
-  it("carries the second gradient stop and a full gradient override", () => {
-    const { container } = render(() => (
-      <Widget color="red" colorTo="blue" gradient="linear-gradient(90deg, red, blue)" />
-    ));
+  it("wears the ui glass class so the shell is the one material", () => {
+    const { container } = render(() => <Widget />);
+    expect(shell(container).classList.contains("glass")).toBe(true);
+  });
+
+  it("carries the second gradient stop on its channel and into the glass", () => {
+    const { container } = render(() => <Widget color="red" colorTo="blue" />);
     expect(channel(container, "--widget-color-to")).toBe("blue");
-    expect(channel(container, "--widget-gradient")).toBe("linear-gradient(90deg, red, blue)");
+    expect(channel(container, "--glass-tone")).toBe("var(--widget-color)");
+    expect(channel(container, "--glass-tone-2")).toBe("blue");
+  });
+
+  it("a widget without a tone, or with the neutral one, is the plain card: no glass tone", () => {
+    const bare = render(() => <Widget />);
+    expect(channel(bare.container, "--glass-tone")).toBe("");
+    expect(channel(bare.container, "--glass-tone-2")).toBe("");
+
+    const neutral = render(() => <Widget tone="neutral" />);
+    expect(channel(neutral.container, "--widget-color")).toBe("var(--tone-neutral)");
+    expect(channel(neutral.container, "--glass-tone")).toBe("");
+  });
+
+  it("paints a deprecated full gradient inline, over the material", () => {
+    const { container } = render(() => (
+      <Widget gradient="linear-gradient(90deg, red, blue)" />
+    ));
+    expect(shell(container).style.backgroundImage).toBe("linear-gradient(90deg, red, blue)");
   });
 
   it("leaves every channel unset when no colour props are given", () => {
     const { container } = render(() => <Widget />);
-    for (const name of ["--widget-color", "--widget-color-to", "--widget-gradient"]) {
+    for (const name of ["--widget-color", "--widget-color-to"]) {
       expect(channel(container, name)).toBe("");
     }
+    expect(shell(container).style.backgroundImage).toBe("");
+  });
+
+  it("empty state text reads theme ink, not a white alpha", () => {
+    const { getByText } = render(() => (
+      <Widget emptyState={{ title: "Nothing here", message: "Add an entity" }} />
+    ));
+    expect(getByText("Nothing here").className).toContain("text-foreground");
+    expect(getByText("Add an entity").className).toContain("text-muted-foreground");
+    expect(getByText("Nothing here").className).not.toMatch(/text-white/);
   });
 
   it("declares itself a size container so widgets can query their own box", () => {

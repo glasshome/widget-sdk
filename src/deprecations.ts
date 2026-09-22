@@ -112,6 +112,23 @@ export const deprecations: readonly DeprecationEntry[] = [
     docsUrl: DOCS_URL,
     sourcePattern: "configSchema\\s*=\\s*z\\.object\\(",
   },
+  {
+    id: "widget.gradient",
+    since: "1.16.0",
+    removeIn: "2.0.0",
+    replacement: "<Widget color colorTo>",
+    docsUrl: "https://glasshome.app/docs/widget-sdk/widget",
+    sourcePattern: "<Widget[^>]*\\sgradient=",
+  },
+  {
+    // A fill in its own colour paints a second tone over the card's wash.
+    id: "sliderFill.color",
+    since: "1.16.0",
+    removeIn: "2.0.0",
+    replacement: "the Widget's tone or color; the fill follows the card",
+    docsUrl: "https://glasshome.app/docs/widget-sdk/widget",
+    sourcePattern: "<WidgetSliderFill[^>]*\\scolor=",
+  },
 ];
 
 /** Format a registry entry into the one-line notice shared by every channel. */

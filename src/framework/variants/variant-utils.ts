@@ -165,7 +165,7 @@ function mergeInteractions(
  * const customVariant = mergeVariants(classicGlass, {
  *   styles: {
  *     cssVars: {
- *       "--widget-bg": "rgba(0, 0, 0, 0.5)"
+ *       "--glass-base": "oklch(0.2 0 0 / 0.5)"
  *     }
  *   }
  * });
@@ -201,7 +201,7 @@ export function mergeVariants(
  *   name: "Dark Glass",
  *   styles: {
  *     cssVars: {
- *       "--widget-bg": "rgba(0, 0, 0, 0.5)"
+ *       "--glass-base": "oklch(0.2 0 0 / 0.5)"
  *     }
  *   }
  * });
@@ -274,14 +274,14 @@ export function applyLayout(
  * @example
  * ```tsx
  * const blueTinted = applyCssVars(classicGlass, {
- *   "--widget-bg": "rgba(59, 130, 246, 0.2)",
- *   "--widget-border": "rgba(59, 130, 246, 0.3)"
+ *   "--glass-tone": "oklch(0.62 0.2 260)",
+ *   "--glass-wash": "30%"
  * });
  * ```
  */
 export function applyCssVars(
   variant: WidgetVariantConfig,
-  cssVars: Record<`--widget-${string}`, string | number>,
+  cssVars: Record<`--widget-${string}` | `--glass-${string}`, string | number>,
 ): WidgetVariantConfig {
   return mergeVariants(variant, {
     styles: { cssVars },

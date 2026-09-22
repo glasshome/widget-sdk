@@ -54,7 +54,7 @@ export interface WidgetStyles {
   /** Tailwind utility classes (for simple styling) */
   class?: string;
   /** CSS custom properties for themeable values */
-  cssVars?: Record<`--widget-${string}`, string | number>;
+  cssVars?: Record<`--widget-${string}` | `--glass-${string}`, string | number>;
 }
 
 /**
