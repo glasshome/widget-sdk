@@ -7,6 +7,7 @@
  */
 
 export { cn } from "./cn";
+export { copyText, type CopyState, useCopyText } from "./clipboard";
 export {
   calculateLightGroup,
   calculateSensorGroup,
