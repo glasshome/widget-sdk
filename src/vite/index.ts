@@ -516,7 +516,26 @@ function assertNoHostThemeVars(outDir: string, name: string): void {
  * across a shadow boundary, so the host mirrors the document's `dark` class
  * onto the shadow host element and `:host(.dark)` picks it up.
  */
-function createWidgetBuildEntry(root: string, name: string, widgetEntry: string): string {
+/** The widget's own folder plus the project's shared folders: Tailwind only
+ *  emits utilities for files it is pointed at, and a widget's shared component
+ *  is as much its source as its entry. A sibling widget's folder stays out. */
+export function widgetProjectScanDirs(srcDir: string, widgetEntry: string): string[] {
+  const src = resolve(srcDir);
+  const own = dirname(widgetEntry);
+  const siblings = new Set(discoverWidgets(src).map((w) => dirname(w.entry)));
+  const shared = readdirSync(src, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => join(src, e.name))
+    .filter((dir) => !siblings.has(dir));
+  return [own, ...shared];
+}
+
+function createWidgetBuildEntry(
+  root: string,
+  name: string,
+  widgetEntry: string,
+  srcDir: string,
+): string {
   const cacheDir = resolve(root, BUILD_CACHE_DIR);
   mkdirSync(cacheDir, { recursive: true });
 
@@ -537,7 +556,7 @@ function createWidgetBuildEntry(root: string, name: string, widgetEntry: string)
     join(uiDir, "src"),
     join(uiDir, "dist"),
     ...(sdkDir ? [join(sdkDir, "src"), join(sdkDir, "dist")] : []),
-    dirname(widgetEntry),
+    ...widgetProjectScanDirs(srcDir, widgetEntry),
   ].filter((dir) => existsSync(dir));
 
   const cssPath = resolve(cacheDir, `${name}.tailwind.css`);
@@ -723,7 +742,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       css: { ...options?.viteConfig?.css, ...widgetCssConfig() },
       build: {
         lib: {
-          entry: createWidgetBuildEntry(root, widget.name, widget.entry),
+          entry: createWidgetBuildEntry(root, widget.name, widget.entry, srcDir),
           formats: ["es"],
           fileName: widget.name,
           // Widget CSS ships as a separate asset (adopted by the host's
@@ -777,7 +796,13 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
         css: widgetCssConfig(),
         build: {
           lib: {
-            entry: createWidgetBuildEntry(root, "index", resolve(root, entry)),
+            // A single-widget project: its entry's folder is the whole source tree.
+            entry: createWidgetBuildEntry(
+              root,
+              "index",
+              resolve(root, entry),
+              dirname(resolve(root, entry)),
+            ),
             formats: ["es"] as const,
             fileName: "index",
             cssFileName: "index",
