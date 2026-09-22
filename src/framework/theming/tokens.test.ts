@@ -117,7 +117,10 @@ describe("shell material is the ui glass formula", () => {
   });
 
   test("the shell wears the card recipe's knobs", () => {
-    expect(shellRule()).toContain("--glass-base: color-mix(in srgb, var(--card) 60%, transparent)");
+    // The theme's material clarity when the host ui has it; the card recipe's 60% before ui 1.17.
+    expect(shellRule()).toContain(
+      "--glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent)",
+    );
     expect(shellRule()).toContain("--glass-rim: 0.3");
     expect(shellRule()).toContain("--glass-lift: 0.45");
     expect(shellRule()).toContain("--glass-shade: 0.05");

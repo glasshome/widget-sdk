@@ -65,7 +65,7 @@
   --glass-wash: 22%;
   --glass-wash-2: 11%;
   --glass-wash-angle: 135deg;
-  --glass-base: color-mix(in srgb, var(--card) 60%, transparent);
+  --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
   --glass-rim: 0.3;
   --glass-lift: 0.45;
   --glass-shade: 0.05;
