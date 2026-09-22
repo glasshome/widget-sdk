@@ -105,16 +105,15 @@ describe("injection idempotent", () => {
 
 describe("shell material is the ui glass formula", () => {
   const shellRule = () => {
-    const start = css.indexOf(".glasshome-widget {\n  --glass-tone");
+    const start = css.indexOf(".glasshome-widget {\n  --glass-wash");
     if (start === -1) throw new Error("no glass knob block on the shell");
     return css.slice(start, css.indexOf("}", start));
   };
 
-  test("the widget colour channel feeds the glass tone, both stops", () => {
-    expect(shellRule()).toContain("--glass-tone: var(--widget-color)");
-    expect(shellRule()).toContain("--glass-tone-2: var(--widget-color-to, var(--widget-color))");
+  test("the shell sets the wash strengths and leaves the tone to the widget", () => {
     expect(shellRule()).toContain("--glass-wash: 22%");
     expect(shellRule()).toContain("--glass-wash-2: 11%");
+    expect(shellRule()).not.toContain("--glass-tone");
   });
 
   test("the shell wears the card recipe's knobs", () => {

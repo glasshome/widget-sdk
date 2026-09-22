@@ -127,7 +127,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       ...(variantConfig()?.styles?.cssVars || {}),
       ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
       ...(props.color ? { "--widget-color": props.color } : {}),
-      ...(props.colorTo ? { "--widget-color-to": props.colorTo } : {}),
+      ...(props.tone || props.color ? { "--glass-tone": "var(--widget-color)" } : {}),
+      ...(props.colorTo ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo } : {}),
       ...(props.gradient ? { "background-image": gradient() } : {}),
     }),
   );

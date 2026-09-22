@@ -48,9 +48,17 @@ describe("Widget shell", () => {
     expect(shell(container).classList.contains("glass")).toBe(true);
   });
 
-  it("carries the second gradient stop on its channel", () => {
+  it("carries the second gradient stop on its channel and into the glass", () => {
     const { container } = render(() => <Widget color="red" colorTo="blue" />);
     expect(channel(container, "--widget-color-to")).toBe("blue");
+    expect(channel(container, "--glass-tone")).toBe("var(--widget-color)");
+    expect(channel(container, "--glass-tone-2")).toBe("blue");
+  });
+
+  it("a widget without a tone is the plain card: no glass tone at all", () => {
+    const { container } = render(() => <Widget />);
+    expect(channel(container, "--glass-tone")).toBe("");
+    expect(channel(container, "--glass-tone-2")).toBe("");
   });
 
   it("paints a deprecated full gradient inline, over the material", () => {

@@ -58,10 +58,10 @@
 
 /* Shell material: ui's .glass, worn through the class Widget.tsx carries.
  * Unlayered and class-specific, so these beat the formula's :where() defaults
- * (tone-2 and wash-2 are re-declared there and cannot be set from a utility). */
+ * (wash-2 is re-declared there and cannot be set from a utility). The tone
+ * stays the formula's transparent default until Widget.tsx sets one inline:
+ * a widget without a tone is the plain card, never a neutral-grey wash. */
 .glasshome-widget {
-  --glass-tone: var(--widget-color);
-  --glass-tone-2: var(--widget-color-to, var(--widget-color));
   --glass-wash: 22%;
   --glass-wash-2: 11%;
   --glass-wash-angle: 135deg;
