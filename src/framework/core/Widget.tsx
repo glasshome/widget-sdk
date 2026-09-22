@@ -195,9 +195,9 @@ function WidgetEmptyStateInner(props: {
 }): JSX.Element {
   return (
     <div class="flex h-full w-full flex-col items-center justify-center gap-2 text-center">
-      {props.icon && <div class="flex items-center justify-center text-white/30">{props.icon}</div>}
-      {props.title && <h3 class="font-semibold text-sm text-white/60">{props.title}</h3>}
-      {props.message && <p class="text-white/50 text-xs">{props.message}</p>}
+      {props.icon && <div class="flex items-center justify-center text-muted-foreground">{props.icon}</div>}
+      {props.title && <h3 class="font-semibold text-sm text-foreground">{props.title}</h3>}
+      {props.message && <p class="text-muted-foreground text-xs">{props.message}</p>}
     </div>
   );
 }

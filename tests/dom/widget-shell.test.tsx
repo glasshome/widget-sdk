@@ -68,6 +68,15 @@ describe("Widget shell", () => {
     expect(shell(container).style.backgroundImage).toBe("");
   });
 
+  it("empty state text reads theme ink, not a white alpha", () => {
+    const { getByText } = render(() => (
+      <Widget emptyState={{ title: "Nothing here", message: "Add an entity" }} />
+    ));
+    expect(getByText("Nothing here").className).toContain("text-foreground");
+    expect(getByText("Add an entity").className).toContain("text-muted-foreground");
+    expect(getByText("Nothing here").className).not.toMatch(/text-white/);
+  });
+
   it("declares itself a size container so widgets can query their own box", () => {
     const { container } = render(() => <Widget />);
     expect(shell(container).style.getPropertyValue("container-type")).toBe("size");
