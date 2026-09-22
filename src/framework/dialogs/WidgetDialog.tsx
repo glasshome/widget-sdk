@@ -1,4 +1,8 @@
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
   ResponsiveDialogBody,
   ResponsiveDialogFooter,
   Tabs,
@@ -29,6 +33,8 @@ import {
 } from "solid-js";
 import type { ZodType } from "zod";
 import { toFormSchema } from "../to-form-schema";
+import { type CopyState, useCopyText } from "../utils/clipboard";
+import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
 
 /** The JSON Schema dialect ui's SchemaForm accepts, sourced from ui itself. */
@@ -107,6 +113,12 @@ export interface WidgetDialogProps {
   TabsTrigger?: typeof TabsTrigger;
   TabsContent?: typeof TabsContent;
 }
+
+const COPY_LABEL: Record<CopyState, string> = {
+  idle: "Copy all",
+  copied: "Copied",
+  failed: "Copy failed",
+};
 
 export function WidgetDialog(props: WidgetDialogProps) {
   const [local] = splitProps(props, [
@@ -283,9 +295,12 @@ export function WidgetDialog(props: WidgetDialogProps) {
         </svg>
       ),
       content: local.controlsContent ?? (
-        <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
-          <p class="text-muted-foreground text-sm">No additional controls</p>
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No controls</EmptyTitle>
+            <EmptyDescription>This widget is shown as is.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ),
     });
 
@@ -314,27 +329,21 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
         </svg>
       ),
-      content: local.debugContent ?? (
-        <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
-          <p class="text-muted-foreground text-sm">No debug information available</p>
-        </div>
-      ),
+      content: local.debugContent ?? <WidgetDebugTab data={local.debugData} />,
     });
 
     return tabs;
   };
 
-  const handleCopyDebug = async () => {
+  const debugCopy = useCopyText();
+
+  const handleCopyDebug = () => {
     if (local.debugData === undefined) return;
-    try {
-      const text =
-        typeof local.debugData === "string"
-          ? local.debugData
-          : JSON.stringify(local.debugData, null, 2);
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // Silently fail
-    }
+    const text =
+      typeof local.debugData === "string"
+        ? local.debugData
+        : JSON.stringify(local.debugData, null, 2);
+    void debugCopy.copy(text);
   };
 
   const RD = local.ResponsiveDialog;
@@ -429,7 +438,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
               </Show>
               <Show when={tabValue() === "debug" && local.debugData !== undefined}>
                 <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                  Copy
+                  {COPY_LABEL[debugCopy.state()]}
                 </Btn>
               </Show>
             </RDFooter>

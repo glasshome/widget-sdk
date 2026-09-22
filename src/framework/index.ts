@@ -56,7 +56,16 @@ export { WidgetSliderFill } from "./backgrounds/WidgetSliderFill";
 // Dialog Components
 // ============================================================================
 
-export { WidgetDialog, type WidgetDialogProps, type WidgetDialogTab } from "./dialogs";
+export {
+  buildDebugData,
+  WidgetDebugTab,
+  type WidgetDebugData,
+  type WidgetDebugEntity,
+  WidgetDebugView,
+  WidgetDialog,
+  type WidgetDialogProps,
+  type WidgetDialogTab,
+} from "./dialogs";
 
 // ============================================================================
 // Hooks
@@ -123,12 +132,15 @@ export {
 export {
   calculateLightGroup,
   calculateSensorGroup,
+  type CopyState,
+  copyText,
   countActiveEntities,
   getEntityAttribute,
   isEntityActive,
   type LightGroupResult,
   type SensorGroupResult,
   type SensorGroupType,
+  useCopyText,
 } from "./utils";
 
 // ============================================================================
