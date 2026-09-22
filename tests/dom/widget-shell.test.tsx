@@ -55,10 +55,14 @@ describe("Widget shell", () => {
     expect(channel(container, "--glass-tone-2")).toBe("blue");
   });
 
-  it("a widget without a tone is the plain card: no glass tone at all", () => {
-    const { container } = render(() => <Widget />);
-    expect(channel(container, "--glass-tone")).toBe("");
-    expect(channel(container, "--glass-tone-2")).toBe("");
+  it("a widget without a tone, or with the neutral one, is the plain card: no glass tone", () => {
+    const bare = render(() => <Widget />);
+    expect(channel(bare.container, "--glass-tone")).toBe("");
+    expect(channel(bare.container, "--glass-tone-2")).toBe("");
+
+    const neutral = render(() => <Widget tone="neutral" />);
+    expect(channel(neutral.container, "--widget-color")).toBe("var(--tone-neutral)");
+    expect(channel(neutral.container, "--glass-tone")).toBe("");
   });
 
   it("paints a deprecated full gradient inline, over the material", () => {
