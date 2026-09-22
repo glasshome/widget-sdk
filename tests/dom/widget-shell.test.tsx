@@ -43,19 +43,29 @@ describe("Widget shell", () => {
     expect(channel(container, "--widget-color")).toBe("oklch(0.7 0.2 195)");
   });
 
-  it("carries the second gradient stop and a full gradient override", () => {
-    const { container } = render(() => (
-      <Widget color="red" colorTo="blue" gradient="linear-gradient(90deg, red, blue)" />
-    ));
+  it("wears the ui glass class so the shell is the one material", () => {
+    const { container } = render(() => <Widget />);
+    expect(shell(container).classList.contains("glass")).toBe(true);
+  });
+
+  it("carries the second gradient stop on its channel", () => {
+    const { container } = render(() => <Widget color="red" colorTo="blue" />);
     expect(channel(container, "--widget-color-to")).toBe("blue");
-    expect(channel(container, "--widget-gradient")).toBe("linear-gradient(90deg, red, blue)");
+  });
+
+  it("paints a deprecated full gradient inline, over the material", () => {
+    const { container } = render(() => (
+      <Widget gradient="linear-gradient(90deg, red, blue)" />
+    ));
+    expect(shell(container).style.backgroundImage).toBe("linear-gradient(90deg, red, blue)");
   });
 
   it("leaves every channel unset when no colour props are given", () => {
     const { container } = render(() => <Widget />);
-    for (const name of ["--widget-color", "--widget-color-to", "--widget-gradient"]) {
+    for (const name of ["--widget-color", "--widget-color-to"]) {
       expect(channel(container, name)).toBe("");
     }
+    expect(shell(container).style.backgroundImage).toBe("");
   });
 
   it("declares itself a size container so widgets can query their own box", () => {

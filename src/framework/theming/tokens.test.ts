@@ -59,22 +59,11 @@ describe("tokens.css contract", () => {
     expect(css).toContain("--widget-glow-strength: var(--widget-glow-default)");
   });
 
-  test("envelope vars per mode", () => {
+  test("icon glow default per mode", () => {
     const parts = css.split(".dark {");
     expect(parts.length).toBe(2);
-    const rootChunk = parts[0] ?? "";
-    const darkChunk = parts[1] ?? "";
-    expect(rootChunk).toContain("--widget-grad-strength:    1;");
-    expect(darkChunk).toContain("--widget-grad-strength:    1.1;");
-    // All three envelope vars present in both chunks
-    for (const v of [
-      "--widget-grad-strength",
-      "--widget-glow-default",
-      "--widget-border-highlight",
-    ]) {
-      expect(rootChunk).toContain(v);
-      expect(darkChunk).toContain(v);
-    }
+    expect(parts[0]).toContain("--widget-glow-default:     0.4;");
+    expect(parts[1]).toContain("--widget-glow-default:     0.5;");
   });
 
   test("atproperty widget-color", () => {
@@ -114,30 +103,38 @@ describe("injection idempotent", () => {
   });
 });
 
-describe("Phase 26 shell gradient (VIS-P01)", () => {
-  test("shell gradient — color-mix oklch formula at 135deg with 22%/11% asymmetric stops modulated by --widget-grad-strength", () => {
-    expect(css).toContain("var(--widget-gradient,");
-    expect(css).toContain("linear-gradient(135deg,");
-    expect(css).toContain(
-      "color-mix(in oklch, var(--widget-color) calc(22% * var(--widget-grad-strength)), transparent)",
-    );
-    expect(css).toContain(
-      "color-mix(in oklch, var(--widget-color-to, var(--widget-color)) calc(11% * var(--widget-grad-strength)), transparent)",
-    );
+describe("shell material is the ui glass formula", () => {
+  const shellRule = () => {
+    const start = css.indexOf(".glasshome-widget {\n  --glass-tone");
+    if (start === -1) throw new Error("no glass knob block on the shell");
+    return css.slice(start, css.indexOf("}", start));
+  };
+
+  test("the widget colour channel feeds the glass tone, both stops", () => {
+    expect(shellRule()).toContain("--glass-tone: var(--widget-color)");
+    expect(shellRule()).toContain("--glass-tone-2: var(--widget-color-to, var(--widget-color))");
+    expect(shellRule()).toContain("--glass-wash: 22%");
+    expect(shellRule()).toContain("--glass-wash-2: 11%");
   });
 
-  test("shell material — frost slot composited below the gradient, backdrop var-driven", () => {
-    // Bottom background layer is the shared --glass-frost slot (ui .glass parity).
-    expect(css).toMatch(/background:\s*\n?\s*var\(--widget-gradient,[\s\S]*?\),\s*\n?\s*var\(--glass-frost, none\);/);
-    // Dynamic backdrop rides the --widget-backdrop channel, default none.
-    expect(css).toContain("backdrop-filter: var(--widget-backdrop, none)");
-    expect(css).toContain("-webkit-backdrop-filter: var(--widget-backdrop, none)");
+  test("the shell wears the card recipe's knobs", () => {
+    expect(shellRule()).toContain("--glass-base: color-mix(in srgb, var(--card) 60%, transparent)");
+    expect(shellRule()).toContain("--glass-rim: 0.3");
+    expect(shellRule()).toContain("--glass-lift: 0.45");
+    expect(shellRule()).toContain("--glass-shade: 0.05");
+    expect(css).toContain(".dark .glasshome-widget {\n  --glass-shade: 0;");
   });
-});
 
-describe("Phase 26 inset highlight (VIS-P02)", () => {
-  test("inset highlight — single 1px highlight using --widget-border-highlight", () => {
-    expect(css).toContain("box-shadow: inset 0 1px 0 var(--widget-border-highlight)");
+  test("the backdrop still rides the host-gated channel", () => {
+    expect(shellRule()).toContain("backdrop-filter: var(--widget-backdrop, none)");
+    expect(shellRule()).toContain("-webkit-backdrop-filter: var(--widget-backdrop, none)");
+  });
+
+  test("no second glass: the shell paints no gradient, rim or highlight of its own", () => {
+    expect(css).not.toContain("--widget-border-highlight");
+    expect(css).not.toContain("--widget-grad-strength");
+    expect(css).not.toContain("var(--widget-gradient");
+    expect(css).not.toContain("linear-gradient(135deg");
   });
 });
 

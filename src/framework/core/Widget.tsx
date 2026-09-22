@@ -41,7 +41,7 @@ interface WidgetProps {
   color?: string;
   /** Second-stop gradient color (`--widget-color-to`). */
   colorTo?: string;
-  /** Full CSS gradient string (`--widget-gradient`); overrides the auto-shell. */
+  /** @deprecated Use `color` + `colorTo`; a full gradient paints over the material. Removed in 2.0.0. */
   gradient?: string;
   loading?: boolean;
   class?: string;
@@ -115,6 +115,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     return props.variant;
   });
 
+  const gradient = deprecate(() => props.gradient, "widget.gradient");
+
   const channelStyle = createMemo(
     (): JSX.CSSProperties => ({
       "container-type": "size",
@@ -126,7 +128,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
       ...(props.color ? { "--widget-color": props.color } : {}),
       ...(props.colorTo ? { "--widget-color-to": props.colorTo } : {}),
-      ...(props.gradient ? { "--widget-gradient": props.gradient } : {}),
+      ...(props.gradient ? { "background-image": gradient() } : {}),
     }),
   );
 
@@ -150,8 +152,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
             props.gestures?.bindElement(el);
           }}
           class={cn(
-            "glasshome-widget",
-            "relative h-full w-full select-none overflow-hidden rounded-xl border border-border/50",
+            "glasshome-widget glass",
+            "relative h-full w-full select-none overflow-hidden rounded-xl",
             variantConfig()?.styles?.class,
             props.class,
           )}
