@@ -26,6 +26,7 @@ export {
 // Intersection pause
 export { useIntersectionPause } from "./use-intersection-pause";
 // Reduced motion
+export { type Daylight, type DaylightPhase, useDaylight } from "./use-daylight";
 export { useReducedMotion } from "./use-reduced-motion";
 // Dialog
 export { useWidgetDialog, type WidgetDialogReturn } from "./use-widget-dialog";
