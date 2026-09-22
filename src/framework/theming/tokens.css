@@ -62,8 +62,10 @@
  * stays the formula's transparent default until Widget.tsx sets one inline:
  * a widget without a tone is the plain card, never a neutral-grey wash. */
 .glasshome-widget {
-  --glass-wash: 22%;
-  --glass-wash-2: 11%;
+  --widget-wash: 22%;
+  --widget-wash-2: 11%;
+  --glass-wash: var(--widget-wash);
+  --glass-wash-2: var(--widget-wash-2);
   --glass-wash-angle: 135deg;
   --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
   --glass-rim: 0.3;
@@ -71,6 +73,11 @@
   --glass-shade: 0.05;
   backdrop-filter: var(--widget-backdrop, none);
   -webkit-backdrop-filter: var(--widget-backdrop, none);
+}
+/* A fill widget keeps a neutral card; the fill carries the tone, so a full fill is the toned card. */
+.glasshome-widget:has(.glasshome-widget-slider-fill) {
+  --glass-wash: 0%;
+  --glass-wash-2: 0%;
 }
 .dark .glasshome-widget {
   --glass-shade: 0;
@@ -127,15 +134,15 @@
   z-index: 30;
 }
 
-/* === Slot: icon === */
+/* === Slot: icon ===
+ * ui's tinted icon pill (ICON_PILL_TINT): the disc is .glass, so the material shapes it. */
 .glasshome-widget-icon {
   width: var(--widget-icon-box);
   height: var(--widget-icon-box);
   border-radius: var(--radius-sm, 12px);
-  background: var(--widget-icon-color, var(--widget-color));
-  box-shadow: 0 0 calc(var(--widget-glow-strength) * 30px)
-    color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 50%, transparent);
-  color: oklch(from var(--widget-icon-color, var(--widget-color)) calc(0.52 + sign(0.5 - l) * 0.43) calc(c * 0.2) h);
+  --glass-tone: var(--widget-icon-color, var(--widget-color));
+  --glass-rim: 0.4;
+  --glass-wash: 18%;
 }
 .glasshome-widget-icon-glyph {
   font-size: var(--widget-icon-glyph);
@@ -193,9 +200,18 @@
  * detected via container query. */
 .glasshome-widget-slider-fill {
   --widget-fill-value: 0;
-  background: color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 30%, transparent);
-  box-shadow: 0 0 calc(var(--widget-glow-strength) * 40px)
-    color-mix(in oklch, var(--widget-icon-color, var(--widget-color)) 40%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1)), transparent),
+    color-mix(
+      in srgb,
+      var(--widget-color-to, var(--widget-color)) calc(var(--widget-wash-2) * var(--material-tint, 1)),
+      transparent
+    )
+  );
+  /* Inset: the clip-path cuts any outer shadow. */
+  box-shadow: inset 0 0 calc(var(--material-glow, 0px) * 1.2)
+    oklch(from var(--widget-color) l c h / 0.55);
   clip-path: inset(0 calc((100 - var(--widget-fill-value)) * 1%) 0 0 round var(--widget-radius));
 }
 @container widget (max-aspect-ratio: 1) {
