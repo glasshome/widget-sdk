@@ -40,3 +40,29 @@ describe("daylightFrom without sun.sun", () => {
     expect(daylightFrom(undefined, at(12)).elevation).toBeUndefined();
   });
 });
+
+describe("daylightFrom progress", () => {
+  const iso = (h: number, m = 0, day = 15) => new Date(2026, 5, day, h, m).toISOString();
+  test("runs from sunrise to sunset while the sun is up", () => {
+    const sun = {
+      state: "above_horizon",
+      elevation: 40,
+      next_rising: iso(5, 0, 16),
+      next_setting: iso(21, 0),
+    };
+    expect(daylightFrom(sun, new Date(2026, 5, 15, 13, 0)).progress).toBeCloseTo(0.5, 2);
+  });
+  test("runs from sunset to sunrise overnight", () => {
+    const sun = {
+      state: "below_horizon",
+      elevation: -20,
+      next_rising: iso(5, 0, 16),
+      next_setting: iso(21, 0, 16),
+    };
+    expect(daylightFrom(sun, new Date(2026, 5, 16, 1, 0)).progress).toBeCloseTo(0.5, 2);
+  });
+  test("is undefined without the sun's times", () => {
+    expect(daylightFrom({ state: "above_horizon", elevation: 30 }, at(12)).progress).toBeUndefined();
+    expect(daylightFrom(undefined, at(12)).progress).toBeUndefined();
+  });
+});
