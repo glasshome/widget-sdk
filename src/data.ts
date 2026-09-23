@@ -21,6 +21,8 @@ export type {
   CalendarEvent,
   CalendarEventsData,
   CalendarWindowOptions,
+  ForecastType,
+  WeatherForecast,
 } from "@glasshome/sync-layer";
 export {
   byDomain,
