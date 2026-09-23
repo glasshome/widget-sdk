@@ -5,6 +5,25 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0](https://github.com/glasshome/widget-sdk/compare/v1.15.1...v1.16.0) (2026-09-22)
+
+
+### Features
+
+* **dialogs:** the debug tab renders itself from debugData ([f91ac0b](https://github.com/glasshome/widget-sdk/commit/f91ac0bf4842e844df9ffbdfbf713798374635d6))
+* **shell:** the card fill follows the theme's material clarity ([4af5fcc](https://github.com/glasshome/widget-sdk/commit/4af5fcc59162a8794732b7b185c12f21ec764831))
+* **shell:** the icon disc and slider fill follow the material ([bf8b39d](https://github.com/glasshome/widget-sdk/commit/bf8b39d8fbbcef6ddec611a385d2a08b7ee9cfd2))
+* **shell:** the widget shell wears ui's .glass; gradient prop deprecated ([e74fe68](https://github.com/glasshome/widget-sdk/commit/e74fe68e2a6d745e066dad1376c549f68d3e1ae5))
+
+
+### Bug Fixes
+
+* **deps:** the ui pin follows FactRow into 1.18.0 ([03b8993](https://github.com/glasshome/widget-sdk/commit/03b8993fa2dfbe60800f616bd2c53e1a3d8e9b58))
+* **dialogs:** copy from the debug tab copies ([a42a351](https://github.com/glasshome/widget-sdk/commit/a42a35120258c137bcdc552a973784c4870e425a))
+* **shell:** a widget without a tone is the plain card, never a neutral wash ([836035c](https://github.com/glasshome/widget-sdk/commit/836035c11074efdac72eff94a3eae77e2afccde2))
+* **shell:** the empty state reads theme ink, visible in light mode ([14d56ee](https://github.com/glasshome/widget-sdk/commit/14d56ee3c099ff8e7625fa35a027f14d0b09df21))
+* **shell:** the neutral tone paints no wash ([462e9ae](https://github.com/glasshome/widget-sdk/commit/462e9ae9dae764823ee030ad60e6709d549ce6fd))
+
 ## [1.15.1](https://github.com/glasshome/widget-sdk/compare/v1.15.0...v1.15.1) (2026-09-12)
 
 
