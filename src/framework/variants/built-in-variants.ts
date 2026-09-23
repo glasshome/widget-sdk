@@ -23,7 +23,7 @@ export const classicGlass: WidgetVariantConfig = {
     cssVars: {
       "--widget-padding": "1.5rem",
       // ui CARD_BLUR as a cssVar: the host's performant-blur sheet gates this channel.
-      "--widget-backdrop": "blur(var(--glass-blur, 24px)) saturate(1.8)",
+      "--widget-backdrop": "blur(var(--glass-blur, var(--material-blur, 24px))) saturate(1.8)",
     },
   },
   layout: {
