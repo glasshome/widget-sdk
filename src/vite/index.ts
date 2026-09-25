@@ -12,8 +12,10 @@ import { createRequire } from "node:module";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  type CapabilityGrant,
   formatSchemaError,
   isHostProvidedModule,
+  matchesRead,
   widgetManifestSchema,
 } from "@glasshome/widget-contract";
 import tailwindcss from "@tailwindcss/vite";
@@ -231,6 +233,46 @@ function writeGeneratedManifest(
   if (next !== current) writeFileSync(manifestPath, next);
 }
 
+const SDK_IMPORT_RE = /import\s*(\{[^}]*\}|\*\s*as\s+[\w$]+)\s*from\s*["']@glasshome\/widget-sdk["']/g;
+const SDK_DYNAMIC_IMPORT_RE = /import\(\s*["']@glasshome\/widget-sdk["']\s*\)/;
+
+/** What a built bundle imports from the SDK, by exported name; `*` for a namespace or dynamic import. */
+export function sdkImportsOf(code: string): Set<string> {
+  const names = new Set<string>();
+  if (SDK_DYNAMIC_IMPORT_RE.test(code)) names.add("*");
+  for (const [, clause = ""] of code.matchAll(SDK_IMPORT_RE)) {
+    if (!clause.startsWith("{")) {
+      names.add("*");
+      continue;
+    }
+    for (const part of clause.slice(1, -1).split(",")) {
+      const name = part.trim().split(/\s+as\s+/)[0];
+      if (name) names.add(name);
+    }
+  }
+  return names;
+}
+
+/** SDK hooks that read a fixed entity on the widget's behalf, so the widget must declare that read. */
+export const HOOK_READS: Record<string, string> = { useDaylight: "sun.sun" };
+
+export function assertHookReadsDeclared(
+  code: string,
+  capabilities: readonly CapabilityGrant[],
+  widgetName: string,
+): void {
+  const imports = sdkImportsOf(code);
+  for (const [hook, entityId] of Object.entries(HOOK_READS)) {
+    if (!imports.has(hook) && !imports.has("*")) continue;
+    if (matchesRead(capabilities, entityId)) continue;
+    const domain = entityId.split(".")[0];
+    throw new Error(
+      `[widget-sdk] "${widgetName}" uses ${hook}(), which reads ${entityId}, but its capabilities grant no read of it.\n` +
+        `  Add { "domain": "${domain}", "access": "read" } to capabilities, so the homeowner is told before installing.`,
+    );
+  }
+}
+
 export async function runSchemaGuard(args: {
   outFile: string;
   hashFile: string;
@@ -264,11 +306,15 @@ export async function runSchemaGuard(args: {
   assertExampleConfigsValid(def.exampleConfigIssues, declaredName);
 
   const jsonSchema = def.jsonSchema;
-  if (!jsonSchema) return;
+  const manifestFile = args.manifestPath && existsSync(args.manifestPath) ? args.manifestPath : null;
+  if (jsonSchema && manifestFile) writeGeneratedManifest(manifestFile, def, jsonSchema);
+  // Checked against the manifest as written, since that file is what publish ships.
+  const shipped: CapabilityGrant[] | undefined = manifestFile
+    ? JSON.parse(readFileSync(manifestFile, "utf-8")).capabilities
+    : def.manifest?.capabilities;
+  assertHookReadsDeclared(readFileSync(args.outFile, "utf-8"), shipped ?? [], declaredName);
 
-  if (args.manifestPath && existsSync(args.manifestPath)) {
-    writeGeneratedManifest(args.manifestPath, def, jsonSchema);
-  }
+  if (!jsonSchema) return;
 
   const hash = hashSchema(jsonSchema);
   const configVersion = def.manifest?.configVersion ?? null;

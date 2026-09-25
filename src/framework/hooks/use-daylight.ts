@@ -75,7 +75,8 @@ function holdClock(): () => void {
 
 /**
  * Household daylight: from Home Assistant's `sun.sun` when present, else the
- * local clock. Ambient like locale; the widget never needs a capability for it.
+ * local clock when the home has no sun entity. Reads `sun.sun`, so the widget
+ * declares `{ domain: "sun", access: "read" }`; the build refuses it otherwise.
  */
 export function useDaylight(): Accessor<Daylight> {
   const sun = useEntity("sun.sun");
