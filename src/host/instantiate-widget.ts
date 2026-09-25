@@ -18,7 +18,7 @@
 import { injectTokens, WidgetCtx } from "@glasshome/widget-sdk";
 import type { ReactiveWidgetContext, WidgetDefinition } from "@glasshome/widget-sdk";
 import { type Accessor, createComponent, ErrorBoundary } from "solid-js";
-import { render } from "solid-js/web";
+import { clearDelegatedEvents, DelegatedEvents, delegateEvents, render } from "solid-js/web";
 
 export interface WidgetInstanceHandle {
   dispose: () => void;
@@ -93,6 +93,24 @@ function observeHostClasses(host: HTMLElement, classes: string[]): () => void {
   };
 }
 
+// Handlers passed through props (every ui control) are delegated, and the document cannot see into a closed root.
+// Solid's handler leaves target/currentTarget pinned to inner nodes; unpin, registered after it, removes them before the event leaves.
+function delegateInside(shadow: ShadowRoot): () => void {
+  if (shadow.mode !== "closed") return () => {};
+  const events = [...DelegatedEvents];
+  const root = shadow as unknown as Document;
+  const unpin = (e: Event) => {
+    Reflect.deleteProperty(e, "target");
+    Reflect.deleteProperty(e, "currentTarget");
+  };
+  delegateEvents(events, root);
+  for (const name of events) shadow.addEventListener(name, unpin);
+  return () => {
+    clearDelegatedEvents(root);
+    for (const name of events) shadow.removeEventListener(name, unpin);
+  };
+}
+
 /**
  * Mount a widget into a closed shadow root on `host`.
  *
@@ -111,6 +129,7 @@ function observeHostClasses(host: HTMLElement, classes: string[]): () => void {
  */
 export function instantiateWidget(host: HTMLElement, opts: MountOptions): WidgetInstanceHandle {
   const shadow = host.attachShadow({ mode: "closed" });
+  const stopDelegation = delegateInside(shadow);
   const stopClassSync = observeHostClasses(host, opts.mirrorClasses ?? ["dark"]);
 
   // Tokens adopted by the host directly — widgets that never mount <Widget>
@@ -160,6 +179,7 @@ export function instantiateWidget(host: HTMLElement, opts: MountOptions): Widget
     dispose: () => {
       stopClassSync();
       dispose();
+      stopDelegation();
     },
   };
 }
