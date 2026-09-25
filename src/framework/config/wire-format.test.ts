@@ -197,4 +197,34 @@ describe("wire format (spec D.2)", () => {
       labels: { dashboard: "This dashboard's area", home: "The whole home" },
     });
   });
+
+  test("field.choice carries its icons to the wire", () => {
+    const schema = defineConfig({
+      lamp: field.choice(["table", "floor"], {
+        title: "Lamp",
+        default: "table",
+        icons: { table: "mdi:lamp", floor: "mdi:floor-lamp" },
+      }),
+    });
+    const wire = toFormSchema(schema) as { properties: Record<string, Record<string, unknown>> };
+    expect(wire.properties.lamp).toMatchObject({
+      enum: ["table", "floor"],
+      icons: { table: "mdi:lamp", floor: "mdi:floor-lamp" },
+    });
+  });
+
+  test("field.image sends each preset's label and thumb, never its full picture", () => {
+    const schema = defineConfig({
+      photo: field.image({
+        title: "Photo",
+        presets: { dog: { label: "Dog", src: "full.webp", thumb: "thumb.webp" } },
+      }),
+    });
+    const wire = toFormSchema(schema) as { properties: Record<string, Record<string, unknown>> };
+    expect(wire.properties.photo).toMatchObject({
+      formType: "image-picker",
+      presets: { dog: { label: "Dog", thumb: "thumb.webp" } },
+    });
+    expect(JSON.stringify(wire)).not.toContain("full.webp");
+  });
 });

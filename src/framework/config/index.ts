@@ -48,6 +48,8 @@ type ChoiceOpts<T extends string> = {
   default?: T;
   /** Display names for the options; the raw value shows without them. */
   labels?: Partial<Record<T, string>>;
+  /** Icon per option (e.g. "mdi:floor-lamp"); set, the host shows the options as icon cards. */
+  icons?: Partial<Record<T, string>>;
 };
 type EntitiesOpts = { title?: string; description?: string; deviceClass?: string };
 
@@ -105,7 +107,9 @@ function choice<const T extends string>(
 ): z.ZodDefault<z.ZodEnum<{ [K in T]: K }>> | z.ZodOptional<z.ZodEnum<{ [K in T]: K }>> {
   const base = z.enum(values as unknown as [T, ...T[]]);
   const withDefault = o.default !== undefined ? base.default(o.default) : base.optional();
-  return withDefault.meta(meta({ title: o.title, description: o.description, labels: o.labels }));
+  return withDefault.meta(
+    meta({ title: o.title, description: o.description, labels: o.labels, icons: o.icons }),
+  );
 }
 
 type ChoicesOpts<T extends string> = {
@@ -174,16 +178,40 @@ function icon(o?: { title?: string; description?: string; default?: string }) {
   return o?.default !== undefined ? base.default(o.default) : base.optional();
 }
 
+/** A built-in picture: `thumb` travels in the manifest for the picker, `src` stays in the bundle. */
+export interface ImagePresetSource {
+  label: string;
+  src: string;
+  thumb: string;
+}
+
+type ImageOpts = {
+  title?: string;
+  description?: string;
+  /** Built-in pictures the picker offers before the household's uploads. */
+  presets?: Record<string, ImagePresetSource>;
+};
+
 /**
- * Image id (an opaque handle, not a URL). The host renders its picker and
- * resolves the id with `imageUrl()`.
+ * Image id (an opaque handle, not a URL), or a picked preset. The host renders
+ * its picker; the widget resolves the value with `imageSrc()`.
  */
-function image(o: { title?: string; description?: string; default: string }): z.ZodDefault<z.ZodString>;
-function image(o?: { title?: string; description?: string }): z.ZodOptional<z.ZodString>;
-function image(o?: { title?: string; description?: string; default?: string }) {
-  const base = z
-    .string()
-    .meta(meta({ formType: "image-picker", title: o?.title ?? "Image", description: o?.description }));
+function image(o: ImageOpts & { default: string }): z.ZodDefault<z.ZodString>;
+function image(o?: ImageOpts): z.ZodOptional<z.ZodString>;
+function image(o?: ImageOpts & { default?: string }) {
+  const presets =
+    o?.presets &&
+    Object.fromEntries(
+      Object.entries(o.presets).map(([key, p]) => [key, { label: p.label, thumb: p.thumb }]),
+    );
+  const base = z.string().meta(
+    meta({
+      formType: "image-picker",
+      title: o?.title ?? "Image",
+      description: o?.description,
+      presets,
+    }),
+  );
   return o?.default !== undefined ? base.default(o.default) : base.optional();
 }
 

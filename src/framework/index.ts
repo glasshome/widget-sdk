@@ -125,8 +125,10 @@ export {
   defineConfig,
   field,
   type Field,
+  type ImagePresetSource,
   type Infer,
 } from "./config";
+export { imageSrc } from "./image-src";
 
 // ============================================================================
 // Utilities
