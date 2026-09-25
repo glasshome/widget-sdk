@@ -56,6 +56,8 @@ export interface ReactiveWidgetContext {
   dashboard?: () => WidgetDashboard;
   /** Who is looking. Absent on hosts that predate this field. */
   viewer?: () => WidgetViewer;
+  /** True when the household turned on Developer Mode; widget dialogs show Debug only then. */
+  developer?: () => boolean;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();

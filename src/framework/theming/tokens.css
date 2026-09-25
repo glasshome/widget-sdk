@@ -223,3 +223,288 @@
     clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0 round var(--widget-radius));
   }
 }
+
+/* === Panel: what a held tile opens (framework/panel) ===
+ * Rendered in a dialog outside the widget's shadow root, so every rule the panel
+ * needs lives here, never in a widget's own utilities. */
+.glasshome-panel {
+  --widget-wash: 22%;
+  --widget-wash-2: 11%;
+  --widget-radius: var(--radius-lg, 16px);
+  --widget-icon-box: 52px;
+  --widget-icon-glyph: 28px;
+  --panel-pad: 22px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: min(560px, 80vh);
+  color: var(--foreground);
+}
+/* The query box sits outside the grid: an element cannot answer its own container query. */
+.glasshome-panel-frame {
+  container-type: inline-size;
+  container-name: panel;
+}
+.glasshome-panel [data-slot="swatch-picker"] {
+  max-width: 360px;
+}
+.glasshome-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.glasshome-panel-backdrop > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.glasshome-panel-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, oklch(0 0 0 / 0.5), transparent 32%, transparent 55%, oklch(0 0 0 / 0.7));
+}
+.glasshome-panel-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 420px;
+  padding: var(--panel-pad);
+  overflow: hidden;
+  touch-action: none;
+}
+.glasshome-panel-stage:not(.glasshome-panel-stage-slides) {
+  touch-action: auto;
+}
+.glasshome-panel-stage-slides {
+  cursor: ns-resize;
+}
+.glasshome-panel-stage-fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1)), transparent),
+    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash-2) * var(--material-tint, 1)), transparent)
+  );
+  clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0 round var(--widget-radius));
+  transition: clip-path var(--duration-state, 200ms) var(--ease-emphasis, ease-out);
+}
+.glasshome-panel-art {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 82%;
+  width: 62%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.glasshome-panel-art > * {
+  max-width: 100%;
+  max-height: 100%;
+}
+.glasshome-panel-head,
+.glasshome-panel-readout,
+.glasshome-panel-actions {
+  position: relative;
+}
+.glasshome-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.glasshome-panel-titles,
+.glasshome-panel-readout,
+.glasshome-panel-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.glasshome-panel-eyebrow,
+.glasshome-panel-hint,
+.glasshome-panel-caption {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.glasshome-panel-name {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glasshome-panel-readout {
+  margin-top: auto;
+  gap: 4px;
+}
+.glasshome-panel-value {
+  font-size: clamp(56px, 12cqi, 88px);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.glasshome-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* Words on a picture stay near-white with a soft shadow, whatever the theme. */
+.glasshome-panel-has-backdrop .glasshome-panel-stage {
+  color: oklch(0.98 0 0);
+  text-shadow: 0 1px 12px oklch(0 0 0 / 0.45);
+}
+.glasshome-panel-has-backdrop .glasshome-panel-eyebrow,
+.glasshome-panel-has-backdrop .glasshome-panel-hint,
+.glasshome-panel-has-backdrop .glasshome-panel-caption {
+  color: oklch(0.98 0 0 / 0.82);
+}
+.glasshome-panel-aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--panel-pad);
+}
+/* A picture fades into glass under the aside, so small text never sits on it. */
+.glasshome-panel-has-backdrop .glasshome-panel-aside {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--card) 70%, transparent), color-mix(in oklch, var(--card) 88%, transparent));
+}
+@container panel (min-width: 720px) {
+  .glasshome-panel-has-aside {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+  .glasshome-panel-has-backdrop .glasshome-panel-aside {
+    background: none;
+  }
+  .glasshome-panel-has-backdrop.glasshome-panel-has-aside .glasshome-panel-backdrop::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, transparent 30%, color-mix(in oklch, var(--card) 70%, transparent) 50%, color-mix(in oklch, var(--card) 88%, transparent) 70%);
+  }
+}
+.glasshome-panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.glasshome-panel-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.glasshome-panel-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+}
+.glasshome-panel-row-wrap {
+  position: relative;
+  min-width: 0;
+}
+.glasshome-panel-row {
+  position: relative;
+  width: 100%;
+  height: 56px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 12px 0 10px;
+  overflow: hidden;
+  text-align: left;
+  touch-action: pan-y;
+  --widget-icon-box: 34px;
+  --widget-icon-glyph: 19px;
+}
+.glasshome-panel-row-fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.glasshome-panel-row-icon {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+.glasshome-panel-row-icon-off {
+  color: var(--muted-foreground);
+}
+.glasshome-panel-row-text {
+  position: relative;
+}
+.glasshome-panel-row-name,
+.glasshome-panel-row-state,
+.glasshome-panel-fact-label,
+.glasshome-panel-fact-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.glasshome-panel-row-name,
+.glasshome-panel-fact-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.glasshome-panel-row-state,
+.glasshome-panel-fact-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+.glasshome-panel-row-trailing {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  translate: 0 -50%;
+}
+.glasshome-panel-facts {
+  display: flex;
+  padding: 10px 4px;
+  border-radius: var(--radius-lg, 16px);
+  --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
+  backdrop-filter: blur(var(--material-blur, 24px)) saturate(1.8);
+  -webkit-backdrop-filter: blur(var(--material-blur, 24px)) saturate(1.8);
+}
+.glasshome-panel-fact {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+.glasshome-panel-fact + .glasshome-panel-fact {
+  border-left: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
+}
+.glasshome-panel-fact-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--muted-foreground);
+}
+/* The dialog a panel opens in: edge to edge, the panel owns its padding. */
+.glasshome-panel-dialog {
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+.glasshome-panel-value small {
+  margin-left: 2px;
+  font-size: 0.4em;
+  font-weight: 500;
+  letter-spacing: 0;
+  opacity: 0.85;
+}

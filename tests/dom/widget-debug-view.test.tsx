@@ -24,6 +24,7 @@ import {
   WidgetDebugTab,
 } from "../../src/framework/dialogs/debug-view";
 import { WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
+import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
 
 const parts = {
   ResponsiveDialog,
@@ -91,19 +92,27 @@ describe("WidgetDebugTab", () => {
   });
 });
 
+const developerCtx = {
+  updateConfig: () => {},
+  dimensions: () => ({ width: 0, height: 0 }),
+  developer: () => true,
+};
+
 describe("the dialog's copy action", () => {
   it("reports the copy it made", async () => {
     const writeText = vi.fn(async () => {});
     setClipboard({ writeText });
     render(() => (
-      <WidgetDialog
-        {...parts}
-        open
-        onOpenChange={() => {}}
-        title="Lamp"
-        activeTab="debug"
-        debugData={data()}
-      />
+      <WidgetCtx.Provider value={developerCtx}>
+        <WidgetDialog
+          {...parts}
+          open
+          onOpenChange={() => {}}
+          title="Lamp"
+          activeTab="debug"
+          debugData={data()}
+        />
+      </WidgetCtx.Provider>
     ));
 
     fireEvent.click(screen.getByRole("button", { name: "Copy all" }));
@@ -120,14 +129,16 @@ describe("the dialog's copy action", () => {
     });
     document.execCommand = vi.fn(() => false);
     render(() => (
-      <WidgetDialog
-        {...parts}
-        open
-        onOpenChange={() => {}}
-        title="Lamp"
-        activeTab="debug"
-        debugData={data()}
-      />
+      <WidgetCtx.Provider value={developerCtx}>
+        <WidgetDialog
+          {...parts}
+          open
+          onOpenChange={() => {}}
+          title="Lamp"
+          activeTab="debug"
+          debugData={data()}
+        />
+      </WidgetCtx.Provider>
     ));
 
     fireEvent.click(screen.getByRole("button", { name: "Copy all" }));

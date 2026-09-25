@@ -21,6 +21,7 @@ import {
 import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, it } from "vitest";
 import { WidgetDialog, type WidgetDialogProps } from "../../src/framework/dialogs/WidgetDialog";
+import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
 
 const parts = {
   ResponsiveDialog,
@@ -37,18 +38,22 @@ const parts = {
   TabsContent,
 };
 
-function mount(extra: Partial<WidgetDialogProps> = {}) {
+/** The tab row is Developer Mode's; the shell tests below read it, so they mount as a developer. */
+function mount(extra: Partial<WidgetDialogProps> = {}, developer = true) {
+  const ctx = { updateConfig: () => {}, dimensions: () => ({ width: 0, height: 0 }), developer: () => developer };
   return render(() => (
-    <WidgetDialog
-      {...parts}
-      open
-      onOpenChange={() => {}}
-      title="Lamp"
-      activeTab="edit"
-      onSave={() => {}}
-      editContent={<p>edit pane</p>}
-      {...extra}
-    />
+    <WidgetCtx.Provider value={ctx}>
+      <WidgetDialog
+        {...parts}
+        open
+        onOpenChange={() => {}}
+        title="Lamp"
+        activeTab="edit"
+        onSave={() => {}}
+        editContent={<p>edit pane</p>}
+        {...extra}
+      />
+    </WidgetCtx.Provider>
   ));
 }
 
@@ -187,5 +192,37 @@ describe("WidgetDialog shell", () => {
     mount({ description: "Pick the lamp this card drives." });
 
     expect(slot("dialog-description")?.textContent).toBe("Pick the lamp this card drives.");
+  });
+});
+
+describe("WidgetDialog for a homeowner", () => {
+  it("shows no tab row and no Debug outside Developer Mode", () => {
+    mount({}, false);
+
+    expect(slot("tabs-list")).toBeNull();
+    expect(screen.queryByText("Debug")).toBeNull();
+    expect(screen.getByText("edit pane")).toBeTruthy();
+  });
+
+  it("lands on the settings when asked for Debug outside Developer Mode", () => {
+    mount({ activeTab: "debug", debugData: { a: 1 } }, false);
+
+    expect(screen.getByText("edit pane")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Copy all" })).toBeNull();
+  });
+
+  it("opens a held tile's panel alone, without a header or tabs", () => {
+    mount({ activeTab: "controls", panel: <div>the panel</div> }, false);
+
+    expect(screen.getByText("the panel")).toBeTruthy();
+    expect(slot("responsive-dialog-header-action")).toBeNull();
+    expect(screen.queryByText("edit pane")).toBeNull();
+  });
+
+  it("opens edit mode on the settings even when the widget has a panel", () => {
+    mount({ activeTab: "edit", panel: <div>the panel</div> }, false);
+
+    expect(screen.getByText("edit pane")).toBeTruthy();
+    expect(screen.queryByText("the panel")).toBeNull();
   });
 });

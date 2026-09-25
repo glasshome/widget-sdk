@@ -53,6 +53,23 @@ export { WidgetValue } from "./components/WidgetValue";
 export { WidgetSliderFill } from "./backgrounds/WidgetSliderFill";
 
 // ============================================================================
+// Panel (what a held tile opens)
+// ============================================================================
+
+export {
+  type PanelFact,
+  PanelFacts,
+  PanelRow,
+  type PanelRowProps,
+  PanelRows,
+  PanelSection,
+  type PanelSlide,
+  WidgetPanel,
+  type WidgetPanelProps,
+} from "./panel/panel";
+export { isPanelControllable, PanelEntityRow } from "./panel/panel-entity";
+
+// ============================================================================
 // Dialog Components
 // ============================================================================
 

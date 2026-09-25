@@ -1,3 +1,13 @@
+import type {
+  ModalSize,
+  Button as UIButton,
+  ResponsiveDialog as UIResponsiveDialog,
+  ResponsiveDialogContent as UIResponsiveDialogContent,
+  ResponsiveDialogDescription as UIResponsiveDialogDescription,
+  ResponsiveDialogHeader as UIResponsiveDialogHeader,
+  ResponsiveDialogTitle as UIResponsiveDialogTitle,
+  SchemaForm as UISchemaForm,
+} from "@glasshome/ui/solid";
 import {
   Empty,
   EmptyDescription,
@@ -10,16 +20,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@glasshome/ui/solid";
-import type {
-  ModalSize,
-  Button as UIButton,
-  ResponsiveDialog as UIResponsiveDialog,
-  ResponsiveDialogContent as UIResponsiveDialogContent,
-  ResponsiveDialogDescription as UIResponsiveDialogDescription,
-  ResponsiveDialogHeader as UIResponsiveDialogHeader,
-  ResponsiveDialogTitle as UIResponsiveDialogTitle,
-  SchemaForm as UISchemaForm,
-} from "@glasshome/ui/solid";
 import {
   type ComponentProps,
   createEffect,
@@ -30,8 +30,10 @@ import {
   on,
   Show,
   splitProps,
+  useContext,
 } from "solid-js";
 import type { ZodType } from "zod";
+import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
 import { type CopyState, useCopyText } from "../utils/clipboard";
 import { WidgetDebugTab } from "./debug-view";
@@ -79,6 +81,8 @@ export interface WidgetDialogProps {
   onDelete?: () => void;
   editContent?: JSX.Element;
   controlsContent?: JSX.Element;
+  /** The held-tile panel (`WidgetPanel`). When set, holding the tile opens it alone, edge to edge. */
+  panel?: JSX.Element;
   debugContent?: JSX.Element;
   debugData?: string | Record<string, unknown>;
   tabs?: WidgetDialogTab[];
@@ -131,6 +135,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "onDelete",
     "editContent",
     "controlsContent",
+    "panel",
     "debugContent",
     "debugData",
     "tabs",
@@ -335,6 +340,10 @@ export function WidgetDialog(props: WidgetDialogProps) {
     return tabs;
   };
 
+  const ctx = useContext(WidgetCtx);
+  const developer = () => ctx?.developer?.() ?? false;
+  const panelMode = () => tabValue() === "controls" && local.panel !== undefined;
+
   const debugCopy = useCopyText();
 
   const handleCopyDebug = () => {
@@ -360,22 +369,19 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const Btn = local.Button;
 
   const builtTabs = createMemo(
-    on(
-      [() => local.open, formSchema, () => local.config, () => local.tabs],
-      () => resolvedTabs(),
-    ),
+    on([() => local.open, formSchema, () => local.config, () => local.tabs], () => resolvedTabs()),
   );
 
   const effectiveOnOpenChange = (open: boolean) =>
     schemaMode() ? handleSchemaClose(open) : local.onOpenChange(open);
-  const effectiveHasChanges = () =>
-    schemaMode() ? schemaDirty() : local.hasUnsavedChanges;
+  const effectiveHasChanges = () => (schemaMode() ? schemaDirty() : local.hasUnsavedChanges);
   const effectiveOnSave = () => (schemaMode() ? handleSchemaSave : local.onSave);
 
   // Custom `tabs` ids need not include the "controls" default useWidgetDialog
   // starts on; the tab row falls back to the first tab, so the footer must too.
+  const visibleTabs = () => builtTabs().filter((tab) => tab.id !== "debug" || developer());
   const tabValue = () => {
-    const tabs = builtTabs();
+    const tabs = visibleTabs();
     const active = activeTab();
     return tabs.some((tab) => tab.id === active) ? active : (tabs[0]?.id ?? active);
   };
@@ -386,65 +392,80 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   return (
     <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
-      <RDContent size={panelSize()} class={local.class}>
-        <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
-          {/* A phone leaves no room for the tab row beside the title, so the
+      <Show
+        when={!panelMode()}
+        fallback={
+          <RDContent size="full" class="glasshome-panel-dialog" ariaLabel={local.title}>
+            {local.panel}
+          </RDContent>
+        }
+      >
+        <RDContent size={panelSize()} class={local.class}>
+          <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
+            {/* A phone leaves no room for the tab row beside the title, so the
               header wraps rather than truncating it away. */}
-          <RDHeader
-            class="flex-wrap"
-            action={
-              <>
-                <TabsListPart class="w-auto">
-                  <For each={builtTabs()}>
-                    {(tab) => (
-                      <TabsTriggerPart value={tab.id}>
-                        <span class="inline-flex size-3.5 shrink-0 items-center">{tab.icon}</span>
-                        {tab.label}
-                      </TabsTriggerPart>
-                    )}
-                  </For>
-                </TabsListPart>
-                {local.headerActions}
-              </>
-            }
-          >
-            <RDTitle class="truncate">{local.title}</RDTitle>
-            <Show when={local.description}>
-              <RDDescription>{local.description}</RDDescription>
+            <RDHeader
+              class="flex-wrap"
+              action={
+                <>
+                  {/* Homeowners see one view per door (a held tile's controls, edit mode's
+                    settings); the tab row is Developer Mode's way between them. */}
+                  <Show when={developer() || local.tabs !== undefined}>
+                    <TabsListPart class="w-auto">
+                      <For each={visibleTabs()}>
+                        {(tab) => (
+                          <TabsTriggerPart value={tab.id}>
+                            <span class="inline-flex size-3.5 shrink-0 items-center">
+                              {tab.icon}
+                            </span>
+                            {tab.label}
+                          </TabsTriggerPart>
+                        )}
+                      </For>
+                    </TabsListPart>
+                  </Show>
+                  {local.headerActions}
+                </>
+              }
+            >
+              <RDTitle class="truncate">{local.title}</RDTitle>
+              <Show when={local.description}>
+                <RDDescription>{local.description}</RDDescription>
+              </Show>
+            </RDHeader>
+
+            <RDBody>
+              <For each={visibleTabs()}>
+                {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
+              </For>
+            </RDBody>
+
+            <Show when={showFooter()}>
+              <RDFooter>
+                <Show when={tabValue() === "edit" && local.onDelete}>
+                  <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
+                    Delete
+                  </Btn>
+                </Show>
+                <Show when={tabValue() === "edit" && effectiveOnSave()}>
+                  <Btn
+                    size="sm"
+                    disabled={!effectiveHasChanges()}
+                    onClick={() => effectiveOnSave()?.()}
+                  >
+                    Save
+                  </Btn>
+                </Show>
+                <Show when={tabValue() === "debug" && local.debugData !== undefined}>
+                  <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
+                    {COPY_LABEL[debugCopy.state()]}
+                  </Btn>
+                </Show>
+              </RDFooter>
             </Show>
-          </RDHeader>
-
-          <RDBody>
-            <For each={builtTabs()}>
-              {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
-            </For>
-          </RDBody>
-
-          <Show when={showFooter()}>
-            <RDFooter>
-              <Show when={tabValue() === "edit" && local.onDelete}>
-                <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                  Delete
-                </Btn>
-              </Show>
-              <Show when={tabValue() === "edit" && effectiveOnSave()}>
-                <Btn
-                  size="sm"
-                  disabled={!effectiveHasChanges()}
-                  onClick={() => effectiveOnSave()?.()}
-                >
-                  Save
-                </Btn>
-              </Show>
-              <Show when={tabValue() === "debug" && local.debugData !== undefined}>
-                <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                  {COPY_LABEL[debugCopy.state()]}
-                </Btn>
-              </Show>
-            </RDFooter>
-          </Show>
-        </TabsRoot>
-      </RDContent>
+          </TabsRoot>
+        </RDContent>
+      </Show>
     </RD>
   );
 }

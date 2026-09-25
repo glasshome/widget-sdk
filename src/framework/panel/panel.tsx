@@ -1,0 +1,340 @@
+import { Button, Icon } from "@glasshome/ui/solid";
+import { For, type JSX, onCleanup, Show } from "solid-js";
+
+/** A continuous value the whole stage (or a row) sets by dragging. */
+export interface PanelSlide {
+  value: number;
+  min?: number;
+  max?: number;
+  onChange: (value: number) => void;
+  /** Fires once when the drag ends, with the last value. */
+  onCommit?: (value: number) => void;
+}
+
+const HOLD_MS = 450;
+const SLOP_PX = 8;
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/**
+ * Tap, hold and slide on one element: a drag past the slop slides (horizontally
+ * for rows, vertically for the stage), a short press taps, a long still press holds.
+ */
+function pointerGestures(opts: {
+  axis: "x" | "y";
+  slide?: () => PanelSlide | undefined;
+  onTap?: () => void;
+  onHold?: () => void;
+}) {
+  let start: { x: number; y: number; id: number } | undefined;
+  let sliding = false;
+  let held = false;
+  let holdTimer: ReturnType<typeof setTimeout> | undefined;
+  let last = 0;
+
+  const valueAt = (el: HTMLElement, e: PointerEvent) => {
+    const s = opts.slide?.();
+    if (!s) return 0;
+    const r = el.getBoundingClientRect();
+    const t =
+      opts.axis === "x" ? (e.clientX - r.left) / r.width : 1 - (e.clientY - r.top) / r.height;
+    const lo = s.min ?? 0;
+    const hi = s.max ?? 100;
+    return Math.round(clamp(lo + t * (hi - lo), lo, hi));
+  };
+
+  const end = () => {
+    clearTimeout(holdTimer);
+    start = undefined;
+  };
+  onCleanup(() => clearTimeout(holdTimer));
+
+  return {
+    onPointerDown: (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      sliding = false;
+      held = false;
+      if (opts.onHold) {
+        holdTimer = setTimeout(() => {
+          held = true;
+          opts.onHold?.();
+        }, HOLD_MS);
+      }
+    },
+    onPointerMove: (e: PointerEvent) => {
+      if (!start || e.pointerId !== start.id || held) return;
+      const el = e.currentTarget as HTMLElement;
+      const d = opts.axis === "x" ? Math.abs(e.clientX - start.x) : Math.abs(e.clientY - start.y);
+      if (!sliding && opts.slide?.() && d > SLOP_PX) {
+        sliding = true;
+        clearTimeout(holdTimer);
+        el.setPointerCapture(e.pointerId);
+      }
+      if (sliding) {
+        last = valueAt(el, e);
+        opts.slide?.()?.onChange(last);
+      } else if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > SLOP_PX) {
+        clearTimeout(holdTimer);
+      }
+    },
+    onPointerUp: (e: PointerEvent) => {
+      if (!start || e.pointerId !== start.id) return;
+      if (sliding) opts.slide?.()?.onCommit?.(last);
+      else if (!held) opts.onTap?.();
+      end();
+    },
+    onPointerCancel: end,
+  };
+}
+
+export interface WidgetPanelProps {
+  /** Iconify name of the widget's icon, the same one its tile shows. */
+  icon: string;
+  /** The widget's tone (a colour or `var(--tone-*)`); tints the icon and the stage fill. */
+  tone?: string;
+  /** The small line above the name ("2 of 3 on", "22.5° · 45%"). */
+  eyebrow?: JSX.Element;
+  name: string;
+  /** The widget's object art, drawn big on the stage's right. */
+  art?: JSX.Element;
+  /** A full-bleed picture behind the whole panel (a room, an album cover). */
+  backdrop?: JSX.Element;
+  /** The big value in the stage's bottom-left ("60%", "22°", "Locked"). */
+  value?: JSX.Element;
+  /** The line above the value ("Drag anywhere to dim"). */
+  hint?: JSX.Element;
+  /** The line under the value ("2 of 3 lights on"). */
+  caption?: JSX.Element;
+  /** Dragging up and down anywhere on the stage sets this value. */
+  slide?: PanelSlide;
+  /** The stage's bottom row: scenes, modes, transport. */
+  actions?: JSX.Element;
+  /** Everything beside the stage (under it on a phone): sections of rows and facts. */
+  children?: JSX.Element;
+}
+
+/**
+ * The panel a tile opens when held: the tile's own object on a stage, and beside
+ * it only what the tile cannot show. Widgets fill it; the SDK owns its shape.
+ */
+export function WidgetPanel(props: WidgetPanelProps): JSX.Element {
+  const gestures = pointerGestures({ axis: "y", slide: () => props.slide });
+  const fill = () => {
+    const s = props.slide;
+    if (!s) return undefined;
+    const lo = s.min ?? 0;
+    const hi = s.max ?? 100;
+    return ((s.value - lo) / (hi - lo || 1)) * 100;
+  };
+  return (
+    <div class="glasshome-panel-frame">
+      <div
+        class="glasshome-panel"
+        classList={{
+          "glasshome-panel-has-aside": !!props.children,
+          "glasshome-panel-has-backdrop": !!props.backdrop,
+        }}
+        style={
+          {
+            "--widget-color": props.tone ?? "var(--tone-neutral)",
+          } as JSX.CSSProperties
+        }
+      >
+        <Show when={props.backdrop}>
+          <div class="glasshome-panel-backdrop" aria-hidden="true">
+            {props.backdrop}
+          </div>
+        </Show>
+        <div
+          class="glasshome-panel-stage"
+          classList={{ "glasshome-panel-stage-slides": !!props.slide }}
+          onPointerDown={gestures.onPointerDown}
+          onPointerMove={gestures.onPointerMove}
+          onPointerUp={gestures.onPointerUp}
+          onPointerCancel={gestures.onPointerCancel}
+        >
+          <Show when={!props.backdrop && fill() !== undefined}>
+            <div
+              class="glasshome-panel-stage-fill"
+              style={{ "--widget-fill-value": fill() } as JSX.CSSProperties}
+              aria-hidden="true"
+            />
+          </Show>
+          <Show when={props.art}>
+            <div class="glasshome-panel-art" aria-hidden="true">
+              {props.art}
+            </div>
+          </Show>
+          <div class="glasshome-panel-head">
+            <span class="glasshome-widget-icon glass glass-tint glasshome-panel-icon">
+              <Icon icon={props.icon} class="glasshome-widget-icon-glyph" />
+            </span>
+            <span class="glasshome-panel-titles">
+              <Show when={props.eyebrow}>
+                <span class="glasshome-panel-eyebrow">{props.eyebrow}</span>
+              </Show>
+              <span class="glasshome-panel-name">{props.name}</span>
+            </span>
+          </div>
+          <div class="glasshome-panel-readout">
+            <Show when={props.hint}>
+              <span class="glasshome-panel-hint">{props.hint}</span>
+            </Show>
+            <Show when={props.value}>
+              <span class="glasshome-panel-value">{props.value}</span>
+            </Show>
+            <Show when={props.caption}>
+              <span class="glasshome-panel-caption">{props.caption}</span>
+            </Show>
+          </div>
+          <Show when={props.actions}>
+            <div class="glasshome-panel-actions">{props.actions}</div>
+          </Show>
+        </div>
+        <Show when={props.children}>
+          <div class="glasshome-panel-aside">{props.children}</div>
+        </Show>
+      </div>
+    </div>
+  );
+}
+
+/** A labelled group in the panel's aside ("Lights", "Playing on"). */
+export function PanelSection(props: { label: string; children: JSX.Element }): JSX.Element {
+  return (
+    <section class="glasshome-panel-section">
+      <h3 class="glasshome-panel-label">{props.label}</h3>
+      {props.children}
+    </section>
+  );
+}
+
+/** Rows side by side, as many as fit (three lamps, two blinds). */
+export function PanelRows(props: { children: JSX.Element }): JSX.Element {
+  return <div class="glasshome-panel-rows">{props.children}</div>;
+}
+
+export interface PanelRowProps {
+  icon: string;
+  name: string;
+  /** The small line under the name ("70%", "Heating to 22°"). */
+  state?: JSX.Element;
+  /** The device's tone; tints its icon and fill while it is on. */
+  tone?: string;
+  on: boolean;
+  /** 0-100 fill; dragging across the row sets it. */
+  slide?: PanelSlide;
+  onTap?: () => void;
+  onHold?: () => void;
+  /** A control at the row's end (Unlock, + Add). */
+  trailing?: JSX.Element;
+  "aria-label"?: string;
+}
+
+/** One device: a small tile made of button glass. Tap switches it, drag sets its level. */
+export function PanelRow(props: PanelRowProps): JSX.Element {
+  const gestures = pointerGestures({
+    axis: "x",
+    slide: () => props.slide,
+    onTap: () => props.onTap?.(),
+    onHold: props.onHold ? () => props.onHold?.() : undefined,
+  });
+  const fill = () => {
+    const s = props.slide;
+    if (!s || !props.on) return undefined;
+    const lo = s.min ?? 0;
+    const hi = s.max ?? 100;
+    return ((s.value - lo) / (hi - lo || 1)) * 100;
+  };
+  const onKey = (e: KeyboardEvent) => {
+    const s = props.slide;
+    if (!s) return;
+    const step =
+      e.key === "ArrowRight" || e.key === "ArrowUp"
+        ? 5
+        : e.key === "ArrowLeft" || e.key === "ArrowDown"
+          ? -5
+          : 0;
+    if (!step) return;
+    e.preventDefault();
+    const v = clamp(s.value + step, s.min ?? 0, s.max ?? 100);
+    s.onChange(v);
+    s.onCommit?.(v);
+  };
+  return (
+    <div class="glasshome-panel-row-wrap">
+      <Button
+        variant="outline"
+        size="none"
+        class="glasshome-panel-row"
+        style={
+          {
+            "--widget-color": props.tone ?? "var(--tone-neutral)",
+          } as JSX.CSSProperties
+        }
+        aria-label={props["aria-label"]}
+        aria-pressed={props.on}
+        onPointerDown={gestures.onPointerDown}
+        onPointerMove={gestures.onPointerMove}
+        onPointerUp={gestures.onPointerUp}
+        onPointerCancel={gestures.onPointerCancel}
+        onKeyDown={onKey}
+        onClick={(e: MouseEvent) => {
+          // Pointer taps land in onPointerUp; only a keyboard press reaches here with detail 0.
+          if (e.detail === 0) props.onTap?.();
+        }}
+      >
+        <Show when={fill() !== undefined}>
+          <span
+            class="glasshome-widget-slider-fill glasshome-panel-row-fill"
+            style={{ "--widget-fill-value": fill() } as JSX.CSSProperties}
+          />
+        </Show>
+        <span
+          class="glasshome-widget-icon glass glasshome-panel-row-icon"
+          classList={{
+            "glass-tint": props.on,
+            "glasshome-panel-row-icon-off": !props.on,
+          }}
+        >
+          <Icon icon={props.icon} class="glasshome-widget-icon-glyph" />
+        </span>
+        <span class="glasshome-panel-row-text">
+          <span class="glasshome-panel-row-name">{props.name}</span>
+          <Show when={props.state !== undefined}>
+            <span class="glasshome-panel-row-state">{props.state}</span>
+          </Show>
+        </span>
+      </Button>
+      <Show when={props.trailing}>
+        <span class="glasshome-panel-row-trailing">{props.trailing}</span>
+      </Show>
+    </div>
+  );
+}
+
+export interface PanelFact {
+  icon: string;
+  label: string;
+  value: JSX.Element;
+}
+
+/** Readings in one strip (window, CO₂, motion): read, never pressed. */
+export function PanelFacts(props: { items: PanelFact[] }): JSX.Element {
+  return (
+    <div class="glasshome-panel-facts glass">
+      <For each={props.items}>
+        {(f) => (
+          <div class="glasshome-panel-fact">
+            <Icon icon={f.icon} class="glasshome-panel-fact-icon" />
+            <span class="glasshome-panel-row-text">
+              <span class="glasshome-panel-fact-label">{f.label}</span>
+              <span class="glasshome-panel-fact-value">{f.value}</span>
+            </span>
+          </div>
+        )}
+      </For>
+    </div>
+  );
+}

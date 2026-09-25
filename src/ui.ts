@@ -56,6 +56,7 @@ export {
   SelectTrigger,
   SelectValue,
   Slider,
+  SwatchPicker,
   Switch,
   Tabs,
   TabsContent,
