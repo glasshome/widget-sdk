@@ -58,6 +58,8 @@ export interface ReactiveWidgetContext {
   viewer?: () => WidgetViewer;
   /** True when the household turned on Developer Mode; widget dialogs show Debug only then. */
   developer?: () => boolean;
+  /** The tile's box on the page, so a held tile's sheet opens beside it. Absent: it opens centred. */
+  anchor?: () => HTMLElement | undefined;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();

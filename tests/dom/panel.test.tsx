@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
-import { PanelRow, WidgetPanel } from "../../src/framework/panel/panel";
+import { PanelRow } from "../../src/framework/panel/panel";
 
 const box = { left: 0, top: 0, width: 200, height: 56, right: 200, bottom: 56, x: 0, y: 0 };
 
@@ -48,45 +48,5 @@ describe("PanelRow", () => {
 
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText("Door lock")).toBeTruthy();
-  });
-});
-
-describe("WidgetPanel", () => {
-  it("gives the stage value a keyboard handle", () => {
-    const onChange = vi.fn();
-    const onCommit = vi.fn();
-    render(() => (
-      <WidgetPanel
-        icon="mdi:lightbulb"
-        name="Lamp"
-        slide={{ value: 40, label: "Brightness", onChange, onCommit }}
-      />
-    ));
-
-    const handle = screen.getByRole("slider", { name: "Brightness" }) as HTMLInputElement;
-    handle.value = "45";
-    fireEvent.input(handle);
-    fireEvent.change(handle);
-
-    expect(onChange).toHaveBeenCalledWith(45);
-    expect(onCommit).toHaveBeenCalledWith(45);
-  });
-
-  it("leaves a press on a control inside the stage to that control", () => {
-    const onChange = vi.fn();
-    render(() => (
-      <WidgetPanel
-        icon="mdi:lightbulb"
-        name="Lamp"
-        slide={{ value: 40, onChange }}
-        actions={<button type="button">All off</button>}
-      />
-    ));
-
-    const button = screen.getByRole("button", { name: "All off" });
-    fireEvent.pointerDown(button, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    fireEvent.pointerMove(button, { pointerId: 1, clientX: 10, clientY: 200 });
-
-    expect(onChange).not.toHaveBeenCalled();
   });
 });

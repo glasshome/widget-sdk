@@ -40,7 +40,11 @@ const parts = {
 
 /** The tab row is Developer Mode's; the shell tests below read it, so they mount as a developer. */
 function mount(extra: Partial<WidgetDialogProps> = {}, developer = true) {
-  const ctx = { updateConfig: () => {}, dimensions: () => ({ width: 0, height: 0 }), developer: () => developer };
+  const ctx = {
+    updateConfig: () => {},
+    dimensions: () => ({ width: 0, height: 0 }),
+    developer: () => developer,
+  };
   return render(() => (
     <WidgetCtx.Provider value={ctx}>
       <WidgetDialog
@@ -211,33 +215,66 @@ describe("WidgetDialog for a homeowner", () => {
     expect(screen.queryByRole("button", { name: "Copy all" })).toBeNull();
   });
 
-  it("opens a held tile's panel alone, without a header or tabs", () => {
-    mount({ activeTab: "controls", panel: <div>the panel</div> }, false);
+  it("opens a held tile's sheet with its title and no tabs", () => {
+    mount({ activeTab: "controls", sheet: <div>the extras</div> }, false);
 
-    expect(screen.getByText("the panel")).toBeTruthy();
-    expect(slot("responsive-dialog-header-action")).toBeNull();
+    expect(screen.getByText("the extras")).toBeTruthy();
+    expect(screen.getByText("Lamp")).toBeTruthy();
+    expect(slot("tabs-list")).toBeNull();
     expect(screen.queryByText("edit pane")).toBeNull();
   });
 
-  it("opens edit mode on the settings even when the widget has a panel", () => {
-    mount({ activeTab: "edit", panel: <div>the panel</div> }, false);
+  it("opens the sheet beside the tile when the host gives the tile's box", () => {
+    const tile = document.createElement("div");
+    document.body.appendChild(tile);
+    const ctx = {
+      updateConfig: () => {},
+      dimensions: () => ({ width: 0, height: 0 }),
+      anchor: () => tile,
+    };
+    render(() => (
+      <WidgetCtx.Provider value={ctx}>
+        <WidgetDialog
+          {...parts}
+          open
+          onOpenChange={() => {}}
+          title="Lamp"
+          activeTab="controls"
+          sheet={<div>the extras</div>}
+        />
+      </WidgetCtx.Provider>
+    ));
 
-    expect(screen.getByText("edit pane")).toBeTruthy();
-    expect(screen.queryByText("the panel")).toBeNull();
+    const popover = slot("popover-content");
+    expect(popover?.textContent).toContain("the extras");
+    expect(slot("dialog-content")).toBeNull();
   });
 
-  it("builds no panel while the dialog is closed", () => {
+  it("opens nothing when a tile with no extras is held", () => {
+    mount({ activeTab: "controls" }, false);
+
+    expect(slot("dialog-content")).toBeNull();
+  });
+
+  it("opens edit mode on the settings even when the widget has a sheet", () => {
+    mount({ activeTab: "edit", sheet: <div>the extras</div> }, false);
+
+    expect(screen.getByText("edit pane")).toBeTruthy();
+    expect(screen.queryByText("the extras")).toBeNull();
+  });
+
+  it("builds no sheet while the dialog is closed", () => {
     let built = 0;
     const Panel = () => {
       built++;
       return <div>the panel</div>;
     };
-    // A getter, as the JSX attribute `panel={<Panel />}` compiles to.
+    // A getter, as the JSX attribute `sheet={<Panel />}` compiles to.
     mount(
       {
         open: false,
         activeTab: "controls",
-        get panel() {
+        get sheet() {
           return <Panel />;
         },
       },

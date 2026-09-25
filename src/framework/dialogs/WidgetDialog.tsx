@@ -10,6 +10,8 @@ import type {
 } from "@glasshome/ui/solid";
 import {
   Empty,
+  Popover,
+  PopoverContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -28,6 +30,8 @@ import {
   For,
   type JSX,
   on,
+  onCleanup,
+  onMount,
   Show,
   splitProps,
   useContext,
@@ -81,8 +85,10 @@ export interface WidgetDialogProps {
   onDelete?: () => void;
   editContent?: JSX.Element;
   controlsContent?: JSX.Element;
-  /** The held-tile panel (`WidgetPanel`). When set, holding the tile opens it alone, edge to edge. */
-  panel?: JSX.Element;
+  /** What holding the tile opens: only what the tile cannot show (a group's members, colours, modes),
+      as `PanelSection`s. It opens beside the tile, or from the bottom on a phone. A widget with nothing
+      the tile lacks passes none, and holding it opens nothing. */
+  sheet?: JSX.Element;
   debugContent?: JSX.Element;
   debugData?: string | Record<string, unknown>;
   tabs?: WidgetDialogTab[];
@@ -135,7 +141,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "onDelete",
     "editContent",
     "controlsContent",
-    "panel",
+    "sheet",
     "debugContent",
     "debugData",
     "tabs",
@@ -342,8 +348,13 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   const ctx = useContext(WidgetCtx);
   const developer = () => ctx?.developer?.() ?? false;
-  // `in`, never a read: reading a JSX prop builds it, and a closed dialog must not build its panel.
-  const panelMode = () => tabValue() === "controls" && "panel" in local;
+  // `in`, never a read: reading a JSX prop builds it, and a closed dialog must not build its sheet.
+  const sheetMode = () => tabValue() === "controls" && "sheet" in local;
+  const nothingHeld = () =>
+    tabValue() === "controls" && !("sheet" in local) && !("controlsContent" in local);
+  const narrow = createNarrow();
+  const anchor = () => ctx?.anchor?.();
+  const sheetBeside = () => sheetMode() && !narrow() && anchor() !== undefined;
 
   const debugCopy = useCopyText();
 
@@ -392,81 +403,125 @@ export function WidgetDialog(props: WidgetDialogProps) {
     (tabValue() === "debug" && local.debugData !== undefined);
 
   return (
-    <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
-      <Show
-        when={!panelMode()}
-        fallback={
-          <RDContent size="full" class="glasshome-panel-dialog" ariaLabel={local.title}>
-            {local.panel}
-          </RDContent>
-        }
+    <Show
+      when={!sheetBeside()}
+      fallback={
+        <Popover
+          open={local.open}
+          onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}
+          anchorRef={anchor}
+          getAnchorRect={(el?: HTMLElement) => el?.getBoundingClientRect()}
+          placement="right-start"
+          gutter={12}
+          flip
+          overlap={false}
+        >
+          <PopoverContent aria-label={local.title} class="glasshome-sheet-popover">
+            <p class="glasshome-sheet-title">{local.title}</p>
+            <div class="glasshome-sheet">{local.sheet}</div>
+          </PopoverContent>
+        </Popover>
+      }
+    >
+      <RD
+        open={local.open && !nothingHeld()}
+        onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}
       >
-        <RDContent size={panelSize()} class={local.class}>
-          <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
-            {/* A phone leaves no room for the tab row beside the title, so the
+        <Show
+          when={!sheetMode()}
+          fallback={
+            <RDContent size="md" ariaLabel={local.title}>
+              <RDHeader>
+                <RDTitle class="truncate">{local.title}</RDTitle>
+              </RDHeader>
+              <RDBody>
+                <div class="glasshome-sheet">{local.sheet}</div>
+              </RDBody>
+            </RDContent>
+          }
+        >
+          <RDContent size={panelSize()} class={local.class}>
+            <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
+              {/* A phone leaves no room for the tab row beside the title, so the
               header wraps rather than truncating it away. */}
-            <RDHeader
-              class="flex-wrap"
-              action={
-                <>
-                  {/* Homeowners see one view per door (a held tile's controls, edit mode's
+              <RDHeader
+                class="flex-wrap"
+                action={
+                  <>
+                    {/* Homeowners see one view per door (a held tile's controls, edit mode's
                     settings); the tab row is Developer Mode's way between them. */}
-                  <Show when={developer() || local.tabs !== undefined}>
-                    <TabsListPart class="w-auto">
-                      <For each={visibleTabs()}>
-                        {(tab) => (
-                          <TabsTriggerPart value={tab.id}>
-                            <span class="inline-flex size-3.5 shrink-0 items-center">
-                              {tab.icon}
-                            </span>
-                            {tab.label}
-                          </TabsTriggerPart>
-                        )}
-                      </For>
-                    </TabsListPart>
+                    <Show when={developer() || local.tabs !== undefined}>
+                      <TabsListPart class="w-auto">
+                        <For each={visibleTabs()}>
+                          {(tab) => (
+                            <TabsTriggerPart value={tab.id}>
+                              <span class="inline-flex size-3.5 shrink-0 items-center">
+                                {tab.icon}
+                              </span>
+                              {tab.label}
+                            </TabsTriggerPart>
+                          )}
+                        </For>
+                      </TabsListPart>
+                    </Show>
+                    {local.headerActions}
+                  </>
+                }
+              >
+                <RDTitle class="truncate">{local.title}</RDTitle>
+                <Show when={local.description}>
+                  <RDDescription>{local.description}</RDDescription>
+                </Show>
+              </RDHeader>
+
+              <RDBody>
+                <For each={visibleTabs()}>
+                  {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
+                </For>
+              </RDBody>
+
+              <Show when={showFooter()}>
+                <RDFooter>
+                  <Show when={tabValue() === "edit" && local.onDelete}>
+                    <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
+                      Delete
+                    </Btn>
                   </Show>
-                  {local.headerActions}
-                </>
-              }
-            >
-              <RDTitle class="truncate">{local.title}</RDTitle>
-              <Show when={local.description}>
-                <RDDescription>{local.description}</RDDescription>
+                  <Show when={tabValue() === "edit" && effectiveOnSave()}>
+                    <Btn
+                      size="sm"
+                      disabled={!effectiveHasChanges()}
+                      onClick={() => effectiveOnSave()?.()}
+                    >
+                      Save
+                    </Btn>
+                  </Show>
+                  <Show when={tabValue() === "debug" && local.debugData !== undefined}>
+                    <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
+                      {COPY_LABEL[debugCopy.state()]}
+                    </Btn>
+                  </Show>
+                </RDFooter>
               </Show>
-            </RDHeader>
-
-            <RDBody>
-              <For each={visibleTabs()}>
-                {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
-              </For>
-            </RDBody>
-
-            <Show when={showFooter()}>
-              <RDFooter>
-                <Show when={tabValue() === "edit" && local.onDelete}>
-                  <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                    Delete
-                  </Btn>
-                </Show>
-                <Show when={tabValue() === "edit" && effectiveOnSave()}>
-                  <Btn
-                    size="sm"
-                    disabled={!effectiveHasChanges()}
-                    onClick={() => effectiveOnSave()?.()}
-                  >
-                    Save
-                  </Btn>
-                </Show>
-                <Show when={tabValue() === "debug" && local.debugData !== undefined}>
-                  <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                    {COPY_LABEL[debugCopy.state()]}
-                  </Btn>
-                </Show>
-              </RDFooter>
-            </Show>
-          </TabsRoot>
-        </RDContent>
-      </Show>
-    </RD>
+            </TabsRoot>
+          </RDContent>
+        </Show>
+      </RD>
+    </Show>
   );
+}
+
+/** Below Tailwind's `sm` edge a held tile's sheet comes up from the bottom, as ui's dialogs do. */
+function createNarrow() {
+  const query = "(max-width: 639px)";
+  const [narrow, setNarrow] = createSignal(
+    typeof window !== "undefined" && window.matchMedia(query).matches,
+  );
+  onMount(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setNarrow(mql.matches);
+    mql.addEventListener("change", onChange);
+    onCleanup(() => mql.removeEventListener("change", onChange));
+  });
+  return narrow;
 }

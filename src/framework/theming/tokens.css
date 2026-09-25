@@ -224,181 +224,29 @@
   }
 }
 
-/* === Panel: what a held tile opens (framework/panel) ===
- * Rendered in a dialog outside the widget's shadow root, so every rule the panel
- * needs lives here, never in a widget's own utilities. */
-.glasshome-panel {
-  --widget-wash: 22%;
-  --widget-wash-2: 11%;
-  --widget-radius: var(--radius-lg, 16px);
-  --widget-icon-box: 52px;
-  --widget-icon-glyph: 28px;
-  --panel-pad: 22px;
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: min(560px, 80vh);
+/* === Sheet: what a held tile opens (framework/panel) ===
+ * Rendered in a popover or dialog outside the widget's shadow root, so every rule
+ * the sheet needs lives here, never in a widget's own utilities. */
+.glasshome-sheet-popover {
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(640px, calc(100vh - 32px));
+  overflow-y: auto;
+  padding: 18px;
+}
+.glasshome-sheet-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--foreground);
 }
-/* The query box sits outside the grid: an element cannot answer its own container query. */
-.glasshome-panel-frame {
-  container-type: inline-size;
-  container-name: panel;
+.glasshome-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--foreground);
 }
-.glasshome-panel [data-slot="swatch-picker"] {
+.glasshome-sheet [data-slot="swatch-picker"] {
   max-width: 360px;
-}
-.glasshome-panel-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.glasshome-panel-backdrop > * {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.glasshome-panel-backdrop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, oklch(0 0 0 / 0.5), transparent 32%, transparent 55%, oklch(0 0 0 / 0.7));
-}
-.glasshome-panel-stage {
-  position: relative;
-  container-type: inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 420px;
-  padding: var(--panel-pad);
-  overflow: hidden;
-  touch-action: none;
-}
-.glasshome-panel-stage:not(.glasshome-panel-stage-slides) {
-  touch-action: auto;
-}
-.glasshome-panel-stage-slides {
-  cursor: ns-resize;
-}
-.glasshome-panel-stage-fill {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    0deg,
-    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1)), transparent),
-    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash-2) * var(--material-tint, 1)), transparent)
-  );
-  clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0 round var(--widget-radius));
-  transition: clip-path var(--duration-state, 200ms) var(--ease-emphasis, ease-out);
-}
-.glasshome-panel-art {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  height: 82%;
-  width: 50%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  pointer-events: none;
-}
-.glasshome-panel-art > * {
-  max-width: 100%;
-  max-height: 100%;
-}
-.glasshome-panel-head,
-.glasshome-panel-readout,
-.glasshome-panel-actions {
-  position: relative;
-}
-.glasshome-panel-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.glasshome-panel-titles,
-.glasshome-panel-readout,
-.glasshome-panel-row-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.glasshome-panel-eyebrow,
-.glasshome-panel-hint,
-.glasshome-panel-caption {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--muted-foreground);
-}
-.glasshome-panel-name {
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.15;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* The words keep the stage's left half; the object takes the right, so they never cross. */
-.glasshome-panel-readout {
-  margin-top: auto;
-  gap: 4px;
-  max-width: 60%;
-}
-.glasshome-panel:not(:has(.glasshome-panel-art)) .glasshome-panel-readout {
-  max-width: none;
-}
-.glasshome-panel-value {
-  font-size: clamp(40px, 16cqi, 88px);
-  font-weight: 600;
-  line-height: 0.95;
-  letter-spacing: -0.03em;
-}
-.glasshome-panel-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-/* Words on a picture stay near-white with a soft shadow, whatever the theme. */
-.glasshome-panel-has-backdrop .glasshome-panel-stage {
-  color: oklch(0.98 0 0);
-  text-shadow: 0 1px 12px oklch(0 0 0 / 0.45);
-}
-.glasshome-panel-has-backdrop .glasshome-panel-eyebrow,
-.glasshome-panel-has-backdrop .glasshome-panel-hint,
-.glasshome-panel-has-backdrop .glasshome-panel-caption {
-  color: oklch(0.98 0 0 / 0.82);
-}
-.glasshome-panel-aside {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: var(--panel-pad);
-}
-/* A picture fades into glass under the aside, so small text never sits on it. */
-.glasshome-panel-has-backdrop .glasshome-panel-aside {
-  background: linear-gradient(180deg, color-mix(in oklch, var(--card) 70%, transparent), color-mix(in oklch, var(--card) 88%, transparent));
-}
-@container panel (min-width: 720px) {
-  .glasshome-panel-has-aside {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  }
-  .glasshome-panel-has-backdrop .glasshome-panel-aside {
-    background: none;
-  }
-  .glasshome-panel-has-backdrop.glasshome-panel-has-aside .glasshome-panel-backdrop::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(90deg, transparent 30%, color-mix(in oklch, var(--card) 70%, transparent) 50%, color-mix(in oklch, var(--card) 88%, transparent) 70%);
-  }
 }
 .glasshome-panel-section {
   display: flex;
@@ -413,7 +261,7 @@
 }
 .glasshome-panel-rows {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 8px;
 }
 .glasshome-panel-row-wrap {
@@ -421,6 +269,11 @@
   min-width: 0;
 }
 .glasshome-panel-row {
+  --widget-wash: 22%;
+  --widget-wash-2: 11%;
+  --widget-radius: var(--radius-lg, 16px);
+  --widget-icon-box: 34px;
+  --widget-icon-glyph: 19px;
   position: relative;
   width: 100%;
   height: 56px;
@@ -430,8 +283,10 @@
   overflow: hidden;
   text-align: left;
   touch-action: pan-y;
-  --widget-icon-box: 34px;
-  --widget-icon-glyph: 19px;
+}
+.glasshome-panel-row-static {
+  cursor: default;
+  scale: none;
 }
 .glasshome-panel-row-fill {
   position: absolute;
@@ -450,6 +305,9 @@
 }
 .glasshome-panel-row-text {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .glasshome-panel-row-name,
 .glasshome-panel-row-state,
@@ -479,43 +337,25 @@
 }
 .glasshome-panel-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   row-gap: 10px;
   padding: 10px 4px 10px 0;
   overflow: hidden;
   border-radius: var(--radius-lg, 16px);
   --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
-  backdrop-filter: blur(var(--material-blur, 24px)) saturate(1.8);
-  -webkit-backdrop-filter: blur(var(--material-blur, 24px)) saturate(1.8);
 }
 .glasshome-panel-fact {
   display: flex;
-  flex: 1;
   min-width: 0;
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-}
-.glasshome-panel-fact {
   box-shadow: -1px 0 0 color-mix(in oklch, var(--foreground) 10%, transparent);
 }
 .glasshome-panel-fact-icon {
   flex-shrink: 0;
   font-size: 18px;
   color: var(--muted-foreground);
-}
-/* The dialog a panel opens in: edge to edge, the panel owns its padding. */
-.glasshome-panel-dialog {
-  padding: 0;
-  overflow: hidden;
-  gap: 0;
-}
-.glasshome-panel-value small {
-  margin-left: 2px;
-  font-size: 0.4em;
-  font-weight: 500;
-  letter-spacing: 0;
-  opacity: 0.85;
 }
 
 /* === Hold flood: the dock's hold fill (ui HOLD_MOTION), grown from the finger === */
@@ -541,41 +381,9 @@
   scale: 1;
   opacity: 0;
 }
-.glasshome-panel-value-text {
-  font-size: clamp(26px, 9cqi, 46px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-/* The stage's keyboard handle: a real range input, never drawn; the stage shows its focus. */
-.glasshome-panel-keys {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
-}
-.glasshome-panel-stage:has(.glasshome-panel-keys:focus-visible) {
-  outline: 2px solid var(--ring);
-  outline-offset: -4px;
-  border-radius: var(--radius-lg, 16px);
-}
-/* A phone keeps the object smaller, so the words and the bottom row stay clear of it. */
-@container panel (max-width: 519px) {
-  .glasshome-panel-stage {
-    min-height: 360px;
-  }
-  .glasshome-panel-art {
-    height: 58%;
-    width: 50%;
-    bottom: 64px;
-  }
-}
-.glasshome-panel-row-static {
-  cursor: default;
-  scale: none;
+/* A row of ui buttons in a sheet (scenes, one-tap actions). */
+.glasshome-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

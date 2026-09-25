@@ -53,7 +53,7 @@ export { WidgetValue } from "./components/WidgetValue";
 export { WidgetSliderFill } from "./backgrounds/WidgetSliderFill";
 
 // ============================================================================
-// Panel (what a held tile opens)
+// Sheet parts (what a held tile opens)
 // ============================================================================
 
 export {
@@ -64,8 +64,6 @@ export {
   PanelRows,
   PanelSection,
   type PanelSlide,
-  WidgetPanel,
-  type WidgetPanelProps,
 } from "./panel/panel";
 export { isPanelControllable, PanelEntityRow } from "./panel/panel-entity";
 
