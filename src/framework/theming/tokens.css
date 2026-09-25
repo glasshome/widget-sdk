@@ -149,13 +149,16 @@
   line-height: 1;
 }
 .glasshome-widget-icon-stack {
+  --stack-step: calc(var(--widget-icon-box) * 0.12);
   position: absolute;
-  width: 102%;
-  height: 102%;
+  /* The pill's border would otherwise shrink each plate and widen the first step. */
+  inset: -1px;
+  width: auto;
+  height: auto;
   border-radius: var(--radius-sm, 12px);
 }
-.glasshome-widget-icon-stack-2 { bottom: -14%; right: -10%; opacity: 0.45; z-index: -2; }
-.glasshome-widget-icon-stack-3 { bottom: -28%; right: -20%; opacity: 0.20; z-index: -3; }
+.glasshome-widget-icon-stack-2 { translate: var(--stack-step) var(--stack-step); opacity: 0.45; z-index: -2; }
+.glasshome-widget-icon-stack-3 { translate: calc(2 * var(--stack-step)) calc(2 * var(--stack-step)); opacity: 0.2; z-index: -3; }
 
 /* === Slot: text === */
 .glasshome-widget-title {
