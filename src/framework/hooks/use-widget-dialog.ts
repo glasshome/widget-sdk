@@ -26,6 +26,9 @@
 import { createSignal, onCleanup, useContext } from "solid-js";
 import { WidgetCtx } from "./use-widget-context";
 
+/** Each widget's dialog opener, keyed by its host context, so `Widget` can open settings from an empty tile. */
+export const dialogOpeners = new WeakMap<object, (tab?: string) => void>();
+
 export interface WidgetDialogReturn {
   /** Current dialog open state accessor */
   showDialog: () => boolean;
@@ -67,7 +70,11 @@ export function useWidgetDialog(defaultTab = "controls"): WidgetDialogReturn {
   // Host RPC: let the host (dashboard) open this dialog imperatively.
   const ctx = useContext(WidgetCtx);
   ctx?.registerDialogOpener?.(openDialog);
-  onCleanup(() => ctx?.registerDialogOpener?.(null));
+  if (ctx) dialogOpeners.set(ctx, openDialog);
+  onCleanup(() => {
+    ctx?.registerDialogOpener?.(null);
+    if (ctx && dialogOpeners.get(ctx) === openDialog) dialogOpeners.delete(ctx);
+  });
 
   return {
     showDialog,

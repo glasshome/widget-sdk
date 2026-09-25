@@ -122,7 +122,7 @@ describe("WidgetDialog shell", () => {
   });
 
   it("drops the footer on a tab that has no action", () => {
-    mount({ activeTab: "controls" });
+    mount({ activeTab: "controls", controlsContent: <p>controls pane</p> });
 
     expect(slot("responsive-dialog-footer")).toBeNull();
   });
@@ -250,10 +250,10 @@ describe("WidgetDialog for a homeowner", () => {
     expect(slot("dialog-content")).toBeNull();
   });
 
-  it("opens nothing when a tile with no extras is held", () => {
+  it("lands on the settings when a widget with nothing extra is opened", () => {
     mount({ activeTab: "controls" }, false);
 
-    expect(slot("dialog-content")).toBeNull();
+    expect(screen.getByText("edit pane")).toBeTruthy();
   });
 
   it("opens edit mode on the settings even when the widget has a sheet", () => {

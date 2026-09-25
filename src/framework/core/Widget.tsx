@@ -9,7 +9,16 @@
  * any JS measurement.
  */
 
-import { type JSX, createEffect, createMemo, createSignal, onCleanup, onMount, Show, useContext } from "solid-js";
+import {
+  type JSX,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+  useContext,
+} from "solid-js";
 import type { WidgetSliderFill as WidgetSliderFillType } from "../backgrounds/WidgetSliderFill";
 import type { WidgetContent as WidgetContentType } from "../components/WidgetContent";
 import type { WidgetIcon as WidgetIconType } from "../components/WidgetIcon";
@@ -17,7 +26,8 @@ import type { WidgetStatus as WidgetStatusType } from "../components/WidgetStatu
 import type { WidgetTitle as WidgetTitleType } from "../components/WidgetTitle";
 import type { WidgetValue as WidgetValueType } from "../components/WidgetValue";
 import { WIDGET_Z } from "../design-system/z-index";
-import type { GestureHandlers } from "../gestures/use-widget-gestures";
+import { type GestureHandlers, useWidgetGestures } from "../gestures/use-widget-gestures";
+import { dialogOpeners } from "../hooks/use-widget-dialog";
 import { deprecate } from "../../deprecations";
 import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
 import { WidgetSizeCtx } from "../hooks/use-widget-dimensions";
@@ -65,6 +75,12 @@ interface WidgetComponent {
 
 function WidgetBase(props: WidgetProps): JSX.Element {
   const parentCtx = useContext(WidgetCtx);
+  // An empty tile says "Hold to configure": holding it opens the widget's settings, whatever the widget wired.
+  const emptyGestures = useWidgetGestures(() => ({
+    hold: { action: () => dialogOpeners.get(parentCtx ?? {})?.("edit") },
+  }));
+  onCleanup(emptyGestures.dispose);
+  const gestures = () => (props.emptyState && parentCtx ? emptyGestures : props.gestures);
 
   const [shellEl, setShellEl] = createSignal<HTMLDivElement | undefined>();
 
@@ -121,8 +137,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     (): JSX.CSSProperties => ({
       "container-type": "size",
       "container-name": "widget",
-      "touch-action":
-        props.gestures && !props.isEditMode ? props.gestures.touchAction() : undefined,
+      "touch-action": gestures() && !props.isEditMode ? gestures()?.touchAction() : undefined,
       ...variantConfig()?.styles?.container,
       ...(variantConfig()?.styles?.cssVars || {}),
       ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
@@ -130,21 +145,33 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       ...((props.tone && props.tone !== "neutral") || props.color
         ? { "--glass-tone": "var(--widget-color)" }
         : {}),
-      ...(props.colorTo ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo } : {}),
+      ...(props.colorTo
+        ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo }
+        : {}),
       ...(props.gradient ? { "background-image": gradient() } : {}),
     }),
   );
 
   // Solid's `on:event` directive binds once; we re-read gesture handlers at
   // dispatch time so edit-mode toggles take effect without rebinding.
-  const gestureEnabled = () => !!props.gestures && !props.isEditMode;
-  const onPointerEnter = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerEnter(e); };
-  const onPointerDown = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerDown(e); };
-  const onPointerMove = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerMove(e); };
-  const onPointerUp = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerUp(e); };
-  const onPointerCancel = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerCancel(e); };
+  const gestureEnabled = () => !!gestures() && !props.isEditMode;
+  const onPointerEnter = (e: PointerEvent) => {
+    if (gestureEnabled()) gestures()?.onPointerEnter(e);
+  };
+  const onPointerDown = (e: PointerEvent) => {
+    if (gestureEnabled()) gestures()?.onPointerDown(e);
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    if (gestureEnabled()) gestures()?.onPointerMove(e);
+  };
+  const onPointerUp = (e: PointerEvent) => {
+    if (gestureEnabled()) gestures()?.onPointerUp(e);
+  };
+  const onPointerCancel = (e: PointerEvent) => {
+    if (gestureEnabled()) gestures()?.onPointerCancel(e);
+  };
 
-  const flood = () => props.gestures?.hold?.() ?? null;
+  const flood = () => gestures()?.hold?.() ?? null;
   // The drain plays where the fill grew, so the point outlives the hold.
   const floodPoint = { x: 0, y: 0, r: 0 };
   const holdFloodStyle = (h: { x: number; y: number; r: number } | null): JSX.CSSProperties => {
@@ -167,6 +194,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
             // Gesture lib has its own size observer (used for "auto" slide
             // orientation); we just hand it the element.
             props.gestures?.bindElement(el);
+            emptyGestures.bindElement(el);
           }}
           class={cn(
             "glasshome-widget glass",
@@ -181,7 +209,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           on:pointerup={onPointerUp}
           on:pointercancel={onPointerCancel}
         >
-          <Show when={props.gestures?.hold}>
+          <Show when={gestures()?.hold}>
             <span
               class="glasshome-widget-hold-flood"
               aria-hidden="true"
@@ -221,7 +249,9 @@ function WidgetEmptyStateInner(props: {
 }): JSX.Element {
   return (
     <div class="flex h-full w-full flex-col items-center justify-center gap-2 text-center">
-      {props.icon && <div class="flex items-center justify-center text-muted-foreground">{props.icon}</div>}
+      {props.icon && (
+        <div class="flex items-center justify-center text-muted-foreground">{props.icon}</div>
+      )}
       {props.title && <h3 class="font-semibold text-sm text-foreground">{props.title}</h3>}
       {props.message && <p class="text-muted-foreground text-xs">{props.message}</p>}
     </div>

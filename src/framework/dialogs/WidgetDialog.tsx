@@ -350,8 +350,6 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const developer = () => ctx?.developer?.() ?? false;
   // `in`, never a read: reading a JSX prop builds it, and a closed dialog must not build its sheet.
   const sheetMode = () => tabValue() === "controls" && "sheet" in local;
-  const nothingHeld = () =>
-    tabValue() === "controls" && !("sheet" in local) && !("controlsContent" in local);
   const narrow = createNarrow();
   const anchor = () => ctx?.anchor?.();
   const sheetBeside = () => sheetMode() && !narrow() && anchor() !== undefined;
@@ -394,7 +392,13 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const visibleTabs = () => builtTabs().filter((tab) => tab.id !== "debug" || developer());
   const tabValue = () => {
     const tabs = visibleTabs();
-    const active = activeTab();
+    // Nothing extra to show: a configure button or a held empty tile lands on the settings.
+    const bare =
+      activeTab() === "controls" &&
+      !("sheet" in local) &&
+      !("controlsContent" in local) &&
+      !local.tabs;
+    const active = bare ? "edit" : activeTab();
     return tabs.some((tab) => tab.id === active) ? active : (tabs[0]?.id ?? active);
   };
 
@@ -423,10 +427,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
         </Popover>
       }
     >
-      <RD
-        open={local.open && !nothingHeld()}
-        onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}
-      >
+      <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
         <Show
           when={!sheetMode()}
           fallback={

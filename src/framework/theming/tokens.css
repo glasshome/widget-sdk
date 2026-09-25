@@ -261,7 +261,7 @@
 }
 .glasshome-panel-rows {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
 }
 .glasshome-panel-row-wrap {
@@ -311,11 +311,17 @@
 }
 .glasshome-panel-row-name,
 .glasshome-panel-row-state,
-.glasshome-panel-fact-label,
-.glasshome-panel-fact-value {
+.glasshome-panel-fact-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* A reading may take a second line rather than lose its end ("3 Moderate"). */
+.glasshome-panel-fact-value {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .glasshome-panel-row-name,
 .glasshome-panel-fact-value {
