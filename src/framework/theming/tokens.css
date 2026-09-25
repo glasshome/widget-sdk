@@ -45,8 +45,9 @@
   --widget-glow-strength: var(--widget-glow-default);
   --widget-radius: var(--radius-xl, 12px);
 
-  --widget-icon-box:    clamp(44px, 25cqb, 58px);
-  --widget-icon-glyph:  clamp(24px, 14cqb, 33px);
+  /* Past a 4x4 box the caps give way to the short side, so a large tile's icon keeps its share. */
+  --widget-icon-box:    clamp(44px, 25cqb, max(58px, 12cqmin));
+  --widget-icon-glyph:  clamp(24px, 14cqb, max(33px, 6.8cqmin));
   --widget-pad:         clamp(8px,  3.5cqb, 22px);
   --widget-gap:         clamp(6px,  2cqb,  14px);
   --widget-title-size:  clamp(12px, 2cqi,    18px);
