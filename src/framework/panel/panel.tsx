@@ -1,4 +1,4 @@
-import { Button, Icon } from "@glasshome/ui/solid";
+import { Button, buttonVariants, Icon } from "@glasshome/ui/solid";
 import { For, type JSX, onCleanup, Show } from "solid-js";
 
 /** A continuous value the whole stage (or a row) sets by dragging. */
@@ -9,12 +9,20 @@ export interface PanelSlide {
   onChange: (value: number) => void;
   /** Fires once when the drag ends, with the last value. */
   onCommit?: (value: number) => void;
+  /** Names the value for screen readers and the keyboard handle ("Brightness"). */
+  label?: string;
+  /** Keyboard step; the drag reports whole numbers. */
+  step?: number;
 }
 
 const HOLD_MS = 450;
 const SLOP_PX = 8;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** A press that starts on a control inside the stage belongs to that control, not the stage slide. */
+const INTERACTIVE =
+  'button, a, input, select, textarea, [role="slider"], [role="radio"], [role="switch"]';
 
 /**
  * Tap, hold and slide on one element: a drag past the slop slides (horizontally
@@ -51,8 +59,12 @@ function pointerGestures(opts: {
 
   return {
     onPointerDown: (e: PointerEvent) => {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || start) return;
+      const own = e.target instanceof Element ? e.target.closest(INTERACTIVE) : null;
+      if (own && own !== e.currentTarget) return;
       start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      // Captured from the press on, so the release always comes back here and clears `start`.
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
       sliding = false;
       held = false;
       if (opts.onHold) {
@@ -69,7 +81,6 @@ function pointerGestures(opts: {
       if (!sliding && opts.slide?.() && d > SLOP_PX) {
         sliding = true;
         clearTimeout(holdTimer);
-        el.setPointerCapture(e.pointerId);
       }
       if (sliding) {
         last = valueAt(el, e);
@@ -102,12 +113,15 @@ export interface WidgetPanelProps {
   backdrop?: JSX.Element;
   /** The big value in the stage's bottom-left ("60%", "22°", "Locked"). */
   value?: JSX.Element;
+  /** `text` sets the value at heading size, for words that run long (a song title). */
+  valueSize?: "number" | "text";
   /** The line above the value ("Drag anywhere to dim"). */
   hint?: JSX.Element;
   /** The line under the value ("2 of 3 lights on"). */
   caption?: JSX.Element;
-  /** Dragging up and down anywhere on the stage sets this value. */
-  slide?: PanelSlide;
+  /** Dragging up and down anywhere on the stage sets this value. A pair splits the stage:
+      a drag starting on the left half moves the first, on the right half the second (a low and high target). */
+  slide?: PanelSlide | [PanelSlide, PanelSlide];
   /** The stage's bottom row: scenes, modes, transport. */
   actions?: JSX.Element;
   /** Everything beside the stage (under it on a phone): sections of rows and facts. */
@@ -119,9 +133,20 @@ export interface WidgetPanelProps {
  * it only what the tile cannot show. Widgets fill it; the SDK owns its shape.
  */
 export function WidgetPanel(props: WidgetPanelProps): JSX.Element {
-  const gestures = pointerGestures({ axis: "y", slide: () => props.slide });
-  const fill = () => {
+  const slides = (): PanelSlide[] => {
     const s = props.slide;
+    return s === undefined ? [] : Array.isArray(s) ? s : [s];
+  };
+  let active = 0;
+  const gestures = pointerGestures({ axis: "y", slide: () => slides()[active] });
+  const onStageDown = (e: PointerEvent) => {
+    const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    active = slides().length > 1 && e.clientX > box.left + box.width / 2 ? 1 : 0;
+    gestures.onPointerDown(e);
+  };
+  const fill = () => {
+    if (slides().length !== 1) return undefined;
+    const s = slides()[0];
     if (!s) return undefined;
     const lo = s.min ?? 0;
     const hi = s.max ?? 100;
@@ -148,12 +173,27 @@ export function WidgetPanel(props: WidgetPanelProps): JSX.Element {
         </Show>
         <div
           class="glasshome-panel-stage"
-          classList={{ "glasshome-panel-stage-slides": !!props.slide }}
-          onPointerDown={gestures.onPointerDown}
+          classList={{ "glasshome-panel-stage-slides": slides().length > 0 }}
+          onPointerDown={onStageDown}
           onPointerMove={gestures.onPointerMove}
           onPointerUp={gestures.onPointerUp}
           onPointerCancel={gestures.onPointerCancel}
         >
+          <For each={slides()}>
+            {(s) => (
+              <input
+                type="range"
+                class="glasshome-panel-keys"
+                aria-label={s.label ?? props.name}
+                min={s.min ?? 0}
+                max={s.max ?? 100}
+                step={s.step ?? 1}
+                value={s.value}
+                onInput={(e) => s.onChange(Number(e.currentTarget.value))}
+                onChange={(e) => s.onCommit?.(Number(e.currentTarget.value))}
+              />
+            )}
+          </For>
           <Show when={!props.backdrop && fill() !== undefined}>
             <div
               class="glasshome-panel-stage-fill"
@@ -182,7 +222,12 @@ export function WidgetPanel(props: WidgetPanelProps): JSX.Element {
               <span class="glasshome-panel-hint">{props.hint}</span>
             </Show>
             <Show when={props.value}>
-              <span class="glasshome-panel-value">{props.value}</span>
+              <span
+                class="glasshome-panel-value"
+                classList={{ "glasshome-panel-value-text": props.valueSize === "text" }}
+              >
+                {props.value}
+              </span>
             </Show>
             <Show when={props.caption}>
               <span class="glasshome-panel-caption">{props.caption}</span>
@@ -225,6 +270,8 @@ export interface PanelRowProps {
   on: boolean;
   /** 0-100 fill; dragging across the row sets it. */
   slide?: PanelSlide;
+  /** A 0-100 fill for a row that only reads (a battery level, a share of power). */
+  fill?: number;
   onTap?: () => void;
   onHold?: () => void;
   /** A control at the row's end (Unlock, + Add). */
@@ -232,8 +279,12 @@ export interface PanelRowProps {
   "aria-label"?: string;
 }
 
-/** One device: a small tile made of button glass. Tap switches it, drag sets its level. */
+/**
+ * One device: a small tile made of button glass. Tap switches it, drag sets its level.
+ * A row with nothing to press (no tap, slide or hold) wears the same glass but is not a button.
+ */
 export function PanelRow(props: PanelRowProps): JSX.Element {
+  const interactive = () => !!(props.onTap || props.slide || props.onHold);
   const gestures = pointerGestures({
     axis: "x",
     slide: () => props.slide,
@@ -241,6 +292,7 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
     onHold: props.onHold ? () => props.onHold?.() : undefined,
   });
   const fill = () => {
+    if (props.fill !== undefined) return props.fill;
     const s = props.slide;
     if (!s || !props.on) return undefined;
     const lo = s.min ?? 0;
@@ -262,51 +314,66 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
     s.onChange(v);
     s.onCommit?.(v);
   };
-  return (
-    <div class="glasshome-panel-row-wrap">
-      <Button
-        variant="outline"
-        size="none"
-        class="glasshome-panel-row"
-        style={
-          {
-            "--widget-color": props.tone ?? "var(--tone-neutral)",
-          } as JSX.CSSProperties
-        }
-        aria-label={props["aria-label"]}
-        aria-pressed={props.on}
-        onPointerDown={gestures.onPointerDown}
-        onPointerMove={gestures.onPointerMove}
-        onPointerUp={gestures.onPointerUp}
-        onPointerCancel={gestures.onPointerCancel}
-        onKeyDown={onKey}
-        onClick={(e: MouseEvent) => {
-          // Pointer taps land in onPointerUp; only a keyboard press reaches here with detail 0.
-          if (e.detail === 0) props.onTap?.();
+  const body = () => (
+    <>
+      <Show when={fill() !== undefined}>
+        <span
+          class="glasshome-widget-slider-fill glasshome-panel-row-fill"
+          style={{ "--widget-fill-value": fill() } as JSX.CSSProperties}
+        />
+      </Show>
+      <span
+        class="glasshome-widget-icon glass glasshome-panel-row-icon"
+        classList={{
+          "glass-tint": props.on,
+          "glasshome-panel-row-icon-off": !props.on,
         }}
       >
-        <Show when={fill() !== undefined}>
-          <span
-            class="glasshome-widget-slider-fill glasshome-panel-row-fill"
-            style={{ "--widget-fill-value": fill() } as JSX.CSSProperties}
-          />
+        <Icon icon={props.icon} class="glasshome-widget-icon-glyph" />
+      </span>
+      <span class="glasshome-panel-row-text">
+        <span class="glasshome-panel-row-name">{props.name}</span>
+        <Show when={props.state !== undefined}>
+          <span class="glasshome-panel-row-state">{props.state}</span>
         </Show>
-        <span
-          class="glasshome-widget-icon glass glasshome-panel-row-icon"
-          classList={{
-            "glass-tint": props.on,
-            "glasshome-panel-row-icon-off": !props.on,
+      </span>
+    </>
+  );
+  const tone = () =>
+    ({ "--widget-color": props.tone ?? "var(--tone-neutral)" }) as JSX.CSSProperties;
+  return (
+    <div class="glasshome-panel-row-wrap">
+      <Show
+        when={interactive()}
+        fallback={
+          <div
+            class={`${buttonVariants({ variant: "outline", size: "none" })} glasshome-panel-row glasshome-panel-row-static`}
+            style={tone()}
+          >
+            {body()}
+          </div>
+        }
+      >
+        <Button
+          variant="outline"
+          size="none"
+          class="glasshome-panel-row"
+          style={tone()}
+          aria-label={props["aria-label"]}
+          aria-pressed={props.on}
+          onPointerDown={gestures.onPointerDown}
+          onPointerMove={gestures.onPointerMove}
+          onPointerUp={gestures.onPointerUp}
+          onPointerCancel={gestures.onPointerCancel}
+          onKeyDown={onKey}
+          onClick={(e: MouseEvent) => {
+            // Pointer taps land in onPointerUp; only a keyboard press reaches here with detail 0.
+            if (e.detail === 0) props.onTap?.();
           }}
         >
-          <Icon icon={props.icon} class="glasshome-widget-icon-glyph" />
-        </span>
-        <span class="glasshome-panel-row-text">
-          <span class="glasshome-panel-row-name">{props.name}</span>
-          <Show when={props.state !== undefined}>
-            <span class="glasshome-panel-row-state">{props.state}</span>
-          </Show>
-        </span>
-      </Button>
+          {body()}
+        </Button>
+      </Show>
       <Show when={props.trailing}>
         <span class="glasshome-panel-row-trailing">{props.trailing}</span>
       </Show>

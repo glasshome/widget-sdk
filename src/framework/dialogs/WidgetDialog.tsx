@@ -342,7 +342,8 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   const ctx = useContext(WidgetCtx);
   const developer = () => ctx?.developer?.() ?? false;
-  const panelMode = () => tabValue() === "controls" && local.panel !== undefined;
+  // `in`, never a read: reading a JSX prop builds it, and a closed dialog must not build its panel.
+  const panelMode = () => tabValue() === "controls" && "panel" in local;
 
   const debugCopy = useCopyText();
 

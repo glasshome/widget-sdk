@@ -7,8 +7,8 @@ type Entity = NonNullable<ReturnType<ReturnType<typeof useEntity>>>;
 type CallService = ReturnType<typeof useService>["callService"];
 
 interface DomainRow {
-  icon: string;
-  tone: string;
+  icon: string | ((e: Entity) => string);
+  tone: string | ((e: Entity) => string);
   on: (e: Entity) => boolean;
   state: (e: Entity) => string;
   level?: (e: Entity) => number | undefined;
@@ -23,7 +23,12 @@ const target = (e: Entity) => ({ entity_id: e.id });
 const DOMAINS: Record<string, DomainRow> = {
   light: {
     icon: "mdi:lightbulb",
-    tone: "var(--tone-warning)",
+    tone: (e) => {
+      const rgb = e.attributes.rgb_color;
+      return Array.isArray(rgb) && rgb.length === 3
+        ? `rgb(${rgb.join(" ")})`
+        : "var(--tone-warning)";
+    },
     on: (e) => e.state === "on",
     state: (e) => {
       if (e.state !== "on") return "Off";
@@ -80,7 +85,7 @@ const DOMAINS: Record<string, DomainRow> = {
       call("cover", e.state === "closed" ? "open_cover" : "close_cover", {}, target(e)),
   },
   lock: {
-    icon: "mdi:lock",
+    icon: (e) => (e.state === "locked" ? "mdi:lock" : "mdi:lock-open-variant"),
     tone: "var(--tone-success)",
     on: (e) => e.state === "locked",
     state: (e) => titleCase(e.state),
@@ -112,6 +117,29 @@ const DOMAINS: Record<string, DomainRow> = {
       call("media_player", "volume_set", { volume_level: v / 100 }, target(e)),
     tap: (call, e) => call("media_player", "media_play_pause", {}, target(e)),
   },
+  binary_sensor: {
+    icon: "mdi:eye",
+    tone: "var(--tone-info)",
+    on: (e) => e.state === "on",
+    state: (e) => {
+      const words = BINARY_WORDS[e.deviceClass ?? ""] ?? ["On", "Off"];
+      return e.state === "on" ? words[0] : words[1];
+    },
+  },
+  button: {
+    icon: "mdi:gesture-tap-button",
+    tone: "var(--tone-accent)",
+    on: () => false,
+    state: (e) => pressedAt(e.state),
+    tap: (call, e) => call("button", "press", {}, target(e)),
+  },
+  input_button: {
+    icon: "mdi:gesture-tap-button",
+    tone: "var(--tone-accent)",
+    on: () => false,
+    state: (e) => pressedAt(e.state),
+    tap: (call, e) => call("input_button", "press", {}, target(e)),
+  },
   scene: {
     icon: "mdi:palette",
     tone: "var(--tone-accent)",
@@ -127,6 +155,37 @@ const DOMAINS: Record<string, DomainRow> = {
     tap: (call, e) => call("script", "turn_on", {}, target(e)),
   },
 };
+
+const COVER_ICON: Record<string, string> = {
+  garage: "mdi:garage",
+  gate: "mdi:gate",
+  door: "mdi:door",
+  curtain: "mdi:curtains",
+  shutter: "mdi:window-shutter",
+  awning: "mdi:awning",
+};
+
+const BINARY_WORDS: Record<string, [string, string]> = {
+  door: ["Open", "Closed"],
+  window: ["Open", "Closed"],
+  garage_door: ["Open", "Closed"],
+  opening: ["Open", "Closed"],
+  motion: ["Detected", "Clear"],
+  occupancy: ["Detected", "Clear"],
+  presence: ["Home", "Away"],
+  moisture: ["Wet", "Dry"],
+  smoke: ["Smoke", "Clear"],
+  lock: ["Unlocked", "Locked"],
+  battery: ["Low", "Normal"],
+  connectivity: ["Connected", "Disconnected"],
+};
+
+/** A button's state is when it was last pressed. */
+function pressedAt(state: string): string {
+  const t = Date.parse(state);
+  if (Number.isNaN(t)) return "Never pressed";
+  return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
 
 const FALLBACK: DomainRow = {
   icon: "mdi:circle-medium",
@@ -158,6 +217,9 @@ export function PanelEntityRow(props: {
   name?: string;
   /** A place the panel already names; dropped from the front of the entity's name. */
   within?: string;
+  /** Overrides the domain's icon and tone, so a row matches the widget it sits in. */
+  icon?: string;
+  tone?: string;
   onHold?: () => void;
 }): JSX.Element {
   const entity = useEntity(() => props.entityId);
@@ -175,10 +237,24 @@ export function PanelEntityRow(props: {
         const setLevel = () => d().setLevel;
         return (
           <PanelRow
-            icon={e().icon ?? d().icon}
+            icon={(() => {
+              const own = d().icon;
+              // A state-drawn icon (an open lock) outranks the entity's resting default.
+              if (typeof own === "function") return props.icon ?? own(e());
+              return (
+                props.icon ??
+                e().icon ??
+                COVER_ICON[e().domain === "cover" ? (e().deviceClass ?? "") : ""] ??
+                own
+              );
+            })()}
             name={props.name ?? trimPlace(e().friendlyName ?? e().id, props.within)}
             state={d().state(e())}
-            tone={d().tone}
+            tone={(() => {
+              if (props.tone) return props.tone;
+              const t = d().tone;
+              return typeof t === "function" ? t(e()) : t;
+            })()}
             on={d().on(e())}
             slide={
               setLevel() && level() !== undefined

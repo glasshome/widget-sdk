@@ -225,4 +225,25 @@ describe("WidgetDialog for a homeowner", () => {
     expect(screen.getByText("edit pane")).toBeTruthy();
     expect(screen.queryByText("the panel")).toBeNull();
   });
+
+  it("builds no panel while the dialog is closed", () => {
+    let built = 0;
+    const Panel = () => {
+      built++;
+      return <div>the panel</div>;
+    };
+    // A getter, as the JSX attribute `panel={<Panel />}` compiles to.
+    mount(
+      {
+        open: false,
+        activeTab: "controls",
+        get panel() {
+          return <Panel />;
+        },
+      },
+      false,
+    );
+
+    expect(built).toBe(0);
+  });
 });

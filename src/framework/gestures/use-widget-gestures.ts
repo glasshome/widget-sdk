@@ -30,6 +30,16 @@ export interface GestureHandlers {
   touchAction: () => string;
   /** Cancel any pending hold timer. Call on component unmount via onCleanup. */
   dispose: () => void;
+  /** Where a hold is filling from, relative to the element; `fired` once it opened. */
+  hold?: () => HoldFlood | null;
+}
+
+export interface HoldFlood {
+  x: number;
+  y: number;
+  /** Radius that reaches the farthest corner, so the fill ends as the hold fires. */
+  r: number;
+  fired: boolean;
 }
 
 interface GestureState {
@@ -42,6 +52,7 @@ interface GestureState {
   /** True for mouse/pen once user starts dragging — drives slide path. */
   sliding: boolean;
   holdTimer: ReturnType<typeof setTimeout> | null;
+  graceTimer: ReturnType<typeof setTimeout> | null;
   element: HTMLElement | null;
 }
 
@@ -49,7 +60,9 @@ export function useWidgetGestures(
   config: () => GestureConfig,
   orientation?: () => GestureOrientation,
 ): GestureHandlers {
-  const HOLD_DELAY = 300; // ms
+  // The dock's hold: a tap ends inside the grace, then the fill grows for --duration-morph (400ms).
+  const HOLD_GRACE = 150;
+  const HOLD_DELAY = 550;
   const TAP_THRESHOLD = 10; // px — movement above this means not-a-tap
 
   const state: GestureState = {
@@ -61,8 +74,10 @@ export function useWidgetGestures(
     hasMoved: false,
     sliding: false,
     holdTimer: null,
+    graceTimer: null,
     element: null,
   };
+  const [hold, setHold] = createSignal<HoldFlood | null>(null);
 
   // Cached element dimensions — avoids forced layout in slide path.
   let cachedRect: { width: number; height: number } | null = null;
@@ -96,6 +111,11 @@ export function useWidgetGestures(
       clearTimeout(state.holdTimer);
       state.holdTimer = null;
     }
+    if (state.graceTimer) {
+      clearTimeout(state.graceTimer);
+      state.graceTimer = null;
+    }
+    setHold(null);
   };
 
   const resetState = () => {
@@ -136,9 +156,18 @@ export function useWidgetGestures(
     // Hold timer — same on touch and mouse. Cancelled by movement.
     if (cfg.hold) {
       const holdDelay = cfg.hold.delay ?? HOLD_DELAY;
+      const box = state.element.getBoundingClientRect();
+      const x = e.clientX - box.left;
+      const y = e.clientY - box.top;
+      const r = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
+      state.graceTimer = setTimeout(() => {
+        state.graceTimer = null;
+        setHold({ x, y, r, fired: false });
+      }, Math.min(HOLD_GRACE, holdDelay));
       state.holdTimer = setTimeout(() => {
         state.holdTimer = null;
         if (!state.isDown || state.hasMoved) return;
+        setHold((h) => (h ? { ...h, fired: true } : h));
         haptics.bump();
         cfg.hold?.action();
         state.isDown = false; // prevent tap on release
@@ -287,6 +316,7 @@ export function useWidgetGestures(
     onPointerEnter,
     bindElement,
     touchAction,
+    hold,
     dispose: () => {
       clearHold();
       if (resizeObserver) {

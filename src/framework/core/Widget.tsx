@@ -9,7 +9,7 @@
  * any JS measurement.
  */
 
-import { type JSX, createEffect, createMemo, createSignal, onCleanup, onMount, useContext } from "solid-js";
+import { type JSX, createEffect, createMemo, createSignal, onCleanup, onMount, Show, useContext } from "solid-js";
 import type { WidgetSliderFill as WidgetSliderFillType } from "../backgrounds/WidgetSliderFill";
 import type { WidgetContent as WidgetContentType } from "../components/WidgetContent";
 import type { WidgetIcon as WidgetIconType } from "../components/WidgetIcon";
@@ -144,6 +144,20 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const onPointerUp = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerUp(e); };
   const onPointerCancel = (e: PointerEvent) => { if (gestureEnabled()) props.gestures?.onPointerCancel(e); };
 
+  const flood = () => props.gestures?.hold?.() ?? null;
+  // The drain plays where the fill grew, so the point outlives the hold.
+  const floodPoint = { x: 0, y: 0, r: 0 };
+  const holdFloodStyle = (h: { x: number; y: number; r: number } | null): JSX.CSSProperties => {
+    if (h) Object.assign(floodPoint, { x: h.x, y: h.y, r: h.r });
+    return {
+      left: `${floodPoint.x}px`,
+      top: `${floodPoint.y}px`,
+      width: `${floodPoint.r * 2}px`,
+      height: `${floodPoint.r * 2}px`,
+      "z-index": WIDGET_Z.BACKGROUND,
+    };
+  };
+
   return (
     <WidgetCtx.Provider value={contextValue}>
       <WidgetSizeCtx.Provider value={measured}>
@@ -167,6 +181,15 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           on:pointerup={onPointerUp}
           on:pointercancel={onPointerCancel}
         >
+          <Show when={props.gestures?.hold}>
+            <span
+              class="glasshome-widget-hold-flood"
+              aria-hidden="true"
+              data-hold={flood() && !flood()?.fired ? "" : undefined}
+              data-fired={flood()?.fired ? "" : undefined}
+              style={holdFloodStyle(flood())}
+            />
+          </Show>
           <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
             {props.emptyState ? (
               <WidgetEmptyStateInner

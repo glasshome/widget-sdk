@@ -39,6 +39,7 @@ export {
   mediaUrl,
   parseColor,
   presetValue,
+  Progress,
   ResponsiveDialog,
   ResponsiveDialogBody,
   ResponsiveDialogClose,

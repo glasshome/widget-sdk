@@ -270,6 +270,7 @@
 }
 .glasshome-panel-stage {
   position: relative;
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -301,7 +302,7 @@
   right: 0;
   bottom: 0;
   height: 82%;
-  width: 62%;
+  width: 50%;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -343,12 +344,17 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The words keep the stage's left half; the object takes the right, so they never cross. */
 .glasshome-panel-readout {
   margin-top: auto;
   gap: 4px;
+  max-width: 60%;
+}
+.glasshome-panel:not(:has(.glasshome-panel-art)) .glasshome-panel-readout {
+  max-width: none;
 }
 .glasshome-panel-value {
-  font-size: clamp(56px, 12cqi, 88px);
+  font-size: clamp(40px, 16cqi, 88px);
   font-weight: 600;
   line-height: 0.95;
   letter-spacing: -0.03em;
@@ -472,8 +478,11 @@
   translate: 0 -50%;
 }
 .glasshome-panel-facts {
-  display: flex;
-  padding: 10px 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  row-gap: 10px;
+  padding: 10px 4px 10px 0;
+  overflow: hidden;
   border-radius: var(--radius-lg, 16px);
   --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
   backdrop-filter: blur(var(--material-blur, 24px)) saturate(1.8);
@@ -487,8 +496,8 @@
   gap: 8px;
   padding: 0 12px;
 }
-.glasshome-panel-fact + .glasshome-panel-fact {
-  border-left: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
+.glasshome-panel-fact {
+  box-shadow: -1px 0 0 color-mix(in oklch, var(--foreground) 10%, transparent);
 }
 .glasshome-panel-fact-icon {
   flex-shrink: 0;
@@ -507,4 +516,66 @@
   font-weight: 500;
   letter-spacing: 0;
   opacity: 0.85;
+}
+
+/* === Hold flood: the dock's hold fill (ui HOLD_MOTION), grown from the finger === */
+.glasshome-widget-hold-flood {
+  position: absolute;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--primary) 45%, transparent);
+  pointer-events: none;
+  scale: 0;
+  opacity: 0;
+  transition:
+    scale var(--duration-state, 200ms) var(--ease-contract, ease-in),
+    opacity var(--duration-state, 200ms) var(--ease-contract, ease-in);
+}
+.glasshome-widget-hold-flood[data-hold] {
+  scale: 1;
+  opacity: 1;
+  transition-duration: var(--duration-morph, 400ms);
+  transition-timing-function: linear;
+}
+.glasshome-widget-hold-flood[data-fired] {
+  scale: 1;
+  opacity: 0;
+}
+.glasshome-panel-value-text {
+  font-size: clamp(26px, 9cqi, 46px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* The stage's keyboard handle: a real range input, never drawn; the stage shows its focus. */
+.glasshome-panel-keys {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.glasshome-panel-stage:has(.glasshome-panel-keys:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: -4px;
+  border-radius: var(--radius-lg, 16px);
+}
+/* A phone keeps the object smaller, so the words and the bottom row stay clear of it. */
+@container panel (max-width: 519px) {
+  .glasshome-panel-stage {
+    min-height: 360px;
+  }
+  .glasshome-panel-art {
+    height: 58%;
+    width: 50%;
+    bottom: 64px;
+  }
+}
+.glasshome-panel-row-static {
+  cursor: default;
+  scale: none;
 }
