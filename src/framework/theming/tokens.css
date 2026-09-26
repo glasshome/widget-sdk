@@ -227,11 +227,6 @@
 /* === Sheet: what a held tile opens (framework/panel) ===
  * Rendered in a popover or dialog outside the widget's shadow root, so every rule
  * the sheet needs lives here, never in a widget's own utilities. */
-/* Placed beside its tile, so it drops the centred dialog's own size limits. */
-.glasshome-sheet-beside {
-  max-width: none;
-  margin: 0;
-}
 .glasshome-sheet {
   display: flex;
   flex-direction: column;

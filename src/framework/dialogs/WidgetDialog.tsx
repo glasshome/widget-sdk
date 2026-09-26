@@ -351,11 +351,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const narrow = createNarrow();
   const anchor = () => ctx?.anchor?.();
   const sheetBeside = () => sheetMode() && !narrow() && anchor() !== undefined;
-  const besideTile = (): JSX.CSSProperties | undefined => {
-    const el = anchor();
-    if (!el || !local.open) return undefined;
-    return placeBeside(el.getBoundingClientRect());
-  };
+
 
   const debugCopy = useCopyText();
 
@@ -415,10 +411,9 @@ export function WidgetDialog(props: WidgetDialogProps) {
           when={!sheetMode()}
           fallback={
             <RDContent
-              size="md"
+              size="sm"
               ariaLabel={local.title}
-              class={sheetBeside() ? "glasshome-sheet-beside" : undefined}
-              style={sheetBeside() ? besideTile() : undefined}
+              anchor={sheetBeside() ? anchor() : undefined}
             >
               <RDHeader>
                 <RDTitle class="truncate">{local.title}</RDTitle>
@@ -512,30 +507,4 @@ function createNarrow() {
     onCleanup(() => mql.removeEventListener("change", onChange));
   });
   return narrow;
-}
-
-const SHEET_WIDTH = 380;
-const SHEET_GAP = 12;
-const EDGE = 16;
-
-/** Beside the tile it came from: right of it when there is room, else left, else over it; top-aligned, kept on screen. */
-function placeBeside(tile: DOMRect): JSX.CSSProperties {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const right = tile.right + SHEET_GAP;
-  const left = tile.left - SHEET_GAP - SHEET_WIDTH;
-  const x =
-    right + SHEET_WIDTH <= vw - EDGE
-      ? right
-      : left >= EDGE
-        ? left
-        : Math.max(EDGE, Math.min(tile.left, vw - EDGE - SHEET_WIDTH));
-  const y = Math.max(EDGE, Math.min(tile.top, vh - EDGE - 240));
-  return {
-    left: `${x}px`,
-    top: `${y}px`,
-    translate: "none",
-    width: `${SHEET_WIDTH}px`,
-    "max-height": `${vh - y - EDGE}px`,
-  };
 }

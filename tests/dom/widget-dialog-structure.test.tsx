@@ -247,7 +247,6 @@ describe("WidgetDialog for a homeowner", () => {
 
     const sheet = panel();
     expect(sheet.textContent).toContain("the extras");
-    expect(sheet.classList.contains("glasshome-sheet-beside")).toBe(true);
     expect(sheet.style.left).not.toBe("");
   });
 
