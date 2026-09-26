@@ -9,4 +9,9 @@ export {
   type WidgetDebugData,
   type WidgetDebugEntity,
 } from "./debug-view";
-export { WidgetDialog, type WidgetDialogProps, type WidgetDialogTab } from "./WidgetDialog";
+export {
+  type SheetTile,
+  WidgetDialog,
+  type WidgetDialogProps,
+  type WidgetDialogTab,
+} from "./WidgetDialog";

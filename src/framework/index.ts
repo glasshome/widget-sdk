@@ -78,6 +78,7 @@ export {
   type WidgetDebugEntity,
   WidgetDebugView,
   WidgetDialog,
+  type SheetTile,
   type WidgetDialogProps,
   type WidgetDialogTab,
 } from "./dialogs";

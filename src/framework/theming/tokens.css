@@ -387,3 +387,35 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+/* The sheet wears its tile: the tile's tone washed into the glass, its picture as a band behind
+   the head that fades into the glass, so the tile reads as having grown open. */
+.glasshome-sheet-surface {
+  --glass-wash: 20%;
+  --glass-wash-2: 7%;
+  --widget-icon-box: 48px;
+  --widget-icon-glyph: 26px;
+}
+.glasshome-sheet-band {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 150px;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, #000 30%, transparent);
+}
+.glasshome-sheet-band > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+}
+.glasshome-sheet-surface > [data-slot$="-header"],
+.glasshome-sheet-surface > [data-slot$="-body"] {
+  position: relative;
+}
+.glasshome-sheet-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

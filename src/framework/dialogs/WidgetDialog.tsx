@@ -10,6 +10,7 @@ import type {
 } from "@glasshome/ui/solid";
 import {
   Empty,
+  Icon,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -72,6 +73,15 @@ export interface WidgetDialogTab {
   content: JSX.Element;
 }
 
+export interface SheetTile {
+  /** Iconify name, the tile's own icon. */
+  icon?: string;
+  /** The tile's colour: a CSS colour or `var(--tone-*)`. */
+  tone?: string;
+  /** URL of the tile's picture. */
+  backdrop?: string;
+}
+
 export interface WidgetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -87,6 +97,9 @@ export interface WidgetDialogProps {
       as `PanelSection`s. It opens beside the tile, or from the bottom on a phone. A widget with nothing
       the tile lacks passes none, and holding it opens nothing. */
   sheet?: JSX.Element;
+  /** The tile's look, worn by its sheet so the tile reads as growing open: its icon in the head,
+      its tone in the glass, its picture (a room, an album cover) as a band behind the head. */
+  tile?: SheetTile;
   debugContent?: JSX.Element;
   debugData?: string | Record<string, unknown>;
   tabs?: WidgetDialogTab[];
@@ -140,6 +153,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     "editContent",
     "controlsContent",
     "sheet",
+    "tile",
     "debugContent",
     "debugData",
     "tabs",
@@ -414,8 +428,29 @@ export function WidgetDialog(props: WidgetDialogProps) {
               size="sm"
               ariaLabel={local.title}
               anchor={sheetBeside() ? anchor() : undefined}
+              class="glasshome-sheet-surface"
+              style={
+                local.tile?.tone
+                  ? ({ "--glass-tone": local.tile.tone, "--widget-color": local.tile.tone } as JSX.CSSProperties)
+                  : undefined
+              }
             >
-              <RDHeader>
+              <Show when={local.tile?.backdrop}>
+                {(src) => (
+                  <div class="glasshome-sheet-band" aria-hidden="true">
+                    <img src={src()} alt="" />
+                  </div>
+                )}
+              </Show>
+              <RDHeader
+                media={
+                  local.tile?.icon ? (
+                    <span class="glasshome-widget-icon glass glass-tint glasshome-sheet-icon">
+                      <Icon icon={local.tile.icon} class="glasshome-widget-icon-glyph" />
+                    </span>
+                  ) : undefined
+                }
+              >
                 <RDTitle class="truncate">{local.title}</RDTitle>
               </RDHeader>
               <RDBody>
