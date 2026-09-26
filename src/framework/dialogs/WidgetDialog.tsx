@@ -443,6 +443,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                 )}
               </Show>
               <RDHeader
+                class="items-center"
                 media={
                   local.tile?.icon ? (
                     <span class="glasshome-widget-icon glass glass-tint glasshome-sheet-icon">
