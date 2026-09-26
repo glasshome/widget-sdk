@@ -245,9 +245,10 @@ describe("WidgetDialog for a homeowner", () => {
       </WidgetCtx.Provider>
     ));
 
-    const popover = slot("popover-content");
-    expect(popover?.textContent).toContain("the extras");
-    expect(slot("dialog-content")).toBeNull();
+    const sheet = panel();
+    expect(sheet.textContent).toContain("the extras");
+    expect(sheet.classList.contains("glasshome-sheet-beside")).toBe(true);
+    expect(sheet.style.left).not.toBe("");
   });
 
   it("lands on the settings when a widget with nothing extra is opened", () => {
