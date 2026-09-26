@@ -120,6 +120,17 @@ export function useWidgetGestures(
     setHold(null);
   };
 
+  // The click that ends a hold belongs to the hold, never to a chip or button under the finger.
+  const swallowReleaseClick = (el: HTMLElement) => {
+    const swallow = (e: Event) => {
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    const disarm = () => el.removeEventListener("click", swallow, true);
+    el.addEventListener("click", swallow, true);
+    window.addEventListener("pointerup", () => setTimeout(disarm, 0), { capture: true, once: true });
+  };
+
   const resetState = () => {
     state.isDown = false;
     state.hasMoved = false;
@@ -171,6 +182,7 @@ export function useWidgetGestures(
         if (!state.isDown || state.hasMoved) return;
         setHold((h) => (h ? { ...h, fired: true } : h));
         haptics.bump();
+        if (state.element) swallowReleaseClick(state.element);
         cfg.hold?.action();
         state.isDown = false; // prevent tap on release
       }, holdDelay);
