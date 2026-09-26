@@ -33,4 +33,20 @@ describe("an empty tile", () => {
 
     expect(screen.getByTestId("dialog").textContent).toBe("edit");
   });
+
+  it("opens the widget's settings from the context-menu key", () => {
+    const ctx = { updateConfig: () => {}, dimensions: () => ({ width: 0, height: 0 }) };
+    render(() => (
+      <WidgetCtx.Provider value={ctx}>
+        <EmptyWidget />
+      </WidgetCtx.Provider>
+    ));
+
+    const shell = document.querySelector<HTMLElement>(".glasshome-widget");
+    if (!shell) throw new Error("shell did not render");
+    expect(shell.tabIndex).toBe(0);
+    fireEvent.keyDown(shell, { key: "ContextMenu" });
+
+    expect(screen.getByTestId("dialog").textContent).toBe("edit");
+  });
 });

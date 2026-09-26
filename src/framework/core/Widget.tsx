@@ -77,7 +77,10 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const parentCtx = useContext(WidgetCtx);
   // An empty tile says "Hold to configure": holding it opens the widget's settings, whatever the widget wired.
   const emptyGestures = useWidgetGestures(() => ({
-    hold: { action: () => dialogOpeners.get(parentCtx ?? {})?.("edit") },
+    hold: {
+      action: () =>
+        (dialogOpeners.get(parentCtx ?? {}) ?? dialogOpeners.get(contextValue))?.("edit"),
+    },
   }));
   onCleanup(emptyGestures.dispose);
   const gestures = () => (props.emptyState && parentCtx ? emptyGestures : props.gestures);
@@ -119,9 +122,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   });
 
   const contextValue: ReactiveWidgetContext = {
+    ...parentCtx,
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
-    registerDialogOpener: parentCtx?.registerDialogOpener,
-    callService: parentCtx?.callService,
     dimensions: deprecate(() => measured(), "ctx.dimensions"),
   };
 
@@ -208,6 +210,10 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           on:pointermove={onPointerMove}
           on:pointerup={onPointerUp}
           on:pointercancel={onPointerCancel}
+          tabIndex={gestureEnabled() ? 0 : undefined}
+          onKeyDown={(e) => {
+            if (gestureEnabled()) gestures()?.onKeyDown?.(e);
+          }}
         >
           <Show when={gestures()?.hold}>
             <span

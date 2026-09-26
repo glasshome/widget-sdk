@@ -96,7 +96,7 @@ export interface WidgetDialogProps {
   /** What holding the tile opens: only what the tile cannot show (a group's members, colours, modes),
       as `PanelSection`s. It opens beside the tile, or from the bottom on a phone. A widget with nothing
       the tile lacks passes none, and holding it opens nothing. */
-  sheet?: JSX.Element;
+  sheet?: () => JSX.Element;
   /** The tile's look, worn by its sheet so the tile reads as growing open: its icon in the head,
       its tone in the glass, its picture (a room, an album cover) as a band behind the head. */
   tile?: SheetTile;
@@ -360,8 +360,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   const ctx = useContext(WidgetCtx);
   const developer = () => ctx?.developer?.() ?? false;
-  // `in`, never a read: reading a JSX prop builds it, and a closed dialog must not build its sheet.
-  const sheetMode = () => tabValue() === "controls" && "sheet" in local;
+  const sheetMode = () => tabValue() === "controls" && local.sheet !== undefined;
   const narrow = createNarrow();
   const anchor = () => ctx?.anchor?.();
   const sheetBeside = () => sheetMode() && !narrow() && anchor() !== undefined;
@@ -403,12 +402,15 @@ export function WidgetDialog(props: WidgetDialogProps) {
   // Custom `tabs` ids need not include the "controls" default useWidgetDialog
   // starts on; the tab row falls back to the first tab, so the footer must too.
   const visibleTabs = () => builtTabs().filter((tab) => tab.id !== "debug" || developer());
+  // With a sheet, "controls" is the sheet itself, which has no tab row to come back by.
+  const rowTabs = () =>
+    visibleTabs().filter((tab) => tab.id !== "controls" || local.sheet === undefined);
   const tabValue = () => {
     const tabs = visibleTabs();
     // Nothing extra to show: a configure button or a held empty tile lands on the settings.
     const bare =
       activeTab() === "controls" &&
-      !("sheet" in local) &&
+      local.sheet === undefined &&
       !("controlsContent" in local) &&
       !local.tabs;
     const active = bare ? "edit" : activeTab();
@@ -455,7 +457,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                 <RDTitle class="truncate">{local.title}</RDTitle>
               </RDHeader>
               <RDBody>
-                <div class="glasshome-sheet">{local.sheet}</div>
+                <div class="glasshome-sheet">{local.sheet?.()}</div>
               </RDBody>
             </RDContent>
           }
@@ -472,7 +474,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                     settings); the tab row is Developer Mode's way between them. */}
                     <Show when={developer() || local.tabs !== undefined}>
                       <TabsListPart class="w-auto">
-                        <For each={visibleTabs()}>
+                        <For each={rowTabs()}>
                           {(tab) => (
                             <TabsTriggerPart value={tab.id}>
                               <span class="inline-flex size-3.5 shrink-0 items-center">

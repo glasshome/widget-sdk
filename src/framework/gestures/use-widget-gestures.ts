@@ -32,6 +32,8 @@ export interface GestureHandlers {
   dispose: () => void;
   /** Where a hold is filling from, relative to the element; `fired` once it opened. */
   hold?: () => HoldFlood | null;
+  /** Keyboard door: Enter or Space taps, the context-menu key or Shift+F10 holds. */
+  onKeyDown?: (e: KeyboardEvent) => void;
 }
 
 export interface HoldFlood {
@@ -308,7 +310,20 @@ export function useWidgetGestures(
     return "auto";
   };
 
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.target !== e.currentTarget) return;
+    const cfg = config();
+    if ((e.key === "Enter" || e.key === " ") && cfg.tap) {
+      e.preventDefault();
+      cfg.tap();
+    } else if ((e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) && cfg.hold) {
+      e.preventDefault();
+      cfg.hold.action();
+    }
+  };
+
   return {
+    onKeyDown,
     onPointerDown,
     onPointerMove,
     onPointerUp,

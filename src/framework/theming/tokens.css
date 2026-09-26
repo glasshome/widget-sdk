@@ -358,6 +358,11 @@
   color: var(--muted-foreground);
 }
 
+.glasshome-widget:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* === Hold flood: the dock's hold fill (ui HOLD_MOTION), grown from the finger === */
 .glasshome-widget-hold-flood {
   position: absolute;

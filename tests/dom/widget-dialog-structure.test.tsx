@@ -216,7 +216,7 @@ describe("WidgetDialog for a homeowner", () => {
   });
 
   it("opens a held tile's sheet with its title and no tabs", () => {
-    mount({ activeTab: "controls", sheet: <div>the extras</div> }, false);
+    mount({ activeTab: "controls", sheet: () => <div>the extras</div> }, false);
 
     expect(screen.getByText("the extras")).toBeTruthy();
     expect(screen.getByText("Lamp")).toBeTruthy();
@@ -240,7 +240,7 @@ describe("WidgetDialog for a homeowner", () => {
           onOpenChange={() => {}}
           title="Lamp"
           activeTab="controls"
-          sheet={<div>the extras</div>}
+          sheet={() => <div>the extras</div>}
         />
       </WidgetCtx.Provider>
     ));
@@ -257,7 +257,7 @@ describe("WidgetDialog for a homeowner", () => {
   });
 
   it("opens edit mode on the settings even when the widget has a sheet", () => {
-    mount({ activeTab: "edit", sheet: <div>the extras</div> }, false);
+    mount({ activeTab: "edit", sheet: () => <div>the extras</div> }, false);
 
     expect(screen.getByText("edit pane")).toBeTruthy();
     expect(screen.queryByText("the extras")).toBeNull();
@@ -269,14 +269,11 @@ describe("WidgetDialog for a homeowner", () => {
       built++;
       return <div>the panel</div>;
     };
-    // A getter, as the JSX attribute `sheet={<Panel />}` compiles to.
     mount(
       {
         open: false,
         activeTab: "controls",
-        get sheet() {
-          return <Panel />;
-        },
+        sheet: () => <Panel />,
       },
       false,
     );
