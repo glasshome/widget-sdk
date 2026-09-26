@@ -337,6 +337,12 @@
   overflow: hidden;
   border-radius: var(--radius-lg, 16px);
   --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
+  backdrop-filter: blur(calc(var(--material-blur, 24px) * 0.6)) saturate(1.6);
+  -webkit-backdrop-filter: blur(calc(var(--material-blur, 24px) * 0.6)) saturate(1.6);
+}
+/* Without blur a see-through strip is just see-through: it takes the card fill. */
+.reduce-blur .glasshome-panel-facts {
+  --glass-base: var(--card);
 }
 .glasshome-panel-fact {
   display: flex;
