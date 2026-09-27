@@ -528,10 +528,17 @@ const FORBIDDEN_HOST_THEME_VARS = [
   "--accent",
 ];
 
+// Tailwind emits `--x: var(--x)` on :host for self-mapped theme keys; the cycle blocks the inherited value.
+export function dropSelfReferencingVars(css: string): string {
+  return css.replace(/(?<=[{;])\s*(--[\w-]+)\s*:\s*var\(\s*\1\s*\)\s*(;|(?=\}))/g, "");
+}
+
 function assertNoHostThemeVars(outDir: string, name: string): void {
   const cssFile = join(outDir, `${name}.css`);
   if (!existsSync(cssFile)) return;
-  const css = readFileSync(cssFile, "utf-8");
+  const emitted = readFileSync(cssFile, "utf-8");
+  const css = dropSelfReferencingVars(emitted);
+  if (css !== emitted) writeFileSync(cssFile, css);
   // Theme vars under :root are inert in a shadow root (harmless); only :host
   // definitions override inheritance.
   for (const match of css.matchAll(/:host[^{]*\{([^}]*)\}/g)) {
