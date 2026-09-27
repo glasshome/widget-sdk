@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.1](https://github.com/glasshome/widget-sdk/compare/v1.17.0...v1.17.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **vite:** widget CSS drops self-referencing theme variables, so light mode keeps Geist and shadows ([4c35523](https://github.com/glasshome/widget-sdk/commit/4c355235e7aeef875fa35b9348fa02ee2efeff80))
+
 ## [1.17.0](https://github.com/glasshome/widget-sdk/compare/v1.16.0...v1.17.0) (2026-09-27)
 
 
