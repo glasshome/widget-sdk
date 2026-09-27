@@ -1,4 +1,4 @@
-import { children, createEffect, type JSX, onCleanup, useContext } from "solid-js";
+import { children, createEffect, createMemo, type JSX, onCleanup, useContext } from "solid-js";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { cn } from "../utils/cn";
@@ -21,8 +21,9 @@ export function WidgetContent(props: WidgetContentProps): JSX.Element {
   createEffect(() => registry?.setAccent(props.accent));
   onCleanup(() => registry?.setAccent(undefined));
   const resolved = children(() => props.children);
-  const hasParts = () =>
-    resolved.toArray().some((n) => n instanceof Element && PART.test(n.className));
+  const hasParts = createMemo(() =>
+    resolved.toArray().some((n) => n instanceof Element && PART.test(n.className)),
+  );
   return (
     <div
       class={cn(hasParts() ? "glasshome-widget-grid" : "glasshome-widget-content", props.class)}

@@ -46,7 +46,9 @@ export function WidgetHead(props: {
   const confirmed = useContext(WidgetConfirmedCtx);
   const registry = widgetRegistry(useContext(WidgetCtx));
   createEffect(() => registry?.setIcon(props.icon));
-  onCleanup(() => registry?.setIcon(undefined));
+  onCleanup(() => {
+    if (registry?.icon() === props.icon) registry?.setIcon(undefined);
+  });
   // Resolved once: reading a JSX prop twice (Show + body) rebuilds its DOM on every change.
   const eyebrow = children(() => props.eyebrow);
   const aside = children(() => props.aside);
