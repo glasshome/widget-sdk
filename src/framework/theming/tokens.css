@@ -35,19 +35,25 @@
 }
 
 /* === Widget shell ===
- * Fluid scale tokens — tied to the shell's own container box (cqb=height, cqi=width).
- * Icon/pad/gap track HEIGHT (cqb) not the shortest side: two widgets of equal
- * height match regardless of width (a 2×2 and a 4×2 get the same icon). cqmin
- * starved portrait tiles by pinning the icon to the narrow width. Tune
- * multipliers / clamps to adjust density. */
+ * One scale: --widget-unit is 1% of the shell's short side. Each size is a floor,
+ * a line through the designed 2x2 and 4x4 sizes, and past 4x4 the share it has
+ * at 4x4. A widget sizes its own text with these tokens and scales with every tile. */
 .glasshome-widget {
   --widget-color: var(--tone-neutral);
   --widget-glow-strength: var(--widget-glow-default);
   --widget-radius: var(--radius-xl, 12px);
 
-  /* Past a 4x4 box the caps give way to the short side, so a large tile's icon keeps its share. */
-  --widget-icon-box:    clamp(44px, 25cqb, max(58px, 17.5cqmin));
-  --widget-icon-glyph:  clamp(24px, 14cqb, max(33px, 10cqmin));
+  --widget-unit: 1cqmin;
+  --widget-text-value:   max(22px, calc(8.5px + 13.4 * var(--widget-unit)), calc(16 * var(--widget-unit)));
+  --widget-text-name:    max(14px, calc(8.9px + 4.37 * var(--widget-unit)), calc(7.07 * var(--widget-unit)));
+  --widget-text-meta:    max(11px, calc(8px + 2.44 * var(--widget-unit)), calc(4.88 * var(--widget-unit)));
+  --widget-text-sub:     max(12px, calc(10.1px + 1.22 * var(--widget-unit)), calc(4.3 * var(--widget-unit)));
+  --widget-text-caption: max(11px, calc(3.6 * var(--widget-unit)));
+  --widget-control-h:    max(36px, calc(30px + 3.84 * var(--widget-unit)));
+  --widget-grid-pad:     max(10px, calc(1.2px + 5.64 * var(--widget-unit)), calc(6 * var(--widget-unit)));
+  --widget-grid-gap:     max(6px, calc(2.5px + 2.23 * var(--widget-unit)));
+  --widget-icon-box:     max(44px, calc(31.3px + 8.14 * var(--widget-unit)), calc(17.7 * var(--widget-unit)));
+  --widget-icon-glyph:   max(24px, calc(16px + 5.12 * var(--widget-unit)), calc(10 * var(--widget-unit)));
   --widget-pad:         clamp(8px,  3.5cqb, 22px);
   --widget-gap:         clamp(6px,  2cqb,  14px);
   --widget-title-size:  clamp(12px, 2cqi,    18px);
@@ -222,6 +228,434 @@
   .glasshome-widget-slider-fill {
     clip-path: inset(calc((100 - var(--widget-fill-value)) * 1%) 0 0 0 round var(--widget-radius));
   }
+}
+
+/* === Anatomy: Widget.Content with a Widget.Head lays its parts out as a tile === */
+.glasshome-widget-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--widget-grid-gap);
+  height: 100%;
+  padding: var(--widget-grid-pad);
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--foreground);
+}
+
+/* In-flow content spans the tile (the max-content first column would collapse it); absolute parts keep the padding box. */
+.glasshome-widget-grid > :where(:not(.glasshome-widget-backdrop, .glasshome-widget-layer, .glasshome-widget-glyph)) {
+  grid-column: 1 / -1;
+}
+.glasshome-widget-layer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+.glasshome-widget-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.glasshome-widget-head-text {
+  min-height: var(--widget-icon-box);
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.glasshome-widget-head-aside {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-height: 26px;
+  overflow: hidden;
+  flex-shrink: 1;
+}
+.glasshome-widget-eyebrow {
+  font-size: var(--widget-text-meta);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.glasshome-widget-name {
+  font-size: var(--widget-text-name);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+
+.glasshome-widget-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--widget-grid-gap);
+  min-height: 0;
+  min-width: 0;
+}
+.glasshome-widget-reading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  z-index: 1;
+}
+.glasshome-widget-reading-value {
+  font-size: var(--widget-text-value);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+/* Alternating names restart the rise on each change without rebuilding the text. */
+.glasshome-widget-reading-value[data-turn="a"] {
+  animation: tile-value-in-a var(--duration-morph) var(--ease-morph);
+}
+.glasshome-widget-reading-value[data-turn="b"] {
+  animation: tile-value-in-b var(--duration-morph) var(--ease-morph);
+}
+@keyframes tile-value-in-a {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em);
+  }
+}
+@keyframes tile-value-in-b {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em);
+  }
+}
+.glasshome-widget-unit {
+  font-size: 0.5em;
+  font-weight: 550;
+  letter-spacing: 0;
+  margin-left: 0.08em;
+  color: var(--muted-foreground);
+}
+.glasshome-widget-sub {
+  font-size: var(--widget-text-sub);
+  font-weight: 500;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Placed on the tile, not the hero, so a control row never moves or shrinks it. */
+.glasshome-widget-art {
+  position: absolute;
+  right: var(--widget-grid-pad);
+  bottom: var(--widget-grid-pad);
+  height: min(calc(100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - var(--widget-grid-gap)), 48cqi);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+/* Beside art a long word ("Unlocked") shrinks to end where the art starts, at about 50cqi; short values keep full size. */
+@container widget (min-width: 180px) and (min-height: 130px) {
+  .glasshome-widget-hero[data-art] .glasshome-widget-reading-value {
+    font-size: max(18px, min(var(--widget-text-value), calc(50cqi / (var(--value-len, 1) * 0.56))));
+  }
+}
+.glasshome-widget-backdrop > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Art keeps its shape and clears a state word at its largest (15cqi, about 3.4em); each art sets --art-aspect. */
+.glasshome-widget-grid .glasshome-widget-art > * {
+  height: min(100%, calc((52cqi - 2 * var(--widget-grid-pad) - var(--widget-grid-gap)) / var(--art-aspect, 1)));
+  flex-shrink: 0;
+}
+.glasshome-widget-grid .glasshome-widget-art > img {
+  width: auto;
+  height: auto;
+  max-height: 100%;
+  max-width: calc(52cqi - 2 * var(--widget-grid-pad) - var(--widget-grid-gap));
+}
+
+.glasshome-widget-controls {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.glasshome-widget-glyph {
+  display: none;
+  position: absolute;
+  right: -8%;
+  bottom: -22%;
+  font-size: min(130cqb, 80cqi);
+  line-height: 1;
+  color: var(--widget-color);
+  opacity: 0.16;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Controls sit on the bottom row beside the value, or under it on a narrow tile; the art lifts above them. */
+.glasshome-widget-head {
+  grid-column: 1 / -1;
+}
+.glasshome-widget-hero {
+  grid-row: 3;
+  grid-column: 1 / -1;
+}
+.glasshome-widget-grid:has(> .glasshome-widget-controls) > .glasshome-widget-hero {
+  grid-column: 1;
+}
+.glasshome-widget-controls {
+  grid-row: 3;
+  grid-column: 2;
+  align-self: end;
+  position: relative;
+  z-index: 1;
+}
+.glasshome-widget-grid:has(> .glasshome-widget-hero[data-empty]) > .glasshome-widget-controls {
+  grid-column: 1 / -1;
+}
+@container widget (max-width: 519px) {
+  .glasshome-widget-grid:has(> .glasshome-widget-controls) {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  .glasshome-widget-grid:has(> .glasshome-widget-controls) > .glasshome-widget-hero {
+    grid-column: 1 / -1;
+  }
+  .glasshome-widget-controls {
+    grid-row: 4;
+    grid-column: 1 / -1;
+  }
+  .glasshome-widget-grid:has(> .glasshome-widget-controls) .glasshome-widget-art {
+    bottom: calc(var(--widget-grid-pad) + var(--widget-control-h) + var(--widget-grid-gap));
+    height: min(
+      calc(
+        100% -
+        2 *
+        var(--widget-grid-pad) -
+        var(--widget-icon-box) -
+        2 *
+        var(--widget-grid-gap) -
+        var(--widget-control-h)
+      ),
+      48cqi
+    );
+  }
+}
+@container widget (max-height: 229px) {
+  .glasshome-widget-controls {
+    display: none;
+  }
+  .glasshome-widget-grid:has(> .glasshome-widget-controls) {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .glasshome-widget-grid:has(> .glasshome-widget-controls) .glasshome-widget-art {
+    bottom: var(--widget-grid-pad);
+    height: min(calc(100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - var(--widget-grid-gap)), 48cqi);
+  }
+}
+@container widget (max-width: 179px) {
+  .glasshome-widget-art {
+    display: none;
+  }
+}
+@container widget (max-height: 169px) {
+  .glasshome-widget-head-aside {
+    display: none;
+  }
+}
+@container widget ((max-height: 129px) or (max-width: 139px)) {
+  .glasshome-widget-head-text {
+    min-height: 0;
+  }
+  .glasshome-widget-name {
+    -webkit-line-clamp: 1;
+  }
+  .glasshome-widget-grid {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2px;
+  }
+  .glasshome-widget-head-icon,
+  .glasshome-widget-art,
+  .glasshome-widget-eyebrow,
+  .glasshome-widget-sub {
+    display: none;
+  }
+  .glasshome-widget-glyph {
+    display: block;
+  }
+  .glasshome-widget-reading-value {
+    font-size: clamp(18px, min(34cqb, 20cqi), 30px);
+  }
+  .glasshome-widget-name {
+    font-size: clamp(12px, min(18cqb, 11cqi), 15px);
+    font-weight: 550;
+    color: var(--muted-foreground);
+  }
+}
+@container widget (max-height: 129px) and (min-width: 260px) {
+  .glasshome-widget-grid {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--widget-grid-gap);
+  }
+  .glasshome-widget-name {
+    font-size: clamp(14px, 22cqb, 18px);
+    font-weight: 650;
+    color: var(--foreground);
+  }
+  .glasshome-widget-eyebrow {
+    display: block;
+  }
+}
+
+.glasshome-widget-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+}
+.glasshome-widget-backdrop > img.area-night {
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+.glasshome-widget-backdrop > img.area-night[data-visible] {
+  opacity: 1;
+}
+.glasshome-widget-backdrop > .glasshome-widget-backdrop-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(90% 80% at 25% 30%, oklch(0.8 0.14 70), transparent 70%);
+  mix-blend-mode: soft-light;
+  opacity: var(--backdrop-light, 0);
+  transition: opacity 500ms ease;
+}
+.glasshome-widget-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--card) 82%, transparent) 0%,
+    color-mix(in oklch, var(--card) 40%, transparent) 22%,
+    transparent 42%,
+    transparent 62%,
+    color-mix(in oklch, var(--card) 45%, transparent) 82%,
+    color-mix(in oklch, var(--card) 80%, transparent) 100%
+  );
+}
+
+@container widget (max-width: 239px) {
+  .glasshome-widget-choice [data-optional] {
+    display: none;
+  }
+}
+@container widget (max-width: 259px) {
+  .glasshome-widget-head-aside {
+    display: none;
+  }
+}
+@container widget (max-width: 139px) {
+  .glasshome-widget-controls {
+    display: none;
+  }
+}
+
+.glasshome-widget-controls {
+  justify-content: flex-start;
+  align-items: center;
+}
+.glasshome-widget-control.glasshome-widget-control {
+  width: var(--widget-control-h);
+  height: var(--widget-control-h);
+}
+.glasshome-widget-choice .glasshome-widget-control.glasshome-widget-control {
+  width: calc(var(--widget-control-h) - 8px);
+  height: calc(var(--widget-control-h) - 8px);
+}
+@container widget (max-width: 179px) and (min-height: 130px) {
+  .glasshome-widget-grid:not(:has(> .glasshome-widget-backdrop)) .glasshome-widget-head-text {
+    min-height: 0;
+  }
+  .glasshome-widget-grid:not(:has(> .glasshome-widget-backdrop)) .glasshome-widget-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+.glasshome-widget-unit[data-degree] {
+  vertical-align: top;
+  margin-left: 0.02em;
+  color: var(--foreground);
+}
+.glasshome-widget-control-wide.glasshome-widget-control-wide {
+  height: var(--widget-control-h);
+  gap: 6px;
+  padding: 0 14px;
+}
+@container widget (max-width: 179px) {
+  .glasshome-widget-grid:has(> .glasshome-widget-backdrop) .glasshome-widget-head-icon {
+    display: none;
+  }
+}
+.glasshome-widget-grid:has(> .glasshome-widget-backdrop) :is(.glasshome-widget-reading-value, .glasshome-widget-sub, .glasshome-widget-name, .glasshome-widget-eyebrow) {
+  text-shadow: 0 1px 8px color-mix(in oklch, var(--card) 75%, transparent);
+}
+.glasshome-widget-grid:has(> .glasshome-widget-backdrop) :is(.glasshome-widget-sub, .glasshome-widget-eyebrow) {
+  color: color-mix(in oklch, var(--foreground) 82%, transparent);
+}
+/* Control glyphs and words keep their share of a control as it grows past 4x4. */
+.glasshome-widget-grid :is(.glasshome-widget-control, .glasshome-widget-control-wide) :is(iconify-icon, svg) {
+  font-size: calc(var(--widget-control-h) * 0.43);
+  width: 1em;
+  height: 1em;
+}
+:is(.glasshome-widget-controls, .glasshome-widget-control-wide) {
+  font-size: max(13px, calc(var(--widget-control-h) * 0.3));
+}
+/* A big tile with no art of its own carries its icon large and faint, so the glass is not an empty box. */
+@container widget (min-width: 300px) and (min-height: 260px) {
+  .glasshome-widget-grid:not(:has(> .glasshome-widget-backdrop), :has(> .glasshome-widget-hero[data-art], > .glasshome-widget-art, > .glasshome-widget-layer))
+    > .glasshome-widget-glyph {
+    display: block;
+    right: -3%;
+    bottom: -12%;
+    font-size: min(78cqb, 52cqi);
+    opacity: 0.1;
+  }
+}
+/* A one-shot action confirms on its control and on the glyph, the one thing a compact tile shows. */
+.glasshome-widget-grid > .glasshome-widget-glyph {
+  transition: opacity var(--duration-state) var(--ease-morph);
+}
+.glasshome-widget[data-confirmed] .glasshome-widget-glyph {
+  opacity: 0.5;
+}
+.glasshome-widget-grid [data-confirmed]:is(.glasshome-widget-control, .glasshome-widget-control-wide) {
+  --glass-base: color-mix(in srgb, var(--widget-color) 35%, transparent);
+  transition: background-color var(--duration-state) var(--ease-morph);
 }
 
 /* === Sheet: what a held tile opens (framework/panel) ===

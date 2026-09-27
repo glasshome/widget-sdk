@@ -31,6 +31,9 @@ import { dialogOpeners } from "../hooks/use-widget-dialog";
 import { deprecate } from "../../deprecations";
 import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
 import { WidgetSizeCtx } from "../hooks/use-widget-dimensions";
+import { REGISTRY_KEY, widgetRegistry } from "../hooks/widget-registry";
+import * as Anatomy from "../components/anatomy";
+import { WidgetConfirmedCtx } from "../components/anatomy";
 import type { Tone } from "../theming/tone";
 import { injectTokens } from "../theming/tokens";
 import type { WidgetVariantConfig } from "../types";
@@ -60,6 +63,8 @@ interface WidgetProps {
   emptyState?: WidgetEmptyStateConfig;
   /** Gesture handlers from `useWidgetGestures`. */
   gestures?: GestureHandlers;
+  /** An action that leaves no state just ran: the head icon and glyph turn into a check for a moment. */
+  confirmed?: boolean;
   children?: JSX.Element;
 }
 
@@ -71,6 +76,16 @@ interface WidgetComponent {
   Status: typeof WidgetStatusType;
   Value: typeof WidgetValueType;
   SliderFill: typeof WidgetSliderFillType;
+  Head: typeof Anatomy.WidgetHead;
+  Hero: typeof Anatomy.WidgetHero;
+  Controls: typeof Anatomy.WidgetControls;
+  Stepper: typeof Anatomy.WidgetStepper;
+  Choice: typeof Anatomy.WidgetChoice;
+  Action: typeof Anatomy.WidgetAction;
+  Chip: typeof Anatomy.WidgetChip;
+  Backdrop: typeof Anatomy.WidgetBackdrop;
+  Layer: typeof Anatomy.WidgetLayer;
+  Glyph: typeof Anatomy.WidgetGlyph;
 }
 
 function WidgetBase(props: WidgetProps): JSX.Element {
@@ -83,7 +98,24 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     },
   }));
   onCleanup(emptyGestures.dispose);
-  const gestures = () => (props.emptyState && parentCtx ? emptyGestures : props.gestures);
+  const registry = widgetRegistry(parentCtx);
+  // A widget that wires no gestures still holds to open its sheet.
+  const sheetGestures = useWidgetGestures(() => ({
+    hold: registry?.hasSheet()
+      ? {
+          action: () =>
+            (dialogOpeners.get(parentCtx ?? {}) ?? dialogOpeners.get(contextValue))?.(),
+        }
+      : undefined,
+  }));
+  onCleanup(sheetGestures.dispose);
+  const gestures = () =>
+    props.emptyState && parentCtx
+      ? emptyGestures
+      : (props.gestures ?? (registry?.hasSheet() ? sheetGestures : undefined));
+  createEffect(() =>
+    registry?.setTone(props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined)),
+  );
 
   const [shellEl, setShellEl] = createSignal<HTMLDivElement | undefined>();
 
@@ -126,6 +158,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
     dimensions: deprecate(() => measured(), "ctx.dimensions"),
   };
+  // Parts read the widget's registry through this copy; point it back at the host's context.
+  if (parentCtx) Object.defineProperty(contextValue, REGISTRY_KEY, { value: parentCtx });
 
   const variantConfig = createMemo((): WidgetVariantConfig | undefined => {
     if (!props.variant) return undefined;
@@ -189,7 +223,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   return (
     <WidgetCtx.Provider value={contextValue}>
-      <WidgetSizeCtx.Provider value={measured}>
+      <WidgetConfirmedCtx.Provider value={() => props.confirmed === true}>
+        <WidgetSizeCtx.Provider value={measured}>
         <div
           ref={(el) => {
             setShellEl(el);
@@ -205,6 +240,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
             props.class,
           )}
           style={channelStyle()}
+          data-confirmed={props.confirmed || undefined}
           on:pointerenter={onPointerEnter}
           on:pointerdown={onPointerDown}
           on:pointermove={onPointerMove}
@@ -243,7 +279,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
             />
           )}
         </div>
-      </WidgetSizeCtx.Provider>
+        </WidgetSizeCtx.Provider>
+      </WidgetConfirmedCtx.Provider>
     </WidgetCtx.Provider>
   );
 }
@@ -278,3 +315,13 @@ Widget.Title = WidgetTitle;
 Widget.Status = WidgetStatus;
 Widget.Value = WidgetValue;
 Widget.SliderFill = WidgetSliderFill;
+Widget.Head = Anatomy.WidgetHead;
+Widget.Hero = Anatomy.WidgetHero;
+Widget.Controls = Anatomy.WidgetControls;
+Widget.Stepper = Anatomy.WidgetStepper;
+Widget.Choice = Anatomy.WidgetChoice;
+Widget.Action = Anatomy.WidgetAction;
+Widget.Chip = Anatomy.WidgetChip;
+Widget.Backdrop = Anatomy.WidgetBackdrop;
+Widget.Layer = Anatomy.WidgetLayer;
+Widget.Glyph = Anatomy.WidgetGlyph;

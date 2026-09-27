@@ -36,6 +36,7 @@ import {
   useContext,
 } from "solid-js";
 import type { ZodType } from "zod";
+import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
 import { type CopyState, useCopyText } from "../utils/clipboard";
@@ -359,6 +360,15 @@ export function WidgetDialog(props: WidgetDialogProps) {
   };
 
   const ctx = useContext(WidgetCtx);
+  const registry = widgetRegistry(ctx);
+  createEffect(() => registry?.setHasSheet(local.sheet !== undefined));
+  onCleanup(() => registry?.setHasSheet(false));
+  // The sheet wears the tile: its head icon and colour unless the widget passes its own.
+  const look = () => ({
+    icon: local.tile?.icon ?? registry?.icon(),
+    tone: local.tile?.tone ?? registry?.accent() ?? registry?.tone(),
+    backdrop: local.tile?.backdrop,
+  });
   const developer = () => ctx?.developer?.() ?? false;
   const sheetMode = () => tabValue() === "controls" && local.sheet !== undefined;
   const narrow = createNarrow();
@@ -432,12 +442,12 @@ export function WidgetDialog(props: WidgetDialogProps) {
               anchor={sheetBeside() ? anchor() : undefined}
               class="glasshome-sheet-surface"
               style={
-                local.tile?.tone
-                  ? ({ "--glass-tone": local.tile.tone, "--widget-color": local.tile.tone } as JSX.CSSProperties)
+                look().tone
+                  ? ({ "--glass-tone": look().tone, "--widget-color": look().tone } as JSX.CSSProperties)
                   : undefined
               }
             >
-              <Show when={local.tile?.backdrop}>
+              <Show when={look().backdrop}>
                 {(src) => (
                   <div class="glasshome-sheet-band" aria-hidden="true">
                     <img src={src()} alt="" />
@@ -447,11 +457,13 @@ export function WidgetDialog(props: WidgetDialogProps) {
               <RDHeader
                 class="items-center"
                 media={
-                  local.tile?.icon ? (
-                    <span class="glasshome-widget-icon glass glass-tint glasshome-sheet-icon">
-                      <Icon icon={local.tile.icon} class="glasshome-widget-icon-glyph" />
-                    </span>
-                  ) : undefined
+                  <Show when={look().icon}>
+                    {(icon) => (
+                      <span class="glasshome-widget-icon glass glass-tint glasshome-sheet-icon">
+                        <Icon icon={icon()} class="glasshome-widget-icon-glyph" />
+                      </span>
+                    )}
+                  </Show>
                 }
               >
                 <RDTitle class="truncate">{local.title}</RDTitle>

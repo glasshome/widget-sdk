@@ -45,6 +45,19 @@ export { WidgetIcon } from "./components/WidgetIcon";
 export { WidgetStatus } from "./components/WidgetStatus";
 export { WidgetTitle } from "./components/WidgetTitle";
 export { WidgetValue } from "./components/WidgetValue";
+export {
+  WidgetAction,
+  WidgetBackdrop,
+  WidgetChip,
+  WidgetChoice,
+  WidgetControls,
+  WidgetGlyph,
+  WidgetHead,
+  WidgetHero,
+  WidgetLayer,
+  WidgetStepper,
+} from "./components/anatomy";
+export { type Confirm, useConfirm } from "./hooks/use-confirm";
 
 // ============================================================================
 // Background Components

@@ -6,7 +6,10 @@
  * movement is dominantly on the slide axis.
  */
 
-import { createSignal } from "solid-js";
+import { createSignal, useContext } from "solid-js";
+import { WidgetCtx } from "../hooks/use-widget-context";
+import { dialogOpeners } from "../hooks/use-widget-dialog";
+import { widgetRegistry } from "../hooks/widget-registry";
 import type { GestureConfig } from "../types";
 
 type GestureOrientation = "horizontal" | "vertical" | "square";
@@ -59,9 +62,17 @@ interface GestureState {
 }
 
 export function useWidgetGestures(
-  config: () => GestureConfig,
+  wired: () => GestureConfig,
   orientation?: () => GestureOrientation,
 ): GestureHandlers {
+  // A widget whose dialog has a sheet holds to open it, unless it wires its own hold.
+  const ctx = useContext(WidgetCtx);
+  const registry = widgetRegistry(ctx);
+  const config = (): GestureConfig => {
+    const c = wired();
+    if (c.hold || !ctx || !registry?.hasSheet()) return c;
+    return { ...c, hold: { action: () => dialogOpeners.get(ctx)?.() } };
+  };
   // The dock's hold: a tap ends inside the grace, then the fill grows for --duration-morph (400ms).
   const HOLD_GRACE = 150;
   const HOLD_DELAY = 550;
