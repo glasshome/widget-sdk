@@ -5,6 +5,42 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0](https://github.com/glasshome/widget-sdk/compare/v1.16.0...v1.17.0) (2026-09-27)
+
+
+### Features
+
+* **config:** field.choice takes icons, field.image takes built-in presets resolved with imageSrc ([9704c3a](https://github.com/glasshome/widget-sdk/commit/9704c3a0bc49248374eacdd8419b37ff366edae5))
+* **daylight:** progress through the current day or night from sun.sun ([a99f38b](https://github.com/glasshome/widget-sdk/commit/a99f38ba29a4b9093f3b193cc728d06c935c5a09))
+* **panel:** a held tile opens a sheet of only what the tile cannot show ([026423c](https://github.com/glasshome/widget-sdk/commit/026423cd517b474ed4d068dedc0f77544e47c40f))
+* **panel:** a sheet wears its tile's look, so the tile reads as growing open ([4b9bd5e](https://github.com/glasshome/widget-sdk/commit/4b9bd5e20e31d7b9c357f1fbb321b77d029b7e01))
+* **panel:** an empty tile opens its settings when held, and a widget with nothing extra lands on settings ([d7fad2f](https://github.com/glasshome/widget-sdk/commit/d7fad2f5c2792f1d304da83a6a887f2eec4ad601))
+* **panel:** held tiles open a panel, edit mode opens settings, Debug needs Developer Mode ([cc7ca70](https://github.com/glasshome/widget-sdk/commit/cc7ca70c06290fe8faa1c692abe9f8c4e4f3a3e5))
+* **panel:** split and keyboard slides, read-only rows, row overrides, and the dock's hold fill on tiles ([d02da5b](https://github.com/glasshome/widget-sdk/commit/d02da5bce82d8a3f1be05c0dbb11f0e2ab533c2f))
+* **sdk:** widgets can type a forecast with WeatherForecast and ForecastType ([9265b77](https://github.com/glasshome/widget-sdk/commit/9265b77573da14cec43762d8a4f6de5a97dd127e))
+* **sdk:** widgets read the household daylight phase, and wear ui's groups and toggles ([3990b83](https://github.com/glasshome/widget-sdk/commit/3990b83ca760a4b0367895536bd6681768e67f35))
+* **theming:** past a 4x4 box the widget icon keeps growing with the short side ([1b9bc7b](https://github.com/glasshome/widget-sdk/commit/1b9bc7bb15072e32122465b7a88c7ee5685abaf2))
+* **ui:** ColorDisc and TemperatureBar join the ui re-exports ([e984919](https://github.com/glasshome/widget-sdk/commit/e984919e541bc71f2e0b05852e964645e21b3dbc))
+* **vite:** the build refuses a widget that uses useDaylight without declaring a sun read ([410564b](https://github.com/glasshome/widget-sdk/commit/410564bbcecc8b4dbd04ef96b2ba936c85cd7fc3))
+* **widget:** the tile anatomy is the SDK's: Widget.Head, Hero, Controls, Stepper, Choice, Action, Chip, Backdrop, Layer and Glyph laid out by Widget.Content, one scale of size tokens, actions that confirm themselves, and a sheet that makes the tile hold and wears its look ([e59155e](https://github.com/glasshome/widget-sdk/commit/e59155ece18ebe51c904b1a52f37228b9a49b23a))
+
+
+### Bug Fixes
+
+* **deps:** ui 1.20.0, sync-layer 0.9.0, widget-contract 0.3.0 ([811fc1c](https://github.com/glasshome/widget-sdk/commit/811fc1c1abf66b09efb28f624a19b120aa38d74b))
+* **dialog:** sheets render when opened, tiles answer the keyboard, and the Widget context keeps the host's fields ([56ab421](https://github.com/glasshome/widget-sdk/commit/56ab421b139e32dc6a6cf822eebad118dc4633a9))
+* follow material blur in classic glass widgets ([b622474](https://github.com/glasshome/widget-sdk/commit/b622474b57ec26d529e4ecb2b79354bbc9ea9b21))
+* **host:** a widget overlay's document pass leaves no inner node on the event, and a hold keeps its release click ([54b4224](https://github.com/glasshome/widget-sdk/commit/54b4224e1922c3debeb5a84ec1c71b65e2f30c4d))
+* **host:** taps reach controls inside a widget's closed root without leaking inner nodes ([5e53624](https://github.com/glasshome/widget-sdk/commit/5e5362411854c121f7f60b54ff82d8b4bfc8464d))
+* **icon:** group stack plates match the pill's size and step evenly on both axes ([2cc38ad](https://github.com/glasshome/widget-sdk/commit/2cc38ad05d1c3e7c8bd0dbff56c79579c0d09d28))
+* **panel:** a held tile's sheet keeps the dialog's blurred backdrop ([b089eb0](https://github.com/glasshome/widget-sdk/commit/b089eb0bab5345719b3d4dad202a44e69b484efc))
+* **panel:** a sheet's icon and title share one axis ([87f89ee](https://github.com/glasshome/widget-sdk/commit/87f89ee8df1a4b4d4a01db442a24dba1f901a846))
+* **panel:** the readings strip in a sheet blurs what is behind it, like the buttons ([caf4567](https://github.com/glasshome/widget-sdk/commit/caf4567979df15af79edaf999ce6f4005a841e3f))
+* **vite:** Tailwind scans a project's shared folders, never sibling widgets ([275245b](https://github.com/glasshome/widget-sdk/commit/275245bba610415a1562c88637ba5c0f3df57a4f))
+* **widget:** past a 4x4 box the icon grows with the short side at the share it has at 4x4 ([0745638](https://github.com/glasshome/widget-sdk/commit/0745638b83e73aeba3f5edda5136028612c2f8a0))
+* **widget:** the content caches whether it holds anatomy parts, and a head clears the sheet icon only if it set it ([c44da5a](https://github.com/glasshome/widget-sdk/commit/c44da5aa4b6aa71d96a9b842629c104528d9d1af))
+* **widget:** the tile's focus ring sits inside its edge, where the grid cell cannot clip it ([e86a182](https://github.com/glasshome/widget-sdk/commit/e86a1829674259b123a7399c96a7fde254d05f5d))
+
 ## [1.16.0](https://github.com/glasshome/widget-sdk/compare/v1.15.1...v1.16.0) (2026-09-22)
 
 
