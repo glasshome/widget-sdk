@@ -3,7 +3,7 @@
 import type { JSX } from "solid-js";
 
 /** Slide gesture configuration */
-export interface SlideGestureConfig {
+interface SlideGestureConfig {
   /** Current value */
   value: number;
   /** Value change handler */
@@ -21,7 +21,7 @@ export interface SlideGestureConfig {
 /**
  * Hold gesture configuration
  */
-export interface HoldGestureConfig {
+interface HoldGestureConfig {
   /** Action to perform on hold */
   action: () => void;
   /** Hold delay in ms (default: 300) */
@@ -40,88 +40,14 @@ export interface GestureConfig {
   slide?: SlideGestureConfig;
 }
 
-// ============================================================================
-// Variant System Types (CSS Variables + Discriminated Unions)
-// Internal use only — not re-exported from the public SDK surface.
-// ============================================================================
-
-/**
- * CSS variable-based styling configuration
- */
+/** Look applied to the widget shell: inline style, utility classes and CSS custom properties. */
 export interface WidgetStyles {
-  /** Inline CSS properties applied to widget container */
   container?: JSX.CSSProperties;
-  /** Tailwind utility classes (for simple styling) */
   class?: string;
-  /** CSS custom properties for themeable values */
   cssVars?: Record<`--widget-${string}` | `--glass-${string}`, string | number>;
 }
 
-/**
- * Flex layout strategy with type-safe configuration
- */
-export interface FlexLayoutStrategy {
-  type: "flex";
-  direction: "row" | "column" | "row-reverse" | "column-reverse";
-  align: "start" | "center" | "end" | "stretch";
-  justify: "start" | "center" | "end" | "between" | "around";
-  wrap?: boolean;
-  gap?: string;
-  order?: Partial<Record<WidgetElement, number>>;
-}
-
-/**
- * Grid layout strategy with type-safe configuration
- */
-export interface GridLayoutStrategy {
-  type: "grid";
-  areas: string;
-  columns?: string;
-  rows?: string;
-  gap?: string;
-  elementAreas: Partial<Record<WidgetElement, string>>;
-}
-
-/**
- * Absolute positioning strategy with type-safe configuration
- */
-export interface AbsoluteLayoutStrategy {
-  type: "absolute";
-  positions: Partial<Record<WidgetElement, PositionConfig>>;
-}
-
-/**
- * Custom layout strategy (escape hatch)
- */
-export interface CustomLayoutStrategy {
-  type: "custom";
-  renderer: string;
-}
-
-/**
- * Discriminated union of all layout strategies
- */
-export type LayoutStrategy =
-  | FlexLayoutStrategy
-  | GridLayoutStrategy
-  | AbsoluteLayoutStrategy
-  | CustomLayoutStrategy;
-
-/**
- * Position configuration for absolute layout
- */
-export interface PositionConfig {
-  top?: string;
-  right?: string;
-  bottom?: string;
-  left?: string;
-  transform?: string;
-}
-
-/**
- * Widget element identifiers for layout configuration
- */
-export type WidgetElement =
+type WidgetElement =
   | "icon"
   | "title"
   | "subtitle"
@@ -133,54 +59,63 @@ export type WidgetElement =
   | "overlay"
   | "decorations";
 
-/**
- * Element-specific configuration
- */
-export interface ElementConfig {
-  visible?: Partial<Record<WidgetElement, boolean>>;
-  styles?: Partial<Record<WidgetElement, JSX.CSSProperties>>;
-  classNames?: Partial<Record<WidgetElement, string>>;
-}
+/** @deprecated Never read by the shell. Removed in 2.0.0. */
+type LayoutStrategy =
+  | {
+      type: "flex";
+      direction: "row" | "column" | "row-reverse" | "column-reverse";
+      align: "start" | "center" | "end" | "stretch";
+      justify: "start" | "center" | "end" | "between" | "around";
+      wrap?: boolean;
+      gap?: string;
+      order?: Partial<Record<WidgetElement, number>>;
+    }
+  | {
+      type: "grid";
+      areas: string;
+      columns?: string;
+      rows?: string;
+      gap?: string;
+      elementAreas: Partial<Record<WidgetElement, string>>;
+    }
+  | {
+      type: "absolute";
+      positions: Partial<
+        Record<
+          WidgetElement,
+          { top?: string; right?: string; bottom?: string; left?: string; transform?: string }
+        >
+      >;
+    }
+  | { type: "custom"; renderer: string };
 
-/**
- * Plugin system configuration (serializable)
- */
-export interface VariantPlugins {
-  background?: string;
-  overlay?: string;
-  decorations?: string[];
-}
-
-/**
- * Interaction configuration
- */
-export interface InteractionConfig {
-  hover?: boolean;
-  active?: boolean;
-  focus?: boolean;
-  hoverScale?: number;
-  activeScale?: number;
-}
-
-/**
- * Complete variant configuration
- */
+/** A custom shell look; only `styles` is applied. */
 export interface WidgetVariantConfig {
   id: string;
   name: string;
   description?: string;
   styles?: WidgetStyles;
+  /** @deprecated Never read by the shell. Removed in 2.0.0. */
   layout?: LayoutStrategy;
-  elements?: ElementConfig;
-  plugins?: VariantPlugins;
-  interactions?: InteractionConfig;
+  /** @deprecated Never read by the shell. Removed in 2.0.0. */
+  elements?: {
+    visible?: Partial<Record<WidgetElement, boolean>>;
+    styles?: Partial<Record<WidgetElement, JSX.CSSProperties>>;
+    classNames?: Partial<Record<WidgetElement, string>>;
+  };
+  /** @deprecated Never read by the shell. Removed in 2.0.0. */
+  plugins?: { background?: string; overlay?: string; decorations?: string[] };
+  /** @deprecated Never read by the shell. Removed in 2.0.0. */
+  interactions?: {
+    hover?: boolean;
+    active?: boolean;
+    focus?: boolean;
+    hoverScale?: number;
+    activeScale?: number;
+  };
+  /** @deprecated Never read by the shell. Removed in 2.0.0. */
   extends?: string;
 }
-
-/**
- * Variant registry type
- */
-export type VariantRegistry = Record<string, WidgetVariantConfig>;
 
 // ============================================================================
 // Entity Type Aliases
@@ -189,17 +124,17 @@ export type VariantRegistry = Record<string, WidgetVariantConfig>;
 // ============================================================================
 
 /** Unique entity identifier (e.g., "light.living_room") */
-export type EntityId = string;
+type EntityId = string;
 /** Entity domain (e.g., "light", "sensor", "switch") */
-export type EntityDomain = string;
+type EntityDomain = string;
 /** Area identifier */
-export type AreaId = string;
+type AreaId = string;
 /** Device identifier */
-export type DeviceId = string;
+type DeviceId = string;
 /** Label identifier */
-export type LabelId = string;
+type LabelId = string;
 /** Entity category for filtering */
-export type EntityCategory = "config" | "diagnostic" | null;
+type EntityCategory = "config" | "diagnostic" | null;
 
 // ============================================================================
 // Entity View (full type — the contract between sync-layer and widgets)
@@ -226,6 +161,7 @@ export interface EntityView {
    * Use those fields instead of reaching into `attributes`.
    */
   attributes: Omit<
+    // oxlint-disable-next-line typescript/no-explicit-any -- public signature; tighten in 2.0
     Record<string, any>,
     "device_class" | "unit_of_measurement" | "friendly_name" | "icon"
   >;

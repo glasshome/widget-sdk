@@ -36,9 +36,9 @@ import * as Anatomy from "../components/anatomy";
 import { WidgetConfirmedCtx } from "../components/anatomy";
 import type { Tone } from "../theming/tone";
 import { injectTokens } from "../theming/tokens";
-import type { WidgetVariantConfig } from "../types";
+import type { WidgetStyles, WidgetVariantConfig } from "../types";
 import { cn } from "../utils/cn";
-import { getBuiltInVariant } from "../variants";
+import { getBuiltInVariantStyles } from "../variants/built-in-variants";
 
 interface WidgetEmptyStateConfig {
   icon?: JSX.Element;
@@ -161,10 +161,10 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   // Parts read the widget's registry through this copy; point it back at the host's context.
   if (parentCtx) Object.defineProperty(contextValue, REGISTRY_KEY, { value: parentCtx });
 
-  const variantConfig = createMemo((): WidgetVariantConfig | undefined => {
+  const variantStyles = createMemo((): WidgetStyles | undefined => {
     if (!props.variant) return undefined;
-    if (typeof props.variant === "string") return getBuiltInVariant(props.variant);
-    return props.variant;
+    if (typeof props.variant === "string") return getBuiltInVariantStyles(props.variant);
+    return props.variant.styles;
   });
 
   const gradient = deprecate(() => props.gradient, "widget.gradient");
@@ -174,8 +174,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       "container-type": "size",
       "container-name": "widget",
       "touch-action": gestures() && !props.isEditMode ? gestures()?.touchAction() : undefined,
-      ...variantConfig()?.styles?.container,
-      ...(variantConfig()?.styles?.cssVars || {}),
+      ...variantStyles()?.container,
+      ...(variantStyles()?.cssVars || {}),
       ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
       ...(props.color ? { "--widget-color": props.color } : {}),
       ...((props.tone && props.tone !== "neutral") || props.color
@@ -236,7 +236,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           class={cn(
             "glasshome-widget glass",
             "relative h-full w-full select-none overflow-hidden rounded-xl",
-            variantConfig()?.styles?.class,
+            variantStyles()?.class,
             props.class,
           )}
           style={channelStyle()}

@@ -129,6 +129,14 @@ export const deprecations: readonly DeprecationEntry[] = [
     docsUrl: "https://glasshome.app/docs/widget-sdk/widget",
     sourcePattern: "<WidgetSliderFill[^>]*\\scolor=",
   },
+  {
+    // Type-only: layout, elements, plugins, interactions and extends were never read by the shell.
+    id: "WidgetVariantConfig.layout",
+    since: "1.18.0",
+    removeIn: "2.0.0",
+    replacement: "WidgetVariantConfig.styles (container, class, cssVars)",
+    docsUrl: "https://glasshome.app/docs/widgets/widget-sdk#variants",
+  },
 ];
 
 /** Format a registry entry into the one-line notice shared by every channel. */

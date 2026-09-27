@@ -19,13 +19,29 @@ const channel = (container: HTMLElement, name: string) =>
   shell(container).style.getPropertyValue(name);
 
 describe("Widget shell", () => {
+  it("a variant id or object sets the shell's styles", () => {
+    const builtIn = render(() => <Widget variant="minimal" />);
+    expect(channel(builtIn.container, "--widget-padding")).toBe("1rem");
+
+    const custom = render(() => (
+      <Widget
+        variant={{ id: "mine", name: "Mine", styles: { cssVars: { "--widget-padding": "2rem" }, class: "mine" } }}
+      />
+    ));
+    expect(channel(custom.container, "--widget-padding")).toBe("2rem");
+    expect(shell(custom.container).classList.contains("mine")).toBe(true);
+
+    const unknown = render(() => <Widget variant="toString" />);
+    expect(channel(unknown.container, "--widget-padding")).toBe("");
+  });
+
   it("renders children inside the shell", () => {
-    const { container, getByText } = render(() => (
+    const view = render(() => (
       <Widget>
         <span>inside</span>
       </Widget>
     ));
-    expect(shell(container).contains(getByText("inside"))).toBe(true);
+    expect(shell(view.container).contains(view.getByText("inside"))).toBe(true);
   });
 
   it("injects the widget tokens once the shell mounts", () => {
@@ -81,12 +97,12 @@ describe("Widget shell", () => {
   });
 
   it("empty state text reads theme ink, not a white alpha", () => {
-    const { getByText } = render(() => (
+    const view = render(() => (
       <Widget emptyState={{ title: "Nothing here", message: "Add an entity" }} />
     ));
-    expect(getByText("Nothing here").className).toContain("text-foreground");
-    expect(getByText("Add an entity").className).toContain("text-muted-foreground");
-    expect(getByText("Nothing here").className).not.toMatch(/text-white/);
+    expect(view.getByText("Nothing here").className).toContain("text-foreground");
+    expect(view.getByText("Add an entity").className).toContain("text-muted-foreground");
+    expect(view.getByText("Nothing here").className).not.toMatch(/text-white/);
   });
 
   it("declares itself a size container so widgets can query their own box", () => {
@@ -103,15 +119,15 @@ describe("Widget shell", () => {
   });
 
   it("renders the empty state instead of children when one is given", () => {
-    const { container, queryByText, getByText } = render(() => (
+    const view = render(() => (
       <Widget emptyState={{ title: "Nothing here", message: "Add an entity" }}>
         <span>child</span>
       </Widget>
     ));
-    expect(getByText("Nothing here")).toBeTruthy();
-    expect(getByText("Add an entity")).toBeTruthy();
-    expect(queryByText("child")).toBeNull();
-    expect(shell(container)).toBeTruthy();
+    expect(view.getByText("Nothing here")).toBeTruthy();
+    expect(view.getByText("Add an entity")).toBeTruthy();
+    expect(view.queryByText("child")).toBeNull();
+    expect(shell(view.container)).toBeTruthy();
   });
 
   it("keeps the caller's class alongside the shell class", () => {
