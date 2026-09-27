@@ -56,7 +56,8 @@
     "test": "bun test src && vitest run",
     "test:dom": "vitest run",
     "test:dom:watch": "vitest",
-    "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
+    "check:dead": "fallow dead-code --fail-on-issues"
   },
   "peerDependencies": {
     "@glasshome/sync-layer": "0.9.0",
@@ -78,6 +79,7 @@
     "@solidjs/testing-library": "^0.8.10",
     "@types/bun": "^1.4.0",
     "@types/node": "^25.2.2",
+    "fallow": "3.17.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.0",
     "vite-plugin-solid": "^2.11.12",

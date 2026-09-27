@@ -20,3 +20,4 @@ jobs:
       # Also runs at publish. Here too, or a type error in a test first appears
       # after release-please has already cut the tag.
       - run: bun run typecheck:test
+      - run: bun run check:dead
