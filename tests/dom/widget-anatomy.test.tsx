@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import { onCleanup } from "solid-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
+import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import { useConfirm } from "../../src/framework/hooks/use-confirm";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
 import { useWidgetDialog } from "../../src/framework/hooks/use-widget-dialog";
@@ -160,5 +162,37 @@ describe("a widget with a sheet", () => {
     hold();
     expect(dialog?.showDialog()).toBe(true);
     expect(widgetRegistry(ctx)?.icon()).toBe("mdi:fan");
+  });
+
+  it("holds to open it when the widget wires a tap and no hold", () => {
+    vi.useFakeTimers();
+    const ctx = hostCtx();
+    const taps: string[] = [];
+    let dialog: ReturnType<typeof useWidgetDialog> | undefined;
+    function Tile() {
+      dialog = useWidgetDialog();
+      const gestures = useWidgetGestures(() => ({ tap: () => taps.push("tap") }));
+      onCleanup(gestures.dispose);
+      return (
+        <Widget gestures={gestures}>
+          <Widget.Content>
+            <Widget.Head name="Lamp" />
+          </Widget.Content>
+        </Widget>
+      );
+    }
+    render(() => (
+      <WidgetCtx.Provider value={ctx}>
+        <Tile />
+      </WidgetCtx.Provider>
+    ));
+    const shell = document.querySelector<HTMLElement>(".glasshome-widget");
+    if (!shell) throw new Error("shell did not render");
+    widgetRegistry(ctx)?.setHasSheet(true);
+    fireEvent.pointerDown(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    vi.advanceTimersByTime(600);
+    fireEvent.pointerUp(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    expect(dialog?.showDialog()).toBe(true);
+    expect(taps).toEqual([]);
   });
 });

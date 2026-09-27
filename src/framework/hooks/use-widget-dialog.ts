@@ -9,14 +9,14 @@
  * @example
  * ```tsx
  * function MyWidget() {
- *   const { openDialog, dialogProps } = useWidgetDialog();
+ *   const { dialogProps } = useWidgetDialog();
  *
  *   return (
  *     <>
- *       <Widget gestures={{ hold: { action: openDialog } }}>
+ *       <Widget>
  *         {/* widget content *\/}
  *       </Widget>
- *       <WidgetDialog {...dialogProps} />
+ *       <WidgetDialog {...dialogProps} sheet={() => <MySheet />} />
  *     </>
  *   );
  * }

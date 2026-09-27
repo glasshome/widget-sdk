@@ -9,15 +9,10 @@
  * import {
  *   Widget,
  *   useWidgetGestures,
- *   useWidgetDialog,
  * } from "@glasshome/widget-sdk";
  *
  * export function MyWidget(props) {
- *   const { showDialog, openDialog } = useWidgetDialog();
- *   const gestures = useWidgetGestures(
- *     () => ({ tap: handleTap, hold: { action: openDialog } }),
- *     () => ctx.orientation(),
- *   );
+ *   const gestures = useWidgetGestures(() => ({ tap: handleTap }));
  *
  *   return (
  *     <Widget>
