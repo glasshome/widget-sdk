@@ -4,7 +4,7 @@ import { render } from "solid-js/web";
 
 function PreviewHost() {
   const [isDark, setIsDark] = createSignal(false);
-  const [config, setConfig] = createSignal(widget.manifest.defaultConfig || {});
+  const [config] = createSignal(widget.manifest.defaultConfig || {});
 
   const toggleDark = () => {
     const next = !isDark();
@@ -86,4 +86,6 @@ function PreviewHost() {
   );
 }
 
-render(() => <PreviewHost />, document.getElementById("root")!);
+const root = document.getElementById("root");
+if (!root) throw new Error("preview: #root is missing");
+render(() => <PreviewHost />, root);

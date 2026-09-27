@@ -25,6 +25,7 @@ import {
 } from "../../src/framework/dialogs/debug-view";
 import { WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
+import type { EntityView } from "../../src/framework/types";
 
 const parts = {
   ResponsiveDialog,
@@ -41,7 +42,7 @@ const parts = {
   TabsContent,
 };
 
-const entity = {
+const entity: EntityView = {
   id: "light.desk",
   domain: "light",
   state: "on",
@@ -51,8 +52,19 @@ const entity = {
   attributes: { brightness: 180 },
   lastChanged: new Date("2026-09-20T10:00:00Z"),
   lastUpdated: new Date("2026-09-20T10:05:00Z"),
-  // biome-ignore lint/suspicious/noExplicitAny: fixture stands in for a full EntityView
-} as any;
+  context: { id: "ctx", parentId: null, userId: null },
+  name: "desk",
+  deviceId: null,
+  platform: "hue",
+  uniqueId: null,
+  isDisabled: false,
+  isHidden: false,
+  icon: null,
+  iconSource: "default",
+  entityCategory: null,
+  labels: [],
+  aliases: [],
+};
 
 const data = () => buildDebugData({ title: "Desk" }, [entity], { uiBrightness: 71 });
 

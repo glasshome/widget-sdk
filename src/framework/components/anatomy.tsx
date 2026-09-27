@@ -213,7 +213,7 @@ export function WidgetAction(props: {
   /** Visible label; without one the action is a square icon control named by `aria-label`. */
   children?: JSX.Element;
   "aria-label"?: string;
-  run: () => Promise<unknown> | unknown;
+  run: () => unknown;
   confirm?: Confirm;
   /** Key within a shared `confirm`; defaults to the label or icon. */
   id?: string;

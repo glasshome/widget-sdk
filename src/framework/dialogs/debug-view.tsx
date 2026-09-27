@@ -96,9 +96,12 @@ function humanize(key: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
 }
 
-const isPrimitive = (value: unknown) => value === null || typeof value !== "object";
+type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
-function factText(value: unknown): string {
+const isPrimitive = (value: unknown): value is Primitive =>
+  value === null || (typeof value !== "object" && typeof value !== "function");
+
+function factText(value: Primitive): string {
   if (value === null || value === undefined) return "None";
   return String(value);
 }
@@ -173,7 +176,9 @@ function DebugSection(props: {
 
 function Facts(props: { record: Record<string, unknown> }) {
   const entries = createMemo(() => Object.entries(props.record));
-  const flat = createMemo(() => entries().filter(([, value]) => isPrimitive(value)));
+  const flat = createMemo(() =>
+    entries().flatMap(([key, value]) => (isPrimitive(value) ? [[key, value] as const] : [])),
+  );
   const nested = createMemo(() => entries().filter(([, value]) => !isPrimitive(value)));
   return (
     <Show when={entries().length > 0} fallback={<SectionMeta>Nothing set</SectionMeta>}>

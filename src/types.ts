@@ -70,5 +70,6 @@ export interface WidgetDefinition<C = Record<string, unknown>> {
   manifest: WidgetManifest<C>;
   configSchema?: ZodType<C, unknown>;  // Per D-10: Zod schema as single source of truth
   migrate?: (config: Record<string, unknown>, fromConfigVersion: number) => Record<string, unknown>; // Per D-13: optional migration function
+  // oxlint-disable-next-line typescript/no-explicit-any -- public signature; tighten in 2.0
   component: (props: { config: C }) => any;
 }

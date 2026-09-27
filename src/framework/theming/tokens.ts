@@ -1,3 +1,4 @@
+// oxlint-disable-next-line typescript/triple-slash-reference -- consumers compiling SDK source lack vite/client; a script-scope ambient module cannot be imported
 /// <reference path="./tokens.css.d.ts" />
 import tokensCss from "./tokens.css?raw";
 

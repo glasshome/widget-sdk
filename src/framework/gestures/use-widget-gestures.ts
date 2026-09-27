@@ -39,7 +39,7 @@ export interface GestureHandlers {
   onKeyDown?: (e: KeyboardEvent) => void;
 }
 
-export interface HoldFlood {
+interface HoldFlood {
   x: number;
   y: number;
   /** Radius that reaches the farthest corner, so the fill ends as the hold fires. */

@@ -21,5 +21,3 @@ export const WIDGET_Z = {
   /** Action layer (buttons, edit controls) */
   ACTIONS: 30,
 } as const;
-
-export type WidgetZIndex = (typeof WIDGET_Z)[keyof typeof WIDGET_Z];

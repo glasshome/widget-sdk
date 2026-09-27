@@ -78,7 +78,8 @@ export function calculateLightGroup(
   entities: EntityView[],
   allEntitiesMode = false,
 ): LightGroupResult {
-  if (entities.length === 0) {
+  const first = entities[0];
+  if (!first) {
     return {
       isGroup: false,
       state: "unknown",
@@ -96,7 +97,7 @@ export function calculateLightGroup(
   const isGroup = entities.length > 1;
 
   if (!isGroup) {
-    const entity = entities[0]!;
+    const entity = first;
     const isOn = entity.state === "on";
     const brightness = entity.attributes?.brightness || 0;
     const brightnessPercent = Math.round((brightness / 255) * 100);
@@ -122,7 +123,7 @@ export function calculateLightGroup(
   let unavailableCount = 0;
   let totalBrightness = 0;
   let brightnessCount = 0;
-  const colors: number[][] = [];
+  const colors: [number, number, number][] = [];
 
   for (const entity of entities) {
     switch (entity.state) {
@@ -198,13 +199,13 @@ export function calculateLightGroup(
   // Calculate average color
   let color: string;
   if (colors.length > 0) {
-    const avgR = Math.round(colors.reduce((sum, c) => sum + c[0]!, 0) / colors.length);
-    const avgG = Math.round(colors.reduce((sum, c) => sum + c[1]!, 0) / colors.length);
-    const avgB = Math.round(colors.reduce((sum, c) => sum + c[2]!, 0) / colors.length);
+    const avgR = Math.round(colors.reduce((sum, c) => sum + c[0], 0) / colors.length);
+    const avgG = Math.round(colors.reduce((sum, c) => sum + c[1], 0) / colors.length);
+    const avgB = Math.round(colors.reduce((sum, c) => sum + c[2], 0) / colors.length);
     const brightnessMultiplier = brightness / 255;
     color = `rgb(${Math.round(avgR * brightnessMultiplier)}, ${Math.round(avgG * brightnessMultiplier)}, ${Math.round(avgB * brightnessMultiplier)})`;
   } else {
-    color = getLightColor(entities[0]!);
+    color = getLightColor(first);
   }
 
   // Generate description
@@ -243,7 +244,8 @@ export function calculateSensorGroup(
   groupType: SensorGroupType = "mean",
   ignoreNonNumeric = true,
 ): SensorGroupResult {
-  if (entities.length === 0) {
+  const first = entities[0];
+  if (!first) {
     return {
       isGroup: false,
       state: "unknown",
@@ -256,7 +258,7 @@ export function calculateSensorGroup(
   const isGroup = entities.length > 1;
 
   if (!isGroup) {
-    const entity = entities[0]!;
+    const entity = first;
     const numericValue = Number.parseFloat(entity.state);
 
     // Format individual sensor values to prevent overflow
@@ -319,9 +321,9 @@ export function calculateSensorGroup(
 
   // Check if unavailable
   const allUnavailable = unavailableCount === entities.length;
-  const hasNoNumericValues = numericValues.length === 0;
+  const lastValue = numericValues.at(-1);
 
-  if (allUnavailable || hasNoNumericValues) {
+  if (allUnavailable || lastValue === undefined) {
     return {
       isGroup,
       state: allUnavailable ? "unavailable" : "unknown",
@@ -353,8 +355,8 @@ export function calculateSensorGroup(
     case "median": {
       const sorted = [...numericValues].sort((a, b) => a - b);
       const mid = Math.floor(sorted.length / 2);
-      calculatedValue =
-        sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+      const upper = sorted[mid] ?? lastValue;
+      calculatedValue = sorted.length % 2 === 0 ? ((sorted[mid - 1] ?? upper) + upper) / 2 : upper;
       description = "Median";
       break;
     }
@@ -363,7 +365,7 @@ export function calculateSensorGroup(
       description = "Sum";
       break;
     case "last":
-      calculatedValue = numericValues[numericValues.length - 1]!;
+      calculatedValue = lastValue;
       description = "Latest";
       break;
     case "range":

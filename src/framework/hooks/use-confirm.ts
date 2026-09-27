@@ -8,7 +8,7 @@ export interface Confirm {
   /** Whether anything ran a moment ago. */
   any: () => boolean;
   /** Runs the action; resolves whether it succeeded. */
-  run: (keys: string[], action: () => Promise<unknown> | unknown) => Promise<boolean>;
+  run: (keys: string[], action: () => unknown) => Promise<boolean>;
 }
 
 /**

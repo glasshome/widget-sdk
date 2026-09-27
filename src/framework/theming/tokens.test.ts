@@ -26,7 +26,7 @@ function makeStub() {
     // satisfies the InjectTokensRoot shape it actually uses.
     stub: stub as unknown as Document,
     appended,
-    setQuerySelector(v: unknown) {
+    setQuerySelector: (v: unknown) => {
       querySelectorReturns = v;
     },
   };

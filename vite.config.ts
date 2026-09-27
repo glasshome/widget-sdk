@@ -41,7 +41,6 @@ export default defineConfig({
         "@glasshome/ui/solid",
         "@glasshome/widget-contract",
         "@tailwindcss/vite",
-        "@modular-forms/solid",
         "@solid-primitives/resize-observer",
         "clsx",
         "tailwind-merge",

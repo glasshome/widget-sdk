@@ -22,7 +22,7 @@ function StubSchemaForm(props: {
       {Object.keys(props.schema.properties ?? {}).map((key) => (
         <input
           aria-label={key}
-          value={String(props.data[key] ?? "")}
+          value={typeof props.data[key] === "string" ? props.data[key] : ""}
           onInput={(e) => props.onChange({ ...props.data, [key]: e.currentTarget.value })}
         />
       ))}

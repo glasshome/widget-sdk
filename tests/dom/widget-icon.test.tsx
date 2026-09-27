@@ -21,8 +21,8 @@ const stacks = (container: HTMLElement) =>
 
 describe("WidgetIcon", () => {
   it("renders the glyph inside the icon shell", () => {
-    const { container, getByTestId } = render(() => <WidgetIcon icon={glyph} />);
-    expect(root(container).contains(getByTestId("glyph"))).toBe(true);
+    const view = render(() => <WidgetIcon icon={glyph} />);
+    expect(root(view.container).contains(view.getByTestId("glyph"))).toBe(true);
   });
 
   // The colour travels as a custom property so the widget's stylesheet can
