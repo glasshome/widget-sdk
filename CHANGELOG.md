@@ -5,6 +5,18 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0](https://github.com/glasshome/widget-sdk/compare/v1.17.1...v1.18.0) (2026-09-27)
+
+
+### Features
+
+* **deprecations:** WidgetVariantConfig keeps only styles live; layout, elements, plugins, interactions and extends are deprecated ([b364a12](https://github.com/glasshome/widget-sdk/commit/b364a129ba06b8a1a0c3c3b20553b4af9e06398a))
+
+
+### Bug Fixes
+
+* **deps:** sync-layer 0.9.1, ui 1.21.1 ([16af1fb](https://github.com/glasshome/widget-sdk/commit/16af1fba0e330279f2c7428cd62d2ebe9066dd8b))
+
 ## [1.17.1](https://github.com/glasshome/widget-sdk/compare/v1.17.0...v1.17.1) (2026-09-27)
 
 
