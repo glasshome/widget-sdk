@@ -2,7 +2,20 @@
 
 This guide ships inside `@glasshome/widget-sdk` and matches the SDK version installed next to it. Upgrading the SDK (`bun widget upgrade`) upgrades this guide. When this guide and a blog post, an old example or your memory disagree, this guide wins.
 
-A widget should be indistinguishable from an official one: same parts, same scale, same glass, same motion. Everything below exists to keep it that way.
+Your widget is yours to design. This guide is what we learned building the official widgets: the parts that save you hand-rolling, and the habits that kept them readable and consistent on a homeowner's wall. Follow it by default, and break a rule when your widget has a reason to.
+
+## Lessons from the official widgets
+
+- **Don't hand-roll what the SDK has.** Sliders, steppers, choice rows, dialogs, sheets, hold gestures, loading and error states: the parts already handle sizing, touch, focus, theme and reduced motion. A hand-built copy drifts the first time the theme changes.
+- **No dot lamps.** A small coloured dot for status reads as noise and fails for colour-blind people. Show state with the icon lighting up (`Widget.Head active`), a `Badge`, a fill or a word.
+- **No thin vertical bars.** A narrow upright stripe beside text reads as a blinking text caret. Mark a row with its icon or a fill.
+- **No all-caps**, in labels, badges or headings.
+- **One icon per item, never one per line.** A list where every line carries its own icon is a wall of icons.
+- **Pictures and icons before words.** A tile heavy with text looks like a config panel. A level is a fill, a state is the icon, a thing is its picture; words are the answer and one line explaining it.
+- **Continuous values keep the full-tile slider.** Brightness, volume, position and setpoint slide across the whole tile (`Widget.SliderFill`). Buttons go beside it, never instead of it, and a stepper never stands alone.
+- **Scroll inside the dialog body.** Long dialog content goes in `ResponsiveDialogBody`, which scrolls with the themed bar. Never add your own `overflow` or `max-height` inside a dialog.
+- **Groups act safely.** One tap on a group brings every member to one state, but a group of locks never unlocks in one tap, and doors, gates and garage doors never join a bulk action.
+- **Readings update in place.** A new value changes text; it never rebuilds the tile. Twenty seconds of live data should add and remove no DOM nodes.
 
 ## Before writing code
 
