@@ -4,10 +4,10 @@ Matches the installed `@glasshome/widget-sdk`. Wins over memory and older docs.
 
 ## Loop
 
-1. `bun widget add`: new widget in `src/<name>/` (`index.tsx`, `manifest.json`).
-2. Write it. Add `examples` in `defineWidget` (label, size, config with demo entity ids); preview renders them.
+1. `bun widget add --name <name>`: `src/<name>/` with a working sensor tile (`index.tsx`, `manifest.json`). Start from it.
+2. Write it. `examples` in `defineWidget` (label, size, config) are what preview renders. Demo entity ids: `node_modules/@glasshome/sync-layer/dist/demo/ids.d.ts`; a wrong id renders the empty state. Missing a kind of entity: use a stand-in and config to show each state.
 3. `bun widget build`: typecheck, bundle, validate. Fix every error before previewing.
-4. `bun widget preview <name> --sizes grid`: every example at common tile sizes, light and dark, into `preview/sweep/` with a contact sheet each. Open the images and look.
+4. `bun widget preview <name> --sizes grid`: every example at common tile sizes, light and dark, into `preview/sweep/` with a contact sheet each. Open the images and look. First run: `bun add -d playwright && bunx playwright install chromium`. A crash fails the render with its error.
    - Narrow: `--sizes 150x156,340x242`, `--theme dark`, `--example 0`.
    - Change state: `--config '<json>'`, `--service '<domain.service>|<entity_id>'`, `--at 2026-06-15T21:00:00`, `--click '<selector>'`.
    - Inspect: `--eval '<expr>'` prints per render (`root` = shadow root).
@@ -21,6 +21,8 @@ Matches the installed `@glasshome/widget-sdk`. Wins over memory and older docs.
 - Never `@glasshome/ui` (unchecked version, dead tile on mismatch) or `@glasshome/sync-layer` (second store). Keep `@glasshome/ui` installed; the build reads its CSS.
 - Home Assistant only via SDK hooks (`useEntity`, `useEntities`, `useService`, `useToggle`, …). Declare every read/controlled domain in manifest capabilities.
 - SDK too old for something in the docs: `bun widget upgrade`.
+- Edit the inline `manifest` in `defineWidget`; build copies it into `manifest.json` (name, icon, sizes, capabilities, examples, schema). `version` and `sdkVersion` live only in `manifest.json`.
+- Config: `defineConfig` + `field.*`. `field.entity(domain)` stores a one-item array: read `config.entityIds[0]`.
 
 ## Tile
 
@@ -37,15 +39,15 @@ Parts inside `Widget.Content`; they lay out and resize themselves. Never measure
 | Photo behind tile | `Widget.Backdrop` |
 | Own full-bleed layer | `Widget.Layer` |
 | Faint corner icon | `Widget.Glyph` |
-| Continuous value | `Widget.SliderFill` |
+| Controllable continuous value | `Widget.SliderFill` |
 
 ## Sizes
 
-1×1 to 8×8. Tokens, never px: `--widget-text-value`, `--widget-text-name`, `--widget-text-meta`, `--widget-text-sub`, `--widget-text-caption`, `--widget-control-h`, `--widget-grid-pad`, `--widget-grid-gap`, `--widget-icon-box`, `--widget-icon-glyph`. Layout by container query (`@[150px]:…`, `@container widget (…)`). What renders by `useWidgetDimensions()`, inside `<Widget>` only.
+1×1 to 8×8. Under 130px tall or 140px wide the tile is compact: `eyebrow` and `sub` hide, so carry state in `tone` and the icon. Tokens, never px: `--widget-text-value`, `--widget-text-name`, `--widget-text-meta`, `--widget-text-sub`, `--widget-text-caption`, `--widget-control-h`, `--widget-grid-pad`, `--widget-grid-gap`, `--widget-icon-box`, `--widget-icon-glyph`. Layout by container query (`@[150px]:…`, `@container widget (…)`). What renders by `useWidgetDimensions()`, inside `<Widget>` only.
 
 ## Sheet
 
-Hold opens it. Only what the tile lacks (group members, colours, modes, forecast). Pass `sheet` to `WidgetDialog` only when there is something. Build from `PanelSection`, `PanelRows`, `PanelRow`, `PanelEntityRow`, `PanelFacts`, `ToggleGroup`, `SwatchPicker`, `TemperatureBar`, `ColorDisc`. Never repeat the tile's value, name or art. Widget CSS does not reach it.
+Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`ResponsiveDialog*`, `Button`, `SchemaForm`, `Tabs*`, see the scaffold) and `useWidgetDialog().dialogProps`. Hold opens the sheet on its own once `sheet` is passed; no gesture wiring. Only what the tile lacks (group members, colours, modes, forecast). Pass `sheet` only when there is something: `{...(extras() ? { sheet: () => <MySheet /> } : {})}`. Build from `PanelSection`, `PanelRows`, `PanelRow`, `PanelEntityRow`, `PanelFacts`, `ToggleGroup`, `SwatchPicker`, `TemperatureBar`, `ColorDisc`. Never repeat the tile's value, name or art. Widget CSS does not reach it.
 
 ## Primitives
 
@@ -65,8 +67,8 @@ Hold opens it. Only what the tile lacks (group members, colours, modes, forecast
 - Groups: one tap brings all members to one state; locks never unlock in one tap; doors, gates, garage doors never join bulk actions.
 - Readings update text in place; never rebuild DOM. `Index` for lists of readings.
 - Everything sits on an edge; text left, values/actions right. One accent per view; defaults quiet. No card in a card.
-- Motion: colours morph, never snap. Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()`; pause offscreen with `useIntersectionPause()`.
+- Motion: colours morph, never snap; time transitions with `--duration-state` / `--ease-morph` (zeroed under reduced motion). Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()`; pause offscreen with `useIntersectionPause()`.
 
 ## More
 
-Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widget design: https://github.com/glasshome/widgets/blob/main/DESIGN.md
+Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widgets as worked examples: https://github.com/glasshome/widgets (`src/button`, `src/sensor`); where they differ from this guide, the guide wins.
