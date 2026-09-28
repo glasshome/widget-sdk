@@ -74,6 +74,9 @@ export interface WidgetDialogTab {
   content: JSX.Element;
 }
 
+/** A closed dialog builds none of its tabs: icon and content render only inside the open one. */
+type BuiltTab = { id: string; label: string; icon: () => JSX.Element; content: () => JSX.Element };
+
 export interface SheetTile {
   /** Iconify name, the tile's own icon. */
   icon?: string;
@@ -248,15 +251,21 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   const panelSize = () => PANEL_SIZE[local.maxWidth ?? "xl"];
 
-  const resolvedTabs = (): WidgetDialogTab[] => {
-    if (local.tabs) return local.tabs;
+  const resolvedTabs = (): BuiltTab[] => {
+    if (local.tabs) {
+      return local.tabs.map((tab) => ({
+        ...tab,
+        icon: () => tab.icon,
+        content: () => tab.content,
+      }));
+    }
 
-    const tabs: WidgetDialogTab[] = [];
+    const tabs: BuiltTab[] = [];
 
     tabs.push({
       id: "edit",
       label: "Edit",
-      icon: (
+      icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="size-3.5"
@@ -269,7 +278,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
       ),
-      content:
+      content: () =>
         local.editContent ??
         (() => {
           const SchemaFormEdit = local.SchemaForm;
@@ -298,7 +307,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     tabs.push({
       id: "controls",
       label: "Controls",
-      icon: (
+      icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="size-3.5"
@@ -318,20 +327,21 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <line x1="17" y1="16" x2="23" y2="16" />
         </svg>
       ),
-      content: local.controlsContent ?? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>No controls</EmptyTitle>
-            <EmptyDescription>This widget is shown as is.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ),
+      content: () =>
+        local.controlsContent ?? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyTitle>No controls</EmptyTitle>
+              <EmptyDescription>This widget is shown as is.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ),
     });
 
     tabs.push({
       id: "debug",
       label: "Debug",
-      icon: (
+      icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="size-3.5"
@@ -353,7 +363,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
         </svg>
       ),
-      content: local.debugContent ?? <WidgetDebugTab data={local.debugData} />,
+      content: () => local.debugContent ?? <WidgetDebugTab data={local.debugData} />,
     });
 
     return tabs;
@@ -492,7 +502,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                         {(tab) => (
                           <TabsTriggerPart value={tab.id}>
                             <span class="inline-flex size-3.5 shrink-0 items-center">
-                              {tab.icon}
+                              {tab.icon()}
                             </span>
                             {tab.label}
                           </TabsTriggerPart>
@@ -512,7 +522,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
             <RDBody>
               <For each={visibleTabs()}>
-                {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
+                {(tab) => <TabsContentPart value={tab.id}>{tab.content()}</TabsContentPart>}
               </For>
             </RDBody>
 

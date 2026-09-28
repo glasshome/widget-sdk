@@ -159,3 +159,31 @@ describe("WidgetDialog draft lifecycle", () => {
     expect(save().disabled).toBe(true);
   });
 });
+
+describe("a closed dialog", () => {
+  it("builds none of its tabs until it opens", async () => {
+    let built = 0;
+    function Settings(): JSX.Element {
+      built++;
+      return <p>settings</p>;
+    }
+    const [open, setOpen] = createSignal(false);
+    render(() => (
+      <WidgetDialog
+        {...stubs}
+        ResponsiveDialog={(props: { open?: boolean; children?: JSX.Element }) => (
+          <div>{props.open ? props.children : null}</div>
+        )}
+        open={open()}
+        activeTab="edit"
+        onOpenChange={setOpen}
+        title="Stub"
+        editContent={<Settings />}
+      />
+    ));
+    expect(built).toBe(0);
+    setOpen(true);
+    expect(await screen.findByText("settings")).toBeTruthy();
+    expect(built).toBe(1);
+  });
+});
