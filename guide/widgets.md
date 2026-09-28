@@ -1,129 +1,72 @@
-# Building a GlassHome widget
+# GlassHome widgets
 
-This guide ships inside `@glasshome/widget-sdk` and matches the SDK version installed next to it. Upgrading the SDK (`bun widget upgrade`) upgrades this guide. When this guide and a blog post, an old example or your memory disagree, this guide wins.
+Matches the installed `@glasshome/widget-sdk`. Wins over memory and older docs.
 
-Your widget is yours to design. This guide is what we learned building the official widgets: the parts that save you hand-rolling, and the habits that kept them readable and consistent on a homeowner's wall. Follow it by default, and break a rule when your widget has a reason to.
+## Loop
 
-## Lessons from the official widgets
-
-- **Don't hand-roll what the SDK has.** Sliders, steppers, choice rows, dialogs, sheets, hold gestures, loading and error states: the parts already handle sizing, touch, focus, theme and reduced motion. A hand-built copy drifts the first time the theme changes.
-- **No dot lamps.** A small coloured dot for status reads as noise and fails for colour-blind people. Show state with the icon lighting up (`Widget.Head active`), a `Badge`, a fill or a word.
-- **No thin vertical bars.** A narrow upright stripe beside text reads as a blinking text caret. Mark a row with its icon or a fill.
-- **No all-caps**, in labels, badges or headings.
-- **One icon per item, never one per line.** A list where every line carries its own icon is a wall of icons.
-- **Pictures and icons before words.** A tile heavy with text looks like a config panel. A level is a fill, a state is the icon, a thing is its picture; words are the answer and one line explaining it.
-- **Continuous values keep the full-tile slider.** Brightness, volume, position and setpoint slide across the whole tile (`Widget.SliderFill`). Buttons go beside it, never instead of it, and a stepper never stands alone.
-- **Scroll inside the dialog body.** Long dialog content goes in `ResponsiveDialogBody`, which scrolls with the themed bar. Never add your own `overflow` or `max-height` inside a dialog.
-- **Groups act safely.** One tap on a group brings every member to one state, but a group of locks never unlocks in one tap, and doors, gates and garage doors never join a bulk action.
-- **Readings update in place.** A new value changes text; it never rebuilds the tile. Twenty seconds of live data should add and remove no DOM nodes.
-
-## Before writing code
-
-1. Name each surface the widget needs (the reading, the icon, each control, what the sheet holds).
-2. Resolve each one to an SDK export from the tables below, and write the mapping down (one line per surface).
-3. A surface nothing covers is written `NEW: <what is missing>`. Draw it yourself as bespoke art, and tell the widget's author it is a gap worth asking GlassHome for.
+1. `bun widget add`: new widget in `src/<name>/` (`index.tsx`, `manifest.json`).
+2. Write it. Add `examples` in `defineWidget` (label, size, config with demo entity ids); preview renders them.
+3. `bun widget build`: typecheck, bundle, validate. Fix every error before previewing.
+4. `bun widget preview <name> --sizes grid`: every example at common tile sizes, light and dark, into `preview/sweep/` with a contact sheet each. Open the images and look.
+   - Narrow: `--sizes 150x156,340x242`, `--theme dark`, `--example 0`.
+   - Change state: `--config '<json>'`, `--service '<domain.service>|<entity_id>'`, `--at 2026-06-15T21:00:00`, `--click '<selector>'`.
+   - Inspect: `--eval '<expr>'` prints per render (`root` = shadow root).
+5. Repeat 3-4 until 1×1, 2×2 and a big tile read right in both themes.
+6. Live: `bun widget connect <dashboard-url>`.
+7. Ship: `bun widget publish --name <name> --bump patch|minor|major`. Version lives in `manifest.json`.
 
 ## Imports
 
-- Import everything from `@glasshome/widget-sdk`. UI primitives included: `import { Button, ToggleGroup } from "@glasshome/widget-sdk"`.
-- Never import `@glasshome/ui` or `@glasshome/ui/solid`. The SDK re-export is the one the dashboard checks against `sdkVersion`; a direct import can meet a ui version it was never built against and leaves a dead tile. Keep `@glasshome/ui` installed: the build reads its styles.
-- Never import `@glasshome/sync-layer`. Its hooks come through the SDK (`useEntity`, `useEntities`, `useService`, `useToggle`, …); a direct import bundles a second, disconnected store.
-- Read Home Assistant only through SDK hooks, never `window` or `document` globals, and declare every domain you read or control in the manifest's capabilities.
+- Everything from `@glasshome/widget-sdk`, UI primitives included.
+- Never `@glasshome/ui` (unchecked version, dead tile on mismatch) or `@glasshome/sync-layer` (second store). Keep `@glasshome/ui` installed; the build reads its CSS.
+- Home Assistant only via SDK hooks (`useEntity`, `useEntities`, `useService`, `useToggle`, …). Declare every read/controlled domain in manifest capabilities.
+- SDK too old for something in the docs: `bun widget upgrade`.
 
-## The tile
+## Tile
 
-Build the tile from the `Widget` parts inside `Widget.Content`. Each part hides, shrinks or moves as the tile changes size; never measure the tile to lay it out.
+Parts inside `Widget.Content`; they lay out and resize themselves. Never measure to lay out.
 
 | Need | Part |
 |---|---|
-| The tile | `Widget` (colour via `tone` or `color`, gestures, `confirmed`) with `Widget.Content` inside |
-| Icon, name, small line above it, chips | `Widget.Head` (`icon`, `eyebrow`, `name`, `active`, `count`, `aside`) |
-| The big reading with its unit and art | `Widget.Hero` (`value`, `unit`, `sub`, `art`) |
-| Control row | `Widget.Controls` |
-| Minus and plus next to other controls | `Widget.Stepper` |
-| A row of icon options | `Widget.Choice` |
-| Something that leaves no state (run, press, stop) | `Widget.Action`; share `useConfirm()` when the whole tile runs it |
-| A small fact in the head | `Widget.Chip` |
-| A photo behind the whole tile | `Widget.Backdrop` |
-| Your own full-bleed layer (scene, chart band) | `Widget.Layer` |
-| The faint corner icon | `Widget.Glyph` |
-| A continuous value (brightness, volume, position) | `Widget.SliderFill`; buttons sit beside it, never instead of it |
-
-Colour: `tone` is one of `"accent" | "info" | "success" | "warning" | "danger" | "neutral"`. Everything coloured reads `--widget-color`. Use `accent` on `Widget.Content` for a colour that follows state (a lamp's own colour).
+| Colour | `tone` (`accent info success warning danger neutral`) or `color` on `Widget`; `accent` on `Widget.Content` for state colour |
+| Icon, name, eyebrow, chips | `Widget.Head` (`active`, `count`, `aside`) |
+| Big value, unit, art | `Widget.Hero` |
+| Control row | `Widget.Controls` with `Widget.Stepper`, `Widget.Choice`, `Widget.Action` |
+| Stateless action | `Widget.Action`; `useConfirm()` + `<Widget confirmed>` when the whole tile runs it |
+| Small fact | `Widget.Chip` |
+| Photo behind tile | `Widget.Backdrop` |
+| Own full-bleed layer | `Widget.Layer` |
+| Faint corner icon | `Widget.Glyph` |
+| Continuous value | `Widget.SliderFill` |
 
 ## Sizes
 
-Tiles go from 1×1 to 8×8. Size your own content with the scale tokens, never pixels:
+1×1 to 8×8. Tokens, never px: `--widget-text-value`, `--widget-text-name`, `--widget-text-meta`, `--widget-text-sub`, `--widget-text-caption`, `--widget-control-h`, `--widget-grid-pad`, `--widget-grid-gap`, `--widget-icon-box`, `--widget-icon-glyph`. Layout by container query (`@[150px]:…`, `@container widget (…)`). What renders by `useWidgetDimensions()`, inside `<Widget>` only.
 
-| Token | For |
-|---|---|
-| `--widget-text-value` | A big reading |
-| `--widget-text-name` | A name |
-| `--widget-text-meta` | A small line above a name |
-| `--widget-text-sub` | A small line next to a reading; labels |
-| `--widget-text-caption` | Axis ticks, list rows |
-| `--widget-control-h` | A control's height |
-| `--widget-grid-pad`, `--widget-grid-gap` | Spacing inside the tile |
-| `--widget-icon-box`, `--widget-icon-glyph` | The head icon |
+## Sheet
 
-Layout changes by size use container queries on the `widget` container (`@[150px]:text-4xl`, or `@container widget (...)` in CSS). To change *what* renders, read `useWidgetDimensions()` inside `<Widget>`.
+Hold opens it. Only what the tile lacks (group members, colours, modes, forecast). Pass `sheet` to `WidgetDialog` only when there is something. Build from `PanelSection`, `PanelRows`, `PanelRow`, `PanelEntityRow`, `PanelFacts`, `ToggleGroup`, `SwatchPicker`, `TemperatureBar`, `ColorDisc`. Never repeat the tile's value, name or art. Widget CSS does not reach it.
 
-## The sheet
+## Primitives
 
-Holding a tile opens its sheet: only what the tile has no room for (each light of a group, colours, modes, sources, the days ahead). Pass `sheet` (a render function) to `WidgetDialog`, and only when there is something extra; a widget with nothing extra passes no sheet.
+`Badge`, `Button`, `ButtonGroup`, `CountPill`, `Icon`, `Input`, `Label`, `Progress`, `SchemaForm`, `SectionIcon`, `SectionTitle`, `Select`, `Slider`, `Switch`, `Tabs`, `Toggle`, `ToggleGroup`, `Carousel`, `ColorWheel`, `ColorSlider`, `ResponsiveDialog` + parts. `Icon`, never `iconify-icon`. Never restyle with own classes.
 
-- Build it from `PanelSection`, `PanelRows`, `PanelRow`, `PanelEntityRow` and `PanelFacts`, with `ToggleGroup` for choices and `SwatchPicker`, `TemperatureBar`, `ColorDisc` for colour.
-- Never draw the tile again in the sheet: no art, no big value, no repeated name or state.
-- The sheet renders outside the widget's shadow root, so your CSS never reaches it. Style it only through those parts.
+## Rules
 
-## UI primitives
+- No hand-rolling what the SDK has: sliders, steppers, dialogs, sheets, hold gestures, loading/error states.
+- Theme vars only (`--foreground`, `--muted-foreground`, `--card`, `--primary`, `--border`, `--success`, `--warning`, `--destructive`, `--radius`). Never declare them on `:host`; no own colour/radius tokens; no `--color-*`.
+- Own CSS = layout and bespoke art. No custom panel/row/chip/button chrome.
+- Tailwind classes literal in source, never concatenated. `dark:` works; `isDark()` for the boolean.
+- No dot status lamps. No thin vertical bars (read as a text caret). No all-caps.
+- One icon per item, not per line. Icons, fills and pictures before text.
+- Lead with the answer (value + unit, or a verdict); one small line explains it. Never show a value twice. States per device class (Open/Closed, Detected/Clear).
+- Continuous values keep the full-tile slider; buttons beside it. A stepper never stands alone.
+- Dialog content scrolls in `ResponsiveDialogBody`; no own `overflow`/`max-height` in a dialog.
+- Groups: one tap brings all members to one state; locks never unlock in one tap; doors, gates, garage doors never join bulk actions.
+- Readings update text in place; never rebuild DOM. `Index` for lists of readings.
+- Everything sits on an edge; text left, values/actions right. One accent per view; defaults quiet. No card in a card.
+- Motion: colours morph, never snap. Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()`; pause offscreen with `useIntersectionPause()`.
 
-Available from the SDK: `Badge`, `Button`, `ButtonGroup`, `CountPill`, `Icon`, `Input`, `Label`, `Progress`, `SchemaForm`, `SectionIcon`, `SectionTitle`, `Select` (+ parts), `Slider`, `Switch`, `Tabs` (+ parts), `Toggle`, `ToggleGroup`, `ToggleGroupItem`, `Carousel` (+ parts), `ColorDisc`, `ColorSlider`, `ColorWheel`, `SwatchPicker`, `TemperatureBar`, `ResponsiveDialog` (+ parts). Use `Icon` for icons, never the `iconify-icon` element.
+## More
 
-They carry the glass material and follow the homeowner's theme live. Never restyle one with your own classes; if none fits, it is a `NEW:` line.
-
-## Styling
-
-- Colours, radii and motion come from the theme's variables: `--foreground`, `--muted-foreground`, `--card`, `--primary`, `--border`, `--muted`, `--accent`, `--success`, `--warning`, `--destructive`, `--radius`. They inherit into your shadow root and change live with the theme.
-- Never declare a theme variable on `:host` (the build fails) and never invent your own colour or radius tokens. `--widget-*` variables for your own layout are fine.
-- `--color-*` aliases do not exist inside a widget.
-- Your own CSS is layout and bespoke art only (a drawing, a chart, a scene). Panel, row, chip and button chrome comes from the parts and primitives.
-- Tailwind classes must appear literally in source; never build class names by string concatenation.
-- `dark:` variants work; for the boolean use `isDark()`.
-
-## Words
-
-- Lead with the answer: one number with its unit, or a short verdict ("Locked", "Good time"). The small line explains it ("Now 21.8°C").
-- Never show a value twice on one tile.
-- States follow the device class: a door is Open or Closed, motion is Detected or Clear.
-- No all-caps. Separator ` · `.
-
-## Composition
-
-A homeowner arrives with one question and hunts for the answer.
-
-- Every element sits on an edge of its surface or of a neighbour. Text leads left, values and actions trail right. Centre only what nobody needs to read.
-- Emphasis is contrast: a value at its default is quiet (`--muted-foreground`); the one that changed earns the colour. One accent per view.
-- Show before you tell: a state is a `Badge`, a level a fill, a thing its icon. A tooltip or helper line is the last resort, and touch has no hover.
-- No card inside a card, no glass surface inside the sheet or a dialog.
-
-## Motion
-
-- Colours morph on state change, never snap. Shapes grow out of what opened them.
-- A new reading updates text in place and never rebuilds the DOM; use `Index` for lists that update with readings.
-- Decorative loops are ambient: multiply their duration by `var(--motion-ambient, 0)` so an idle wall tablet draws nothing. Pause off-screen work with `useIntersectionPause()`.
-- Gate non-essential animation on `useReducedMotion()`.
-
-## Checking your work
-
-1. `bun widget build` (it typechecks and validates).
-2. `bun widget preview <widget> --sizes grid` renders every example across common sizes, light and dark, into `preview/`. Look at the pictures: a 1×1, a 2×2 and a big tile, in both themes.
-3. `bun widget connect <url>` to see it live on a dashboard.
-
-## Reference
-
-- Full docs, as markdown: https://glasshome.app/llms.txt (index) and https://glasshome.app/md/widgets/widget-sheets, `/md/widgets/widget-styling`, `/md/widgets/widget-sdk`, `/md/widgets/widget-api-reference`, `/md/widgets/widget-capabilities`.
-- How the official widgets look and why: https://github.com/glasshome/widgets/blob/main/DESIGN.md
-- The design system's composition and motion rules: https://github.com/glasshome/ui/blob/main/SPEC.md
-
-The live docs describe the newest SDK. If they name something this project's SDK does not export, run `bun widget upgrade` before using it.
+Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widget design: https://github.com/glasshome/widgets/blob/main/DESIGN.md
