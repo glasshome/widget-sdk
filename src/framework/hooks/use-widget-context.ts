@@ -60,6 +60,10 @@ export interface ReactiveWidgetContext {
   developer?: () => boolean;
   /** The tile's box on the page, so a held tile's sheet opens beside it. Absent: it opens centred. */
   anchor?: () => HTMLElement | undefined;
+  /** Host hook: whether holding this widget opens anything. Absent on hosts that predate this field. */
+  onHoldable?: (holds: boolean) => void;
+  /** Host hook: a hold on this widget fired. Absent on hosts that predate this field. */
+  onHeld?: () => void;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();

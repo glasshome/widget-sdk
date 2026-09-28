@@ -1,5 +1,6 @@
 import { Button, buttonVariants, Icon } from "@glasshome/ui/solid";
-import { For, type JSX, onCleanup, Show } from "solid-js";
+import { For, type JSX, onCleanup, Show, useContext } from "solid-js";
+import { WidgetCtx } from "../hooks/use-widget-context";
 
 /** A continuous value the whole stage (or a row) sets by dragging. */
 export interface PanelSlide {
@@ -34,6 +35,7 @@ function pointerGestures(opts: {
   onTap?: () => void;
   onHold?: () => void;
 }) {
+  const ctx = useContext(WidgetCtx);
   let start: { x: number; y: number; id: number } | undefined;
   let sliding = false;
   let held = false;
@@ -71,6 +73,7 @@ function pointerGestures(opts: {
         holdTimer = setTimeout(() => {
           held = true;
           opts.onHold?.();
+          ctx?.onHeld?.();
         }, HOLD_MS);
       }
     },
