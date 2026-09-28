@@ -21,8 +21,9 @@ import { Widget } from "../../src/framework/core/Widget";
 const here = dirname(fileURLToPath(import.meta.url));
 const tokensCss = readFileSync(resolve(here, "../../src/framework/theming/tokens.css"), "utf-8");
 
+// The top-level rule, starting a line; container-query overrides are indented.
 function ruleBody(selector: string): string {
-  const start = tokensCss.indexOf(`${selector} {`);
+  const start = tokensCss.indexOf(`\n${selector} {`);
   if (start === -1) throw new Error(`no rule for ${selector}`);
   return tokensCss.slice(start, tokensCss.indexOf("}", start));
 }

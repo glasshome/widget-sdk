@@ -62,8 +62,8 @@ describe("tokens.css contract", () => {
   test("icon glow default per mode", () => {
     const parts = css.split(".dark {");
     expect(parts.length).toBe(2);
-    expect(parts[0]).toContain("--widget-glow-default:     0.4;");
-    expect(parts[1]).toContain("--widget-glow-default:     0.5;");
+    expect(parts[0]).toMatch(/--widget-glow-default:\s*0\.4;/);
+    expect(parts[1]).toMatch(/--widget-glow-default:\s*0\.5;/);
   });
 
   test("atproperty widget-color", () => {
