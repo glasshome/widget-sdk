@@ -3,14 +3,29 @@
   "version": "1.18.0",
   "description": "SDK for building GlassHome dashboard widgets with SolidJS",
   "keywords": [
+    "dashboard",
     "glasshome",
-    "widget",
+    "home-assistant",
     "sdk",
+    "smart-home",
     "solidjs",
     "vite",
-    "home-assistant",
-    "dashboard",
-    "smart-home"
+    "widget"
+  ],
+  "homepage": "https://github.com/glasshome/widget-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/glasshome/widget-sdk/issues"
+  },
+  "license": "MIT",
+  "author": "GlassHome Labs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glasshome/widget-sdk.git"
+  },
+  "files": [
+    "dist",
+    "preview",
+    "tailwind-sources.css"
   ],
   "type": "module",
   "sideEffects": false,
@@ -45,11 +60,9 @@
     "./tailwind-sources": "./tailwind-sources.css",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "preview",
-    "tailwind-sources.css"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build && tsc && bun scripts/check-host-singleton.ts",
     "dev": "vite build --watch",
@@ -57,12 +70,8 @@
     "test:dom": "vitest run",
     "test:dom:watch": "vitest",
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
-    "check:dead": "fallow dead-code --fail-on-issues"
-  },
-  "peerDependencies": {
-    "@glasshome/sync-layer": "0.9.1",
-    "@glasshome/ui": "1.21.1",
-    "solid-js": "^1.9.11"
+    "check:dead": "fallow dead-code --fail-on-issues",
+    "lint": "oxlint --type-aware . && oxfmt --check ."
   },
   "dependencies": {
     "@glasshome/widget-contract": "0.3.0",
@@ -80,23 +89,18 @@
     "@types/bun": "^1.4.0",
     "@types/node": "^25.2.2",
     "fallow": "3.17.0",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.81.0",
+    "oxlint-tsgolint": "7.0.2001",
     "typescript": "^7.0.2",
     "vite": "^8.1.0",
     "vite-plugin-solid": "^2.11.12",
     "vitest": "^4.1.10"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/glasshome/widget-sdk.git"
-  },
-  "homepage": "https://github.com/glasshome/widget-sdk#readme",
-  "bugs": {
-    "url": "https://github.com/glasshome/widget-sdk/issues"
-  },
-  "author": "GlassHome Labs",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
+  "peerDependencies": {
+    "@glasshome/sync-layer": "0.9.1",
+    "@glasshome/ui": "1.21.1",
+    "solid-js": "^1.9.11"
   },
   "engines": {
     "node": ">=18"
