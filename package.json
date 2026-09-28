@@ -25,7 +25,8 @@
   "files": [
     "dist",
     "preview",
-    "tailwind-sources.css"
+    "tailwind-sources.css",
+    "guide"
   ],
   "type": "module",
   "sideEffects": false,
