@@ -25,7 +25,11 @@ describe("Widget shell", () => {
 
     const custom = render(() => (
       <Widget
-        variant={{ id: "mine", name: "Mine", styles: { cssVars: { "--widget-padding": "2rem" }, class: "mine" } }}
+        variant={{
+          id: "mine",
+          name: "Mine",
+          styles: { cssVars: { "--widget-padding": "2rem" }, class: "mine" },
+        }}
       />
     ));
     expect(channel(custom.container, "--widget-padding")).toBe("2rem");
@@ -82,9 +86,7 @@ describe("Widget shell", () => {
   });
 
   it("paints a deprecated full gradient inline, over the material", () => {
-    const { container } = render(() => (
-      <Widget gradient="linear-gradient(90deg, red, blue)" />
-    ));
+    const { container } = render(() => <Widget gradient="linear-gradient(90deg, red, blue)" />);
     expect(shell(container).style.backgroundImage).toBe("linear-gradient(90deg, red, blue)");
   });
 

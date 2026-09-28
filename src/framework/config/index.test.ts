@@ -42,10 +42,7 @@ describe("field.* JSON-schema + default parity vs raw zod", () => {
   });
 
   test("text (optional) matches raw z.string().optional()", () => {
-    parity(
-      field.text({ title: "Label" }),
-      z.string().optional().meta({ title: "Label" }),
-    );
+    parity(field.text({ title: "Label" }), z.string().optional().meta({ title: "Label" }));
   });
 
   test("text (with default) matches raw z.string().default()", () => {
@@ -125,16 +122,20 @@ describe("defineConfig whole-schema parity", () => {
 // Type-inference parity gate (compile-time; tsc fails the build on mismatch).
 // ---------------------------------------------------------------------------
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-  ? true
-  : false;
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Expect<T extends true> = T;
 
 const areaSchema = defineConfig({ title: field.title(), areaId: field.area() });
 type _AreaMatchesRawZod = Expect<
   Equal<
     Infer<typeof areaSchema>,
-    z.infer<z.ZodObject<{ title: ReturnType<typeof widgetFields.title>; areaId: ReturnType<typeof widgetFields.areaId> }>>
+    z.infer<
+      z.ZodObject<{
+        title: ReturnType<typeof widgetFields.title>;
+        areaId: ReturnType<typeof widgetFields.areaId>;
+      }>
+    >
   >
 >;
 

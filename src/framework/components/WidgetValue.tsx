@@ -14,9 +14,7 @@ interface WidgetValueProps {
 export function WidgetValue(props: WidgetValueProps): JSX.Element {
   return (
     <div class={cn("flex flex-col", props.class)}>
-      <div class="glasshome-widget-value">
-        {formatValue(props.value, props.unit)}
-      </div>
+      <div class="glasshome-widget-value">{formatValue(props.value, props.unit)}</div>
       <Show when={props.interpret && typeof props.value === "number"}>
         <div class="glasshome-widget-subtitle">
           {interpretValue(props.value as number, props.unit)}

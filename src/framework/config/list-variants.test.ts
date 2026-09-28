@@ -139,9 +139,7 @@ describe("variant-aware default extraction", () => {
       { kind: "input", entities: [] },
       { kind: "output", entities: [], remainder: false },
     ]);
-    expect(() =>
-      config.parse({ nodes: [{ kind: "bogus" }, { kind: "input" }] }),
-    ).toThrow();
+    expect(() => config.parse({ nodes: [{ kind: "bogus" }, { kind: "input" }] })).toThrow();
   });
 });
 
@@ -149,9 +147,8 @@ describe("variant-aware default extraction", () => {
 // Type-inference gate (compile-time; `typecheck:test` fails the build on drift).
 // ---------------------------------------------------------------------------
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-  ? true
-  : false;
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Expect<T extends true> = T;
 
 const flowConfig = defineConfig({

@@ -14,10 +14,6 @@ export {
   type SensorGroupResult,
   type SensorGroupType,
 } from "./entity-aggregation";
-export {
-  countActiveEntities,
-  getEntityAttribute,
-  isEntityActive,
-} from "./entity-state";
+export { countActiveEntities, getEntityAttribute, isEntityActive } from "./entity-state";
 export { formatValue } from "./format-value";
 export { interpretValue } from "./interpret-value";

@@ -139,7 +139,10 @@ export function useWidgetGestures(
     };
     const disarm = () => el.removeEventListener("click", swallow, true);
     el.addEventListener("click", swallow, true);
-    window.addEventListener("pointerup", () => setTimeout(disarm, 0), { capture: true, once: true });
+    window.addEventListener("pointerup", () => setTimeout(disarm, 0), {
+      capture: true,
+      once: true,
+    });
   };
 
   const resetState = () => {
@@ -184,10 +187,13 @@ export function useWidgetGestures(
       const x = e.clientX - box.left;
       const y = e.clientY - box.top;
       const r = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
-      state.graceTimer = setTimeout(() => {
-        state.graceTimer = null;
-        setHold({ x, y, r, fired: false });
-      }, Math.min(HOLD_GRACE, holdDelay));
+      state.graceTimer = setTimeout(
+        () => {
+          state.graceTimer = null;
+          setHold({ x, y, r, fired: false });
+        },
+        Math.min(HOLD_GRACE, holdDelay),
+      );
       state.holdTimer = setTimeout(() => {
         state.holdTimer = null;
         if (!state.isDown || state.hasMoved) return;

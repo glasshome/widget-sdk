@@ -233,7 +233,8 @@ function writeGeneratedManifest(
   if (next !== current) writeFileSync(manifestPath, next);
 }
 
-const SDK_IMPORT_RE = /import\s*(\{[^}]*\}|\*\s*as\s+[\w$]+)\s*from\s*["']@glasshome\/widget-sdk["']/g;
+const SDK_IMPORT_RE =
+  /import\s*(\{[^}]*\}|\*\s*as\s+[\w$]+)\s*from\s*["']@glasshome\/widget-sdk["']/g;
 const SDK_DYNAMIC_IMPORT_RE = /import\(\s*["']@glasshome\/widget-sdk["']\s*\)/;
 
 /** What a built bundle imports from the SDK, by exported name; `*` for a namespace or dynamic import. */
@@ -306,7 +307,8 @@ export async function runSchemaGuard(args: {
   assertExampleConfigsValid(def.exampleConfigIssues, declaredName);
 
   const jsonSchema = def.jsonSchema;
-  const manifestFile = args.manifestPath && existsSync(args.manifestPath) ? args.manifestPath : null;
+  const manifestFile =
+    args.manifestPath && existsSync(args.manifestPath) ? args.manifestPath : null;
   if (jsonSchema && manifestFile) writeGeneratedManifest(manifestFile, def, jsonSchema);
   // Checked against the manifest as written, since that file is what publish ships.
   const shipped: CapabilityGrant[] | undefined = manifestFile
@@ -658,7 +660,6 @@ function buildOnlyTailwind(): Plugin[] {
   }
   return plugins;
 }
-
 
 // ---------------------------------------------------------------------------
 // Widget discovery & registry generation

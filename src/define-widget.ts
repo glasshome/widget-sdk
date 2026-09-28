@@ -10,15 +10,15 @@ import type { WidgetDefinition } from "./types";
  * @template C - Widget configuration type
  */
 export function defineWidget<C = Record<string, unknown>>(
-	definition: WidgetDefinition<C>,
+  definition: WidgetDefinition<C>,
 ): WidgetDefinition<C> {
-	if (definition.configSchema) {
-		if (!definition.manifest.schema) {
-			definition.manifest.schema = toFormSchema(definition.configSchema);
-		}
-		if (!definition.manifest.defaultConfig) {
-			definition.manifest.defaultConfig = extractDefaults(definition.configSchema);
-		}
-	}
-	return definition;
+  if (definition.configSchema) {
+    if (!definition.manifest.schema) {
+      definition.manifest.schema = toFormSchema(definition.configSchema);
+    }
+    if (!definition.manifest.defaultConfig) {
+      definition.manifest.defaultConfig = extractDefaults(definition.configSchema);
+    }
+  }
+  return definition;
 }

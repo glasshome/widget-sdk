@@ -276,7 +276,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           const schema = schemaMode() ? formSchema() : undefined;
           if (!schema || !SchemaFormEdit) {
             return (
-              <div class="rounded-lg bg-muted/30 p-2 text-center md:p-6">
+              <div class="bg-muted/30 rounded-lg p-2 text-center md:p-6">
                 <p class="text-muted-foreground text-sm">No edit options available</p>
               </div>
             );
@@ -375,7 +375,6 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const anchor = () => ctx?.anchor?.();
   const sheetBeside = () => sheetMode() && !narrow() && anchor() !== undefined;
 
-
   const debugCopy = useCopyText();
 
   const handleCopyDebug = () => {
@@ -432,115 +431,118 @@ export function WidgetDialog(props: WidgetDialogProps) {
     (tabValue() === "debug" && local.debugData !== undefined);
 
   return (
-      <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
-        <Show
-          when={!sheetMode()}
-          fallback={
-            <RDContent
-              size="sm"
-              ariaLabel={local.title}
-              anchor={sheetBeside() ? anchor() : undefined}
-              class="glasshome-sheet-surface"
-              style={
-                look().tone
-                  ? ({ "--glass-tone": look().tone, "--widget-color": look().tone } as JSX.CSSProperties)
-                  : undefined
+    <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
+      <Show
+        when={!sheetMode()}
+        fallback={
+          <RDContent
+            size="sm"
+            ariaLabel={local.title}
+            anchor={sheetBeside() ? anchor() : undefined}
+            class="glasshome-sheet-surface"
+            style={
+              look().tone
+                ? ({
+                    "--glass-tone": look().tone,
+                    "--widget-color": look().tone,
+                  } as JSX.CSSProperties)
+                : undefined
+            }
+          >
+            <Show when={look().backdrop}>
+              {(src) => (
+                <div class="glasshome-sheet-band" aria-hidden="true">
+                  <img src={src()} alt="" />
+                </div>
+              )}
+            </Show>
+            <RDHeader
+              class="items-center"
+              media={
+                <Show when={look().icon}>
+                  {(icon) => (
+                    <span class="glasshome-widget-icon glass glass-tint glasshome-sheet-icon">
+                      <Icon icon={icon()} class="glasshome-widget-icon-glyph" />
+                    </span>
+                  )}
+                </Show>
               }
             >
-              <Show when={look().backdrop}>
-                {(src) => (
-                  <div class="glasshome-sheet-band" aria-hidden="true">
-                    <img src={src()} alt="" />
-                  </div>
-                )}
-              </Show>
-              <RDHeader
-                class="items-center"
-                media={
-                  <Show when={look().icon}>
-                    {(icon) => (
-                      <span class="glasshome-widget-icon glass glass-tint glasshome-sheet-icon">
-                        <Icon icon={icon()} class="glasshome-widget-icon-glyph" />
-                      </span>
-                    )}
-                  </Show>
-                }
-              >
-                <RDTitle class="truncate">{local.title}</RDTitle>
-              </RDHeader>
-              <RDBody>
-                <div class="glasshome-sheet">{local.sheet?.()}</div>
-              </RDBody>
-            </RDContent>
-          }
-        >
-          <RDContent size={panelSize()} class={local.class}>
-            <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
-              {/* A phone leaves no room for the tab row beside the title, so the
-              header wraps rather than truncating it away. */}
-              <RDHeader
-                class="flex-wrap"
-                action={
-                  <>
-                    {/* Homeowners see one view per door (a held tile's controls, edit mode's
-                    settings); the tab row is Developer Mode's way between them. */}
-                    <Show when={developer() || local.tabs !== undefined}>
-                      <TabsListPart class="w-auto">
-                        <For each={rowTabs()}>
-                          {(tab) => (
-                            <TabsTriggerPart value={tab.id}>
-                              <span class="inline-flex size-3.5 shrink-0 items-center">
-                                {tab.icon}
-                              </span>
-                              {tab.label}
-                            </TabsTriggerPart>
-                          )}
-                        </For>
-                      </TabsListPart>
-                    </Show>
-                    {local.headerActions}
-                  </>
-                }
-              >
-                <RDTitle class="truncate">{local.title}</RDTitle>
-                <Show when={local.description}>
-                  <RDDescription>{local.description}</RDDescription>
-                </Show>
-              </RDHeader>
-
-              <RDBody>
-                <For each={visibleTabs()}>
-                  {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
-                </For>
-              </RDBody>
-
-              <Show when={showFooter()}>
-                <RDFooter>
-                  <Show when={tabValue() === "edit" && local.onDelete}>
-                    <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                      Delete
-                    </Btn>
-                  </Show>
-                  <Show when={tabValue() === "edit" && effectiveOnSave()}>
-                    <Btn
-                      size="sm"
-                      disabled={!effectiveHasChanges()}
-                      onClick={() => effectiveOnSave()?.()}
-                    >
-                      Save
-                    </Btn>
-                  </Show>
-                  <Show when={tabValue() === "debug" && local.debugData !== undefined}>
-                    <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                      {COPY_LABEL[debugCopy.state()]}
-                    </Btn>
-                  </Show>
-                </RDFooter>
-              </Show>
-            </TabsRoot>
+              <RDTitle class="truncate">{local.title}</RDTitle>
+            </RDHeader>
+            <RDBody>
+              <div class="glasshome-sheet">{local.sheet?.()}</div>
+            </RDBody>
           </RDContent>
-        </Show>
-      </RD>
+        }
+      >
+        <RDContent size={panelSize()} class={local.class}>
+          <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
+            {/* A phone leaves no room for the tab row beside the title, so the
+              header wraps rather than truncating it away. */}
+            <RDHeader
+              class="flex-wrap"
+              action={
+                <>
+                  {/* Homeowners see one view per door (a held tile's controls, edit mode's
+                    settings); the tab row is Developer Mode's way between them. */}
+                  <Show when={developer() || local.tabs !== undefined}>
+                    <TabsListPart class="w-auto">
+                      <For each={rowTabs()}>
+                        {(tab) => (
+                          <TabsTriggerPart value={tab.id}>
+                            <span class="inline-flex size-3.5 shrink-0 items-center">
+                              {tab.icon}
+                            </span>
+                            {tab.label}
+                          </TabsTriggerPart>
+                        )}
+                      </For>
+                    </TabsListPart>
+                  </Show>
+                  {local.headerActions}
+                </>
+              }
+            >
+              <RDTitle class="truncate">{local.title}</RDTitle>
+              <Show when={local.description}>
+                <RDDescription>{local.description}</RDDescription>
+              </Show>
+            </RDHeader>
+
+            <RDBody>
+              <For each={visibleTabs()}>
+                {(tab) => <TabsContentPart value={tab.id}>{tab.content}</TabsContentPart>}
+              </For>
+            </RDBody>
+
+            <Show when={showFooter()}>
+              <RDFooter>
+                <Show when={tabValue() === "edit" && local.onDelete}>
+                  <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
+                    Delete
+                  </Btn>
+                </Show>
+                <Show when={tabValue() === "edit" && effectiveOnSave()}>
+                  <Btn
+                    size="sm"
+                    disabled={!effectiveHasChanges()}
+                    onClick={() => effectiveOnSave()?.()}
+                  >
+                    Save
+                  </Btn>
+                </Show>
+                <Show when={tabValue() === "debug" && local.debugData !== undefined}>
+                  <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
+                    {COPY_LABEL[debugCopy.state()]}
+                  </Btn>
+                </Show>
+              </RDFooter>
+            </Show>
+          </TabsRoot>
+        </RDContent>
+      </Show>
+    </RD>
   );
 }
 

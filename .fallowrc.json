@@ -1,11 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "entry": [
-    "scripts/*.ts",
-    "src/vite/fixtures/*.ts",
-    "preview/host.tsx"
-  ],
-  "ignoreUnresolvedImports": [
-    "/@glasshome/preview"
-  ]
+  "entry": ["scripts/*.ts", "src/vite/fixtures/*.ts", "preview/host.tsx"],
+  "ignoreUnresolvedImports": ["/@glasshome/preview"]
 }

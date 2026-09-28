@@ -12,12 +12,7 @@ interface WidgetStatusProps {
 export function WidgetStatus(props: WidgetStatusProps): JSX.Element {
   return (
     <p
-      class={cn(
-        "glasshome-widget-status",
-        "relative",
-        props.dimmed && "opacity-40",
-        props.class,
-      )}
+      class={cn("glasshome-widget-status", "relative", props.dimmed && "opacity-40", props.class)}
       style={{ "z-index": WIDGET_Z.ACTIONS }}
     >
       {props.isUnavailable ? "Unavailable" : props.children}

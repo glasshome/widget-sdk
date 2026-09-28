@@ -7,25 +7,25 @@
  */
 
 :root {
-  --tone-success:  oklch(0.70 0.18 145);
-  --tone-warning:  oklch(0.80 0.17 75);
-  --tone-danger:   oklch(0.64 0.22 27);
-  --tone-info:     oklch(0.66 0.20 245);
-  --tone-neutral:  oklch(0.65 0.02 250);
-  --tone-accent:   oklch(0.74 0.18 60);
+  --tone-success: oklch(0.7 0.18 145);
+  --tone-warning: oklch(0.8 0.17 75);
+  --tone-danger: oklch(0.64 0.22 27);
+  --tone-info: oklch(0.66 0.2 245);
+  --tone-neutral: oklch(0.65 0.02 250);
+  --tone-accent: oklch(0.74 0.18 60);
 
-  --widget-glow-default:     0.4;
+  --widget-glow-default: 0.4;
 }
 
 .dark {
-  --tone-success:  oklch(0.74 0.18 145);
-  --tone-warning:  oklch(0.82 0.17 75);
-  --tone-danger:   oklch(0.68 0.22 27);
-  --tone-info:     oklch(0.70 0.20 245);
-  --tone-neutral:  oklch(0.69 0.02 250);
-  --tone-accent:   oklch(0.78 0.18 60);
+  --tone-success: oklch(0.74 0.18 145);
+  --tone-warning: oklch(0.82 0.17 75);
+  --tone-danger: oklch(0.68 0.22 27);
+  --tone-info: oklch(0.7 0.2 245);
+  --tone-neutral: oklch(0.69 0.02 250);
+  --tone-accent: oklch(0.78 0.18 60);
 
-  --widget-glow-default:     0.5;
+  --widget-glow-default: 0.5;
 }
 
 @property --widget-color {
@@ -44,23 +44,51 @@
   --widget-radius: var(--radius-xl, 12px);
 
   --widget-unit: 1cqmin;
-  --widget-text-value:   max(22px, calc(8.5px + 13.4 * var(--widget-unit)), calc(16 * var(--widget-unit)));
-  --widget-text-name:    max(14px, calc(8.9px + 4.37 * var(--widget-unit)), calc(7.07 * var(--widget-unit)));
-  --widget-text-meta:    max(11px, calc(8px + 2.44 * var(--widget-unit)), calc(4.88 * var(--widget-unit)));
-  --widget-text-sub:     max(12px, calc(10.1px + 1.22 * var(--widget-unit)), calc(4.3 * var(--widget-unit)));
+  --widget-text-value: max(
+    22px,
+    calc(8.5px + 13.4 * var(--widget-unit)),
+    calc(16 * var(--widget-unit))
+  );
+  --widget-text-name: max(
+    14px,
+    calc(8.9px + 4.37 * var(--widget-unit)),
+    calc(7.07 * var(--widget-unit))
+  );
+  --widget-text-meta: max(
+    11px,
+    calc(8px + 2.44 * var(--widget-unit)),
+    calc(4.88 * var(--widget-unit))
+  );
+  --widget-text-sub: max(
+    12px,
+    calc(10.1px + 1.22 * var(--widget-unit)),
+    calc(4.3 * var(--widget-unit))
+  );
   --widget-text-caption: max(11px, calc(3.6 * var(--widget-unit)));
-  --widget-control-h:    max(36px, calc(30px + 3.84 * var(--widget-unit)));
-  --widget-grid-pad:     max(10px, calc(1.2px + 5.64 * var(--widget-unit)), calc(6 * var(--widget-unit)));
-  --widget-grid-gap:     max(6px, calc(2.5px + 2.23 * var(--widget-unit)));
-  --widget-icon-box:     max(44px, calc(31.3px + 8.14 * var(--widget-unit)), calc(17.7 * var(--widget-unit)));
-  --widget-icon-glyph:   max(24px, calc(16px + 5.12 * var(--widget-unit)), calc(10 * var(--widget-unit)));
-  --widget-pad:         clamp(8px,  3.5cqb, 22px);
-  --widget-gap:         clamp(6px,  2cqb,  14px);
-  --widget-title-size:  clamp(12px, 2cqi,    18px);
-  --widget-subtitle:    clamp(12px, 2.5cqi,  20px);
-  --widget-status-size: clamp(14px, 5cqi,    36px);
-  --widget-value-size:  clamp(18px, 7cqi,    48px);
-  --widget-badge-size:  clamp(11px, 1.6cqi,  14px);
+  --widget-control-h: max(36px, calc(30px + 3.84 * var(--widget-unit)));
+  --widget-grid-pad: max(
+    10px,
+    calc(1.2px + 5.64 * var(--widget-unit)),
+    calc(6 * var(--widget-unit))
+  );
+  --widget-grid-gap: max(6px, calc(2.5px + 2.23 * var(--widget-unit)));
+  --widget-icon-box: max(
+    44px,
+    calc(31.3px + 8.14 * var(--widget-unit)),
+    calc(17.7 * var(--widget-unit))
+  );
+  --widget-icon-glyph: max(
+    24px,
+    calc(16px + 5.12 * var(--widget-unit)),
+    calc(10 * var(--widget-unit))
+  );
+  --widget-pad: clamp(8px, 3.5cqb, 22px);
+  --widget-gap: clamp(6px, 2cqb, 14px);
+  --widget-title-size: clamp(12px, 2cqi, 18px);
+  --widget-subtitle: clamp(12px, 2.5cqi, 20px);
+  --widget-status-size: clamp(14px, 5cqi, 36px);
+  --widget-value-size: clamp(18px, 7cqi, 48px);
+  --widget-badge-size: clamp(11px, 1.6cqi, 14px);
 }
 
 /* Shell material: ui's .glass, worn through the class Widget.tsx carries.
@@ -126,15 +154,25 @@
     text-align: center;
     gap: clamp(4px, 2.5cqmin, 8px);
   }
-  .glasshome-widget-content > * { align-items: center; text-align: center; }
+  .glasshome-widget-content > * {
+    align-items: center;
+    text-align: center;
+  }
   .glasshome-widget-icon {
-    --widget-icon-box:   clamp(36px, 30cqmin, 56px);
+    --widget-icon-box: clamp(36px, 30cqmin, 56px);
     --widget-icon-glyph: clamp(20px, 17cqmin, 32px);
   }
-  .glasshome-widget-title  { font-size: clamp(11px, 6cqmin, 14px); max-width: 100%; }
+  .glasshome-widget-title {
+    font-size: clamp(11px, 6cqmin, 14px);
+    max-width: 100%;
+  }
   .glasshome-widget-status,
-  .glasshome-widget-value  { font-size: clamp(13px, 7cqmin, 17px); }
-  .glasshome-widget-content [class*="ml-auto"] { margin-left: 0 !important; }
+  .glasshome-widget-value {
+    font-size: clamp(13px, 7cqmin, 17px);
+  }
+  .glasshome-widget-content [class*="ml-auto"] {
+    margin-left: 0 !important;
+  }
 }
 .glasshome-widget-content [class*="ml-auto"] {
   position: relative;
@@ -164,8 +202,16 @@
   height: auto;
   border-radius: var(--radius-sm, 12px);
 }
-.glasshome-widget-icon-stack-2 { translate: var(--stack-step) var(--stack-step); opacity: 0.45; z-index: -2; }
-.glasshome-widget-icon-stack-3 { translate: calc(2 * var(--stack-step)) calc(2 * var(--stack-step)); opacity: 0.2; z-index: -3; }
+.glasshome-widget-icon-stack-2 {
+  translate: var(--stack-step) var(--stack-step);
+  opacity: 0.45;
+  z-index: -2;
+}
+.glasshome-widget-icon-stack-3 {
+  translate: calc(2 * var(--stack-step)) calc(2 * var(--stack-step));
+  opacity: 0.2;
+  z-index: -3;
+}
 
 /* === Slot: text === */
 .glasshome-widget-title {
@@ -212,10 +258,15 @@
   --widget-fill-value: 0;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1)), transparent),
     color-mix(
       in srgb,
-      var(--widget-color-to, var(--widget-color)) calc(var(--widget-wash-2) * var(--material-tint, 1)),
+      var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1)),
+      transparent
+    ),
+    color-mix(
+      in srgb,
+      var(--widget-color-to, var(--widget-color))
+        calc(var(--widget-wash-2) * var(--material-tint, 1)),
       transparent
     )
   );
@@ -245,7 +296,8 @@
 }
 
 /* In-flow content spans the tile (the max-content first column would collapse it); absolute parts keep the padding box. */
-.glasshome-widget-grid > :where(:not(.glasshome-widget-backdrop, .glasshome-widget-layer, .glasshome-widget-glyph)) {
+.glasshome-widget-grid
+  > :where(:not(.glasshome-widget-backdrop, .glasshome-widget-layer, .glasshome-widget-glyph)) {
   grid-column: 1 / -1;
 }
 .glasshome-widget-layer {
@@ -364,7 +416,10 @@
   position: absolute;
   right: var(--widget-grid-pad);
   bottom: var(--widget-grid-pad);
-  height: min(calc(100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - var(--widget-grid-gap)), 48cqi);
+  height: min(
+    calc(100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - var(--widget-grid-gap)),
+    48cqi
+  );
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -385,7 +440,10 @@
 }
 /* Art keeps its shape and clears a state word at its largest (15cqi, about 3.4em); each art sets --art-aspect. */
 .glasshome-widget-grid .glasshome-widget-art > * {
-  height: min(100%, calc((52cqi - 2 * var(--widget-grid-pad) - var(--widget-grid-gap)) / var(--art-aspect, 1)));
+  height: min(
+    100%,
+    calc((52cqi - 2 * var(--widget-grid-pad) - var(--widget-grid-gap)) / var(--art-aspect, 1))
+  );
   flex-shrink: 0;
 }
 .glasshome-widget-grid .glasshome-widget-art > img {
@@ -450,13 +508,8 @@
     bottom: calc(var(--widget-grid-pad) + var(--widget-control-h) + var(--widget-grid-gap));
     height: min(
       calc(
-        100% -
-        2 *
-        var(--widget-grid-pad) -
-        var(--widget-icon-box) -
-        2 *
-        var(--widget-grid-gap) -
-        var(--widget-control-h)
+        100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - 2 * var(--widget-grid-gap) -
+          var(--widget-control-h)
       ),
       48cqi
     );
@@ -471,7 +524,10 @@
   }
   .glasshome-widget-grid:has(> .glasshome-widget-controls) .glasshome-widget-art {
     bottom: var(--widget-grid-pad);
-    height: min(calc(100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - var(--widget-grid-gap)), 48cqi);
+    height: min(
+      calc(100% - 2 * var(--widget-grid-pad) - var(--widget-icon-box) - var(--widget-grid-gap)),
+      48cqi
+    );
   }
 }
 @container widget (max-width: 179px) {
@@ -620,14 +676,23 @@
     display: none;
   }
 }
-.glasshome-widget-grid:has(> .glasshome-widget-backdrop) :is(.glasshome-widget-reading-value, .glasshome-widget-sub, .glasshome-widget-name, .glasshome-widget-eyebrow) {
+.glasshome-widget-grid:has(> .glasshome-widget-backdrop)
+  :is(
+    .glasshome-widget-reading-value,
+    .glasshome-widget-sub,
+    .glasshome-widget-name,
+    .glasshome-widget-eyebrow
+  ) {
   text-shadow: 0 1px 8px color-mix(in oklch, var(--card) 75%, transparent);
 }
-.glasshome-widget-grid:has(> .glasshome-widget-backdrop) :is(.glasshome-widget-sub, .glasshome-widget-eyebrow) {
+.glasshome-widget-grid:has(> .glasshome-widget-backdrop)
+  :is(.glasshome-widget-sub, .glasshome-widget-eyebrow) {
   color: color-mix(in oklch, var(--foreground) 82%, transparent);
 }
 /* Control glyphs and words keep their share of a control as it grows past 4x4. */
-.glasshome-widget-grid :is(.glasshome-widget-control, .glasshome-widget-control-wide) :is(iconify-icon, svg) {
+.glasshome-widget-grid
+  :is(.glasshome-widget-control, .glasshome-widget-control-wide)
+  :is(iconify-icon, svg) {
   font-size: calc(var(--widget-control-h) * 0.43);
   width: 1em;
   height: 1em;
@@ -637,7 +702,10 @@
 }
 /* A big tile with no art of its own carries its icon large and faint, so the glass is not an empty box. */
 @container widget (min-width: 300px) and (min-height: 260px) {
-  .glasshome-widget-grid:not(:has(> .glasshome-widget-backdrop), :has(> .glasshome-widget-hero[data-art], > .glasshome-widget-art, > .glasshome-widget-layer))
+  .glasshome-widget-grid:not(
+      :has(> .glasshome-widget-backdrop),
+      :has(> .glasshome-widget-hero[data-art], > .glasshome-widget-art, > .glasshome-widget-layer)
+    )
     > .glasshome-widget-glyph {
     display: block;
     right: -3%;
@@ -653,7 +721,8 @@
 .glasshome-widget[data-confirmed] .glasshome-widget-glyph {
   opacity: 0.5;
 }
-.glasshome-widget-grid [data-confirmed]:is(.glasshome-widget-control, .glasshome-widget-control-wide) {
+.glasshome-widget-grid
+  [data-confirmed]:is(.glasshome-widget-control, .glasshome-widget-control-wide) {
   --glass-base: color-mix(in srgb, var(--widget-color) 35%, transparent);
   transition: background-color var(--duration-state) var(--ease-morph);
 }

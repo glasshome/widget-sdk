@@ -19,10 +19,7 @@ import {
 } from "@glasshome/ui/solid";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  buildDebugData,
-  WidgetDebugTab,
-} from "../../src/framework/dialogs/debug-view";
+import { buildDebugData, WidgetDebugTab } from "../../src/framework/dialogs/debug-view";
 import { WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
 import type { EntityView } from "../../src/framework/types";

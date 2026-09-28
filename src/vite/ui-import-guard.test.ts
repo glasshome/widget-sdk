@@ -18,7 +18,10 @@ describe("isDirectUiImportSource", () => {
       ),
     ).toBe(true);
     expect(
-      isDirectUiImportSource("/repo/src/light/controls.tsx", "import { Badge } from '@glasshome/ui'"),
+      isDirectUiImportSource(
+        "/repo/src/light/controls.tsx",
+        "import { Badge } from '@glasshome/ui'",
+      ),
     ).toBe(true);
     // Multi-line import: only the closing line carries `from`.
     expect(
@@ -37,7 +40,10 @@ describe("isDirectUiImportSource", () => {
       ),
     ).toBe(false);
     expect(
-      isDirectUiImportSource("/repo/src/light/controls.tsx", 'import { x } from "@glasshome/ui-kit";'),
+      isDirectUiImportSource(
+        "/repo/src/light/controls.tsx",
+        'import { x } from "@glasshome/ui-kit";',
+      ),
     ).toBe(false);
   });
 

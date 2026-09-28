@@ -8,10 +8,14 @@ describe("daylightFrom with sun.sun", () => {
     expect(daylightFrom({ state: "above_horizon", elevation: 30 }, at(3)).phase).toBe("day");
   });
   test("just below the horizon while setting is dusk", () => {
-    expect(daylightFrom({ state: "below_horizon", elevation: -3, rising: false }, at(12)).phase).toBe("dusk");
+    expect(
+      daylightFrom({ state: "below_horizon", elevation: -3, rising: false }, at(12)).phase,
+    ).toBe("dusk");
   });
   test("just below the horizon while rising is dawn", () => {
-    expect(daylightFrom({ state: "below_horizon", elevation: -3, rising: true }, at(12)).phase).toBe("dawn");
+    expect(
+      daylightFrom({ state: "below_horizon", elevation: -3, rising: true }, at(12)).phase,
+    ).toBe("dawn");
   });
   test("past civil twilight is night", () => {
     const d = daylightFrom({ state: "below_horizon", elevation: -12 }, at(12));
@@ -62,7 +66,9 @@ describe("daylightFrom progress", () => {
     expect(daylightFrom(sun, new Date(2026, 5, 16, 1, 0)).progress).toBeCloseTo(0.5, 2);
   });
   test("is undefined without the sun's times", () => {
-    expect(daylightFrom({ state: "above_horizon", elevation: 30 }, at(12)).progress).toBeUndefined();
+    expect(
+      daylightFrom({ state: "above_horizon", elevation: 30 }, at(12)).progress,
+    ).toBeUndefined();
     expect(daylightFrom(undefined, at(12)).progress).toBeUndefined();
   });
 });

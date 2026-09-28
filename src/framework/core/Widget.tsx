@@ -103,8 +103,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const sheetGestures = useWidgetGestures(() => ({
     hold: registry?.hasSheet()
       ? {
-          action: () =>
-            (dialogOpeners.get(parentCtx ?? {}) ?? dialogOpeners.get(contextValue))?.(),
+          action: () => (dialogOpeners.get(parentCtx ?? {}) ?? dialogOpeners.get(contextValue))?.(),
         }
       : undefined,
   }));
@@ -169,24 +168,22 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   const gradient = deprecate(() => props.gradient, "widget.gradient");
 
-  const channelStyle = createMemo(
-    (): JSX.CSSProperties => ({
-      "container-type": "size",
-      "container-name": "widget",
-      "touch-action": gestures() && !props.isEditMode ? gestures()?.touchAction() : undefined,
-      ...variantStyles()?.container,
-      ...(variantStyles()?.cssVars || {}),
-      ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
-      ...(props.color ? { "--widget-color": props.color } : {}),
-      ...((props.tone && props.tone !== "neutral") || props.color
-        ? { "--glass-tone": "var(--widget-color)" }
-        : {}),
-      ...(props.colorTo
-        ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo }
-        : {}),
-      ...(props.gradient ? { "background-image": gradient() } : {}),
-    }),
-  );
+  const channelStyle = createMemo((): JSX.CSSProperties => ({
+    "container-type": "size",
+    "container-name": "widget",
+    "touch-action": gestures() && !props.isEditMode ? gestures()?.touchAction() : undefined,
+    ...variantStyles()?.container,
+    ...(variantStyles()?.cssVars || {}),
+    ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
+    ...(props.color ? { "--widget-color": props.color } : {}),
+    ...((props.tone && props.tone !== "neutral") || props.color
+      ? { "--glass-tone": "var(--widget-color)" }
+      : {}),
+    ...(props.colorTo
+      ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo }
+      : {}),
+    ...(props.gradient ? { "background-image": gradient() } : {}),
+  }));
 
   // Solid's `on:event` directive binds once; we re-read gesture handlers at
   // dispatch time so edit-mode toggles take effect without rebinding.
@@ -225,60 +222,60 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     <WidgetCtx.Provider value={contextValue}>
       <WidgetConfirmedCtx.Provider value={() => props.confirmed === true}>
         <WidgetSizeCtx.Provider value={measured}>
-        <div
-          ref={(el) => {
-            setShellEl(el);
-            // Gesture lib has its own size observer (used for "auto" slide
-            // orientation); we just hand it the element.
-            props.gestures?.bindElement(el);
-            emptyGestures.bindElement(el);
-          }}
-          class={cn(
-            "glasshome-widget glass",
-            "relative h-full w-full select-none overflow-hidden rounded-xl",
-            variantStyles()?.class,
-            props.class,
-          )}
-          style={channelStyle()}
-          data-confirmed={props.confirmed || undefined}
-          on:pointerenter={onPointerEnter}
-          on:pointerdown={onPointerDown}
-          on:pointermove={onPointerMove}
-          on:pointerup={onPointerUp}
-          on:pointercancel={onPointerCancel}
-          tabIndex={gestureEnabled() ? 0 : undefined}
-          onKeyDown={(e) => {
-            if (gestureEnabled()) gestures()?.onKeyDown?.(e);
-          }}
-        >
-          <Show when={gestures()?.hold}>
-            <span
-              class="glasshome-widget-hold-flood"
-              aria-hidden="true"
-              data-hold={flood() && !flood()?.fired ? "" : undefined}
-              data-fired={flood()?.fired ? "" : undefined}
-              style={holdFloodStyle(flood())}
-            />
-          </Show>
-          <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
-            {props.emptyState ? (
-              <WidgetEmptyStateInner
-                icon={props.emptyState.icon}
-                title={props.emptyState.title}
-                message={props.emptyState.message}
+          <div
+            ref={(el) => {
+              setShellEl(el);
+              // Gesture lib has its own size observer (used for "auto" slide
+              // orientation); we just hand it the element.
+              props.gestures?.bindElement(el);
+              emptyGestures.bindElement(el);
+            }}
+            class={cn(
+              "glasshome-widget glass",
+              "relative h-full w-full overflow-hidden rounded-xl select-none",
+              variantStyles()?.class,
+              props.class,
+            )}
+            style={channelStyle()}
+            data-confirmed={props.confirmed || undefined}
+            on:pointerenter={onPointerEnter}
+            on:pointerdown={onPointerDown}
+            on:pointermove={onPointerMove}
+            on:pointerup={onPointerUp}
+            on:pointercancel={onPointerCancel}
+            tabIndex={gestureEnabled() ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (gestureEnabled()) gestures()?.onKeyDown?.(e);
+            }}
+          >
+            <Show when={gestures()?.hold}>
+              <span
+                class="glasshome-widget-hold-flood"
+                aria-hidden="true"
+                data-hold={flood() && !flood()?.fired ? "" : undefined}
+                data-fired={flood()?.fired ? "" : undefined}
+                style={holdFloodStyle(flood())}
               />
-            ) : (
-              props.children
+            </Show>
+            <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
+              {props.emptyState ? (
+                <WidgetEmptyStateInner
+                  icon={props.emptyState.icon}
+                  title={props.emptyState.title}
+                  message={props.emptyState.message}
+                />
+              ) : (
+                props.children
+              )}
+            </div>
+
+            {props.loading && (
+              <div
+                class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
+                style={{ "z-index": WIDGET_Z.OVERLAY }}
+              />
             )}
           </div>
-
-          {props.loading && (
-            <div
-              class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
-              style={{ "z-index": WIDGET_Z.OVERLAY }}
-            />
-          )}
-        </div>
         </WidgetSizeCtx.Provider>
       </WidgetConfirmedCtx.Provider>
     </WidgetCtx.Provider>
@@ -293,9 +290,9 @@ function WidgetEmptyStateInner(props: {
   return (
     <div class="flex h-full w-full flex-col items-center justify-center gap-2 text-center">
       {props.icon && (
-        <div class="flex items-center justify-center text-muted-foreground">{props.icon}</div>
+        <div class="text-muted-foreground flex items-center justify-center">{props.icon}</div>
       )}
-      {props.title && <h3 class="font-semibold text-sm text-foreground">{props.title}</h3>}
+      {props.title && <h3 class="text-foreground text-sm font-semibold">{props.title}</h3>}
       {props.message && <p class="text-muted-foreground text-xs">{props.message}</p>}
     </div>
   );

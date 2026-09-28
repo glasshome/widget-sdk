@@ -120,7 +120,7 @@ function localTime(iso: string): string {
 function JsonBlock(props: { value: unknown }) {
   return (
     <SectionRow class="overflow-hidden p-0">
-      <pre class="max-h-64 overflow-auto p-3 font-mono text-muted-foreground text-xs leading-relaxed">
+      <pre class="text-muted-foreground max-h-64 overflow-auto p-3 font-mono text-xs leading-relaxed">
         {toJson(props.value)}
       </pre>
     </SectionRow>
@@ -131,7 +131,7 @@ function Disclosure(props: { label: string; count?: number; value: unknown }) {
   return (
     <Accordion collapsible class="border-border/50 border-t">
       <AccordionItem value={props.label}>
-        <AccordionTrigger class="py-3 text-muted-foreground text-xs">
+        <AccordionTrigger class="text-muted-foreground py-3 text-xs">
           <span class="flex items-center gap-2">
             {props.label}
             <Show when={props.count !== undefined}>
@@ -277,12 +277,9 @@ export function WidgetDebugTab(props: { data?: string | Record<string, unknown> 
         when={shaped()}
         fallback={
           <DebugSection icon="lucide:braces" title="Debug data" source={props.data}>
-            <Show
-              when={typeof props.data === "string"}
-              fallback={<JsonBlock value={props.data} />}
-            >
+            <Show when={typeof props.data === "string"} fallback={<JsonBlock value={props.data} />}>
               <SectionRow class="overflow-hidden p-0">
-                <pre class="max-h-96 overflow-auto whitespace-pre-wrap p-3 font-mono text-muted-foreground text-xs leading-relaxed">
+                <pre class="text-muted-foreground max-h-96 overflow-auto p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
                   {props.data as string}
                 </pre>
               </SectionRow>

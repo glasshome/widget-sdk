@@ -60,9 +60,7 @@ describe("widget radius", () => {
   });
 
   it("clips the content layer on the same corner", () => {
-    expect(ruleBody(".glasshome-widget-content")).toContain(
-      "border-radius: var(--widget-radius)",
-    );
+    expect(ruleBody(".glasshome-widget-content")).toContain("border-radius: var(--widget-radius)");
   });
 
   it("rounds every slider fill clip, horizontal and vertical", () => {

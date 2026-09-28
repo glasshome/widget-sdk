@@ -39,7 +39,11 @@ describe("runSchemaGuard", () => {
 
   test("shape change without configVersion bump fails the build", async () => {
     const hashFile = join(tmpDir, "b.schema-hash");
-    await runSchemaGuard({ outFile: writeBundle(`title: z.string()`, 1), hashFile, widgetName: "b" });
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string()`, 1),
+      hashFile,
+      widgetName: "b",
+    });
     await expect(
       runSchemaGuard({
         outFile: writeBundle(`title: z.string(), count: z.number()`, 1),
@@ -55,7 +59,11 @@ describe("runSchemaGuard", () => {
 
   test("shape change with configVersion bump passes and re-records", async () => {
     const hashFile = join(tmpDir, "c.schema-hash");
-    await runSchemaGuard({ outFile: writeBundle(`title: z.string()`, 1), hashFile, widgetName: "c" });
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string()`, 1),
+      hashFile,
+      widgetName: "c",
+    });
     await runSchemaGuard({
       outFile: writeBundle(`title: z.string(), count: z.number()`, 2),
       hashFile,
@@ -67,8 +75,16 @@ describe("runSchemaGuard", () => {
 
   test("unchanged shape passes with same configVersion", async () => {
     const hashFile = join(tmpDir, "d.schema-hash");
-    await runSchemaGuard({ outFile: writeBundle(`title: z.string()`, 1), hashFile, widgetName: "d" });
-    await runSchemaGuard({ outFile: writeBundle(`title: z.string()`, 1), hashFile, widgetName: "d" });
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string()`, 1),
+      hashFile,
+      widgetName: "d",
+    });
+    await runSchemaGuard({
+      outFile: writeBundle(`title: z.string()`, 1),
+      hashFile,
+      widgetName: "d",
+    });
     const record = JSON.parse(readFileSync(hashFile, "utf-8"));
     expect(record.configVersion).toBe(1);
   });

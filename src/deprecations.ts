@@ -161,7 +161,10 @@ function isDev(): boolean {
  * once per id (formatted from the registry); production builds are silent and add no
  * overhead beyond a Set lookup. The wrapped function's signature is preserved.
  */
-export function deprecate<A extends unknown[], R>(fn: (...args: A) => R, id: string): (...args: A) => R {
+export function deprecate<A extends unknown[], R>(
+  fn: (...args: A) => R,
+  id: string,
+): (...args: A) => R {
   return (...args: A): R => {
     if (isDev() && !warned.has(id)) {
       warned.add(id);

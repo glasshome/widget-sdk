@@ -169,12 +169,18 @@ function area(o?: { title?: string }): z.ZodOptional<z.ZodString> {
  * Icon name (e.g. "mdi:lightbulb"). The host renders its icon picker; the
  * widget only declares that this field is an icon.
  */
-function icon(o: { title?: string; description?: string; default: string }): z.ZodDefault<z.ZodString>;
+function icon(o: {
+  title?: string;
+  description?: string;
+  default: string;
+}): z.ZodDefault<z.ZodString>;
 function icon(o?: { title?: string; description?: string }): z.ZodOptional<z.ZodString>;
 function icon(o?: { title?: string; description?: string; default?: string }) {
   const base = z
     .string()
-    .meta(meta({ formType: "icon-picker", title: o?.title ?? "Icon", description: o?.description }));
+    .meta(
+      meta({ formType: "icon-picker", title: o?.title ?? "Icon", description: o?.description }),
+    );
   return o?.default !== undefined ? base.default(o.default) : base.optional();
 }
 
@@ -215,7 +221,10 @@ function image(o?: ImageOpts & { default?: string }) {
   return o?.default !== undefined ? base.default(o.default) : base.optional();
 }
 
-function stringList(o: { title: string; description?: string }): z.ZodDefault<z.ZodArray<z.ZodString>> {
+function stringList(o: {
+  title: string;
+  description?: string;
+}): z.ZodDefault<z.ZodArray<z.ZodString>> {
   return z
     .array(z.string())
     .default([])
@@ -234,9 +243,9 @@ function group<S extends ConfigShape>(
   // precise field type on exit. A group is always a present (required) key, so the
   // `Field<T>` erasure does not affect optionality here.
   const base: ZodType = obj;
-  return base
-    .default(extractDefaults(obj))
-    .meta({ title: o.title }) as Field<{ [K in keyof S]: Infer<S[K]> }>;
+  return base.default(extractDefaults(obj)).meta({ title: o.title }) as Field<{
+    [K in keyof S]: Infer<S[K]>;
+  }>;
 }
 
 type ListOpts = {
@@ -385,7 +394,9 @@ function variants<
     throw new Error("field.variants: at least one variant is required");
   }
   if (o.shared && discriminator in o.shared) {
-    throw new Error(`field.variants: shared fields cannot redefine the discriminator "${discriminator}"`);
+    throw new Error(
+      `field.variants: shared fields cannot redefine the discriminator "${discriminator}"`,
+    );
   }
   for (const [kind, shape] of Object.entries(variantShapes)) {
     if (discriminator in shape) {

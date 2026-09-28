@@ -62,9 +62,7 @@ export function injectTokens(root?: Document | ShadowRoot): void {
   if (injected) return;
   const doc =
     (root as unknown as InjectTokensRoot | undefined) ??
-    (typeof document === "undefined"
-      ? undefined
-      : (document as unknown as InjectTokensRoot));
+    (typeof document === "undefined" ? undefined : (document as unknown as InjectTokensRoot));
   if (!doc) return;
   if (doc.head.querySelector?.("style[data-glasshome-tokens]")) {
     injected = true;

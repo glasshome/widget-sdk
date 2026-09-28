@@ -18,7 +18,12 @@ describe("monotoneCubicPath", () => {
   });
 
   test("2-point input is a straight line segment", () => {
-    expect(monotoneCubicPath([{ x: 0, y: 0 }, { x: 5, y: 3 }])).toBe("M 0 0 L 5 3");
+    expect(
+      monotoneCubicPath([
+        { x: 0, y: 0 },
+        { x: 5, y: 3 },
+      ]),
+    ).toBe("M 0 0 L 5 3");
   });
 
   test("empty input does not throw and returns empty string", () => {

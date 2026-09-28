@@ -30,8 +30,7 @@ export function monotoneCubicPath(points: { x: number; y: number }[]): string {
       tangents.push(0);
     } else {
       tangents.push(
-        (3 * (dxPrev + dxCur)) /
-          ((2 * dxCur + dxPrev) / mPrev + (dxCur + 2 * dxPrev) / mCur),
+        (3 * (dxPrev + dxCur)) / ((2 * dxCur + dxPrev) / mPrev + (dxCur + 2 * dxPrev) / mCur),
       );
     }
   }

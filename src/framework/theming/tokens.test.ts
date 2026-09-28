@@ -158,7 +158,9 @@ describe("the icon disc and slider fill follow the material", () => {
 
   test("the slider fill is the card's own wash, so a full fill matches a toned card", () => {
     const fill = rule(".glasshome-widget-slider-fill");
-    expect(fill).toContain("var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1))");
+    expect(fill).toContain(
+      "var(--widget-color) calc(var(--widget-wash) * var(--material-tint, 1))",
+    );
     expect(fill).not.toContain("--widget-icon-color");
   });
 

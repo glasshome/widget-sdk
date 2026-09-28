@@ -34,12 +34,12 @@ export interface WidgetManifest<C = Record<string, unknown>> {
   defaultSize?: GridSize;
   sdkVersion: string;
   icon?: string;
-  schema?: object;                         // Backward compat; auto-populated by vite plugin from configSchema
+  schema?: object; // Backward compat; auto-populated by vite plugin from configSchema
   defaultConfig?: Record<string, unknown>; // Backward compat; replaced by Zod .default() values
-  configVersion?: number;                  // Per D-11: integer, bumped on breaking config changes
-  capabilities?: CapabilityGrant[];        // HA access the widget requests; enforced by the host
-  cssUrl?: string;                         // Set by the build when the widget emits a CSS file
-  examples?: WidgetExample<C>[];           // Curated showcase states for auto-generated preview images
+  configVersion?: number; // Per D-11: integer, bumped on breaking config changes
+  capabilities?: CapabilityGrant[]; // HA access the widget requests; enforced by the host
+  cssUrl?: string; // Set by the build when the widget emits a CSS file
+  examples?: WidgetExample<C>[]; // Curated showcase states for auto-generated preview images
 }
 
 /**
@@ -68,7 +68,7 @@ export interface WidgetContext {
  */
 export interface WidgetDefinition<C = Record<string, unknown>> {
   manifest: WidgetManifest<C>;
-  configSchema?: ZodType<C, unknown>;  // Per D-10: Zod schema as single source of truth
+  configSchema?: ZodType<C, unknown>; // Per D-10: Zod schema as single source of truth
   migrate?: (config: Record<string, unknown>, fromConfigVersion: number) => Record<string, unknown>; // Per D-13: optional migration function
   // oxlint-disable-next-line typescript/no-explicit-any -- public signature; tighten in 2.0
   component: (props: { config: C }) => any;

@@ -131,13 +131,7 @@ export { type GestureHandlers, useWidgetGestures } from "./gestures/use-widget-g
 // Theming
 // ============================================================================
 
-export {
-  injectTokens,
-  type SvgColorKey,
-  svgColors,
-  type Tone,
-  ToneSchema,
-} from "./theming";
+export { injectTokens, type SvgColorKey, svgColors, type Tone, ToneSchema } from "./theming";
 
 // ============================================================================
 // Config Schema Helpers
@@ -176,8 +170,4 @@ export {
 // Types (re-export all)
 // ============================================================================
 
-export type {
-  EntityView,
-  WidgetStyles,
-  WidgetVariantConfig,
-} from "./types";
+export type { EntityView, WidgetStyles, WidgetVariantConfig } from "./types";

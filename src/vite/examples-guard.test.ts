@@ -61,9 +61,9 @@ describe("examples guard", () => {
   });
 
   test("rejects a fractional tile size", async () => {
-    expect(
-      guard(`[{ label: "half", size: { w: 2.5, h: 2 }, config: {} }]`),
-    ).rejects.toThrow(/examples/);
+    expect(guard(`[{ label: "half", size: { w: 2.5, h: 2 }, config: {} }]`)).rejects.toThrow(
+      /examples/,
+    );
   });
 
   test("rejects a zero or negative tile size", async () => {

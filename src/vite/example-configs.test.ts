@@ -121,8 +121,8 @@ export default { manifest: { name: "config-test" }, configSchema: z.object({ tit
   test("the shape guard reports a malformed entry, not the schema", async () => {
     // A missing `config` is a shape error. Reporting it as a schema rejection
     // would point the author at their schema instead of their example.
-    await expect(
-      guard(ENTITY_SCHEMA, `[{ label: "bare", size: { w: 2, h: 2 } }]`),
-    ).rejects.toThrow(/Invalid `examples`/);
+    await expect(guard(ENTITY_SCHEMA, `[{ label: "bare", size: { w: 2, h: 2 } }]`)).rejects.toThrow(
+      /Invalid `examples`/,
+    );
   });
 });
