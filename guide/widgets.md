@@ -9,7 +9,7 @@ Matches the installed `@glasshome/widget-sdk`. Wins over memory and older docs.
 3. `bun widget build`: typecheck, bundle, validate. Fix every error before previewing.
 4. `bun widget preview <name> --sizes grid`: every example at common tile sizes, light and dark, into `preview/sweep/` with a contact sheet each. Open the images and look. First run: `bun add -d playwright && bunx playwright install chromium`. A crash fails the render with its error.
    - Narrow: `--sizes 150x156,340x242`, `--theme dark`, `--example 0`.
-   - Change state: `--config '<json>'`, `--service '<domain.service>|<entity_id>'`, `--at 2026-06-15T21:00:00`, `--click '<selector>'`.
+   - Change state: `--config '<json>'`, `--service '<domain.service>|<entity_id>|<json>'`, `--at 2026-06-15T21:00:00`, `--click '<selector>'`.
    - Inspect: `--eval '<expr>'` prints per render (`root` = shadow root).
 5. Repeat 3-4 until 1×1, 2×2 and a big tile read right in both themes.
 6. Live: `bun widget connect <dashboard-url>`.
@@ -59,13 +59,13 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 - Theme vars only (`--foreground`, `--muted-foreground`, `--card`, `--primary`, `--border`, `--success`, `--warning`, `--destructive`, `--radius`). Never declare them on `:host`; no own colour/radius tokens; no `--color-*`.
 - Own CSS = layout and bespoke art. No custom panel/row/chip/button chrome.
 - Tailwind classes literal in source, never concatenated. `dark:` works; `isDark()` for the boolean.
-- No dot status lamps. No thin vertical bars (read as a text caret). No all-caps.
+- No dot status lamps. No thin vertical bars (read as a text caret). No all-caps. Separator ` · `.
 - One icon per item, not per line. Icons, fills and pictures before text.
 - Lead with the answer (value + unit, or a verdict); one small line explains it. Never show a value twice. States per device class (Open/Closed, Detected/Clear).
 - Continuous values keep the full-tile slider; buttons beside it. A stepper never stands alone.
 - Dialog content scrolls in `ResponsiveDialogBody`; no own `overflow`/`max-height` in a dialog.
 - Groups: one tap brings all members to one state; locks never unlock in one tap; doors, gates, garage doors never join bulk actions.
-- Readings update text in place; never rebuild DOM. `Index` for lists of readings.
+- Readings update text in place; never rebuild DOM. `Index` for lists of readings. Over 20 s of changing demo data a widget adds and removes no DOM nodes.
 - Everything sits on an edge; text left, values/actions right. One accent per view; defaults quiet. No card in a card.
 - Motion: colours morph, never snap; time transitions with `--duration-state` / `--ease-morph` (zeroed under reduced motion). Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()`; pause offscreen with `useIntersectionPause()`.
 
