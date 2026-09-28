@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0](https://github.com/glasshome/widget-sdk/compare/v1.18.1...v1.19.0) (2026-09-28)
+
+
+### Features
+
+* **guide:** ship a widget guide for coding agents, checked against the SDK's exports ([3654ba6](https://github.com/glasshome/widget-sdk/commit/3654ba6d19f9a98aeb54881de12294da541a2c51))
+* **guide:** widget guide for coding agents ([a4ba34f](https://github.com/glasshome/widget-sdk/commit/a4ba34f1ab1b8ebc2fb919e58a0e31232504bd71))
+
 ## [1.18.1](https://github.com/glasshome/widget-sdk/compare/v1.18.0...v1.18.1) (2026-09-28)
 
 
