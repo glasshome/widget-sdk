@@ -112,6 +112,12 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     props.emptyState && parentCtx
       ? emptyGestures
       : (props.gestures ?? (registry?.hasSheet() ? sheetGestures : undefined));
+  // The outermost <Widget> speaks for the widget; an empty one's hold opens settings, not "see more".
+  const reportsHold = !!parentCtx && !(REGISTRY_KEY in parentCtx);
+  if (reportsHold) {
+    createEffect(() => parentCtx?.onHoldable?.(!props.emptyState && !!gestures()?.holds?.()));
+    onCleanup(() => parentCtx?.onHoldable?.(false));
+  }
   createEffect(() =>
     registry?.setTone(props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined)),
   );

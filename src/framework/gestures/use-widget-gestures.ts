@@ -35,6 +35,8 @@ export interface GestureHandlers {
   dispose: () => void;
   /** Where a hold is filling from, relative to the element; `fired` once it opened. */
   hold?: () => HoldFlood | null;
+  /** True while a hold does something. */
+  holds?: () => boolean;
   /** Keyboard door: Enter or Space taps, the context-menu key or Shift+F10 holds. */
   onKeyDown?: (e: KeyboardEvent) => void;
 }
@@ -201,6 +203,7 @@ export function useWidgetGestures(
         haptics.bump();
         if (state.element) swallowReleaseClick(state.element);
         cfg.hold?.action();
+        ctx?.onHeld?.();
         state.isDown = false; // prevent tap on release
       }, holdDelay);
     }
@@ -348,6 +351,7 @@ export function useWidgetGestures(
     } else if ((e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) && cfg.hold) {
       e.preventDefault();
       cfg.hold.action();
+      ctx?.onHeld?.();
     }
   };
 
@@ -361,6 +365,7 @@ export function useWidgetGestures(
     bindElement,
     touchAction,
     hold,
+    holds: () => !!config().hold,
     dispose: () => {
       clearHold();
       if (resizeObserver) {
