@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0](https://github.com/glasshome/widget-sdk/compare/v1.19.0...v1.20.0) (2026-09-29)
+
+
+### Features
+
+* tell the host which widgets hold and when a hold fires ([86c2093](https://github.com/glasshome/widget-sdk/commit/86c20936f017b504083cd2168951953235f40151))
+* tell the host which widgets hold and when a hold fires ([600fa5e](https://github.com/glasshome/widget-sdk/commit/600fa5e70d20f4d3c5c23128cb6d022ce7eb8ad2))
+
 ## [1.19.0](https://github.com/glasshome/widget-sdk/compare/v1.18.1...v1.19.0) (2026-09-28)
 
 
