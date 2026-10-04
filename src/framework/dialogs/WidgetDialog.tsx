@@ -99,7 +99,7 @@ export interface WidgetDialogProps {
   controlsContent?: JSX.Element;
   /** What holding the tile opens: only what the tile cannot show (a group's members, colours, modes),
       as `PanelSection`s. It opens beside the tile, or from the bottom on a phone. A widget with nothing
-      the tile lacks passes none, and holding it opens nothing. */
+      the tile lacks passes none, and holding it says there is nothing more. */
   sheet?: () => JSX.Element;
   /** The tile's look, worn by its sheet so the tile reads as growing open: its icon in the head,
       its tone in the glass, its picture (a room, an album cover) as a band behind the head. */

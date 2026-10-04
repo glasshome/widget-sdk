@@ -883,7 +883,7 @@
 .glasshome-widget-hold-flood[data-hold] {
   scale: 1;
   opacity: 1;
-  transition-duration: var(--duration-morph, 400ms);
+  transition-duration: var(--duration-hold, 250ms);
   transition-timing-function: linear;
 }
 .glasshome-widget-hold-flood[data-fired] {

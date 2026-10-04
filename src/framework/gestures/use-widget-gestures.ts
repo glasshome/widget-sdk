@@ -6,6 +6,7 @@
  * movement is dominantly on the slide axis.
  */
 
+import { HOLD_GRACE_MS, HOLD_MS } from "@glasshome/ui/solid";
 import { createSignal, useContext } from "solid-js";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { dialogOpeners } from "../hooks/use-widget-dialog";
@@ -15,6 +16,10 @@ import type { GestureConfig } from "../types";
 type GestureOrientation = "horizontal" | "vertical" | "square";
 import { cursors } from "./cursors";
 import { haptics } from "./haptics";
+
+/** A press that starts on a control inside a widget belongs to that control. */
+export const INTERACTIVE =
+  'button, a, input, select, textarea, [role="slider"], [role="radio"], [role="switch"]';
 
 export interface GestureHandlers {
   onPointerDown: (e: PointerEvent) => void;
@@ -35,7 +40,7 @@ export interface GestureHandlers {
   dispose: () => void;
   /** Where a hold is filling from, relative to the element; `fired` once it opened. */
   hold?: () => HoldFlood | null;
-  /** True while a hold does something. */
+  /** True while a hold opens something; the "nothing more here" answer does not count. */
   holds?: () => boolean;
   /** Keyboard door: Enter or Space taps, the context-menu key or Shift+F10 holds. */
   onKeyDown?: (e: KeyboardEvent) => void;
@@ -58,6 +63,8 @@ interface GestureState {
   hasMoved: boolean;
   /** True for mouse/pen once user starts dragging — drives slide path. */
   sliding: boolean;
+  /** Pressed on a control: the control keeps taps and drags, the widget only holds. */
+  holdOnly: boolean;
   holdTimer: ReturnType<typeof setTimeout> | null;
   graceTimer: ReturnType<typeof setTimeout> | null;
   element: HTMLElement | null;
@@ -67,17 +74,20 @@ export function useWidgetGestures(
   wired: () => GestureConfig,
   orientation?: () => GestureOrientation,
 ): GestureHandlers {
-  // A widget whose dialog has a sheet holds to open it, unless it wires its own hold.
+  // Every widget answers a hold: its own, else its sheet, else "nothing more here".
   const ctx = useContext(WidgetCtx);
   const registry = widgetRegistry(ctx);
   const config = (): GestureConfig => {
     const c = wired();
-    if (c.hold || !ctx || !registry?.hasSheet()) return c;
-    return { ...c, hold: { action: () => dialogOpeners.get(ctx)?.() } };
+    if (c.hold || !ctx) return c;
+    return {
+      ...c,
+      hold: {
+        action: () =>
+          registry?.hasSheet() ? dialogOpeners.get(ctx)?.() : registry?.setNothingMore(true),
+      },
+    };
   };
-  // The dock's hold: a tap ends inside the grace, then the fill grows for --duration-morph (400ms).
-  const HOLD_GRACE = 150;
-  const HOLD_DELAY = 550;
   const TAP_THRESHOLD = 10; // px — movement above this means not-a-tap
 
   const state: GestureState = {
@@ -88,6 +98,7 @@ export function useWidgetGestures(
     startTime: 0,
     hasMoved: false,
     sliding: false,
+    holdOnly: false,
     holdTimer: null,
     graceTimer: null,
     element: null,
@@ -151,6 +162,7 @@ export function useWidgetGestures(
     state.isDown = false;
     state.hasMoved = false;
     state.sliding = false;
+    state.holdOnly = false;
   };
 
   const getSlideOrientation = (el?: HTMLElement): "horizontal" | "vertical" => {
@@ -170,9 +182,15 @@ export function useWidgetGestures(
 
   const onPointerDown = (e: PointerEvent) => {
     const cfg = config();
-    if (!cfg.tap && !cfg.hold && !cfg.slide) return;
+    const own =
+      e.target instanceof Element
+        ? e.target.closest(`${INTERACTIVE}, .glasshome-widget-controls`)
+        : null;
+    const holdOnly = own !== null && own !== e.currentTarget;
+    if (holdOnly ? !cfg.hold : !cfg.tap && !cfg.hold && !cfg.slide) return;
 
     state.isDown = true;
+    state.holdOnly = holdOnly;
     state.isTouch = e.pointerType === "touch";
     state.element = e.currentTarget as HTMLElement;
     observeElement(state.element);
@@ -184,7 +202,7 @@ export function useWidgetGestures(
 
     // Hold timer — same on touch and mouse. Cancelled by movement.
     if (cfg.hold) {
-      const holdDelay = cfg.hold.delay ?? HOLD_DELAY;
+      const holdDelay = cfg.hold.delay ?? HOLD_MS;
       const box = state.element.getBoundingClientRect();
       const x = e.clientX - box.left;
       const y = e.clientY - box.top;
@@ -194,7 +212,7 @@ export function useWidgetGestures(
           state.graceTimer = null;
           setHold({ x, y, r, fired: false });
         },
-        Math.min(HOLD_GRACE, holdDelay),
+        Math.min(HOLD_GRACE_MS, holdDelay),
       );
       state.holdTimer = setTimeout(() => {
         state.holdTimer = null;
@@ -209,7 +227,7 @@ export function useWidgetGestures(
     }
 
     // Touch pointers are implicitly captured; mouse/pen needs it explicit.
-    if (!state.isTouch && cfg.slide) {
+    if (!state.isTouch && cfg.slide && !holdOnly) {
       try {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       } catch {
@@ -231,7 +249,7 @@ export function useWidgetGestures(
       state.hasMoved = true;
     }
 
-    if (cfg.slide && state.hasMoved) {
+    if (cfg.slide && state.hasMoved && !state.holdOnly) {
       const el = e.currentTarget as HTMLElement;
       const slideOrientation = getSlideOrientation(el);
 
@@ -269,13 +287,13 @@ export function useWidgetGestures(
     const cfg = config();
     const wasDown = state.isDown;
     const duration = Date.now() - state.startTime;
-    const holdDelay = cfg.hold?.delay ?? HOLD_DELAY;
+    const holdDelay = cfg.hold?.delay ?? HOLD_MS;
 
     clearHold();
 
     // Tap: still down (hold didn't fire), no real movement, released before
     // the hold threshold. Same rule on touch and mouse.
-    if (wasDown && cfg.tap && !state.hasMoved && duration < holdDelay) {
+    if (wasDown && cfg.tap && !state.hasMoved && !state.holdOnly && duration < holdDelay) {
       cfg.tap();
     }
 
@@ -365,7 +383,7 @@ export function useWidgetGestures(
     bindElement,
     touchAction,
     hold,
-    holds: () => !!config().hold,
+    holds: () => !!wired().hold || !!registry?.hasSheet(),
     dispose: () => {
       clearHold();
       if (resizeObserver) {

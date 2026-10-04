@@ -1,5 +1,6 @@
-import { Button, buttonVariants, Icon } from "@glasshome/ui/solid";
+import { Button, buttonVariants, HOLD_MS, Icon } from "@glasshome/ui/solid";
 import { For, type JSX, onCleanup, Show, useContext } from "solid-js";
+import { INTERACTIVE } from "../gestures/use-widget-gestures";
 import { WidgetCtx } from "../hooks/use-widget-context";
 
 /** A continuous value the whole stage (or a row) sets by dragging. */
@@ -16,14 +17,9 @@ export interface PanelSlide {
   step?: number;
 }
 
-const HOLD_MS = 450;
 const SLOP_PX = 8;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-
-/** A press that starts on a control inside the stage belongs to that control, not the stage slide. */
-const INTERACTIVE =
-  'button, a, input, select, textarea, [role="slider"], [role="radio"], [role="switch"]';
 
 /**
  * Tap, hold and slide on one element: a drag past the slop slides (horizontally

@@ -9,6 +9,7 @@
  * any JS measurement.
  */
 
+import { Icon, Popover, PopoverContent } from "@glasshome/ui/solid";
 import {
   type JSX,
   createEffect,
@@ -88,6 +89,8 @@ interface WidgetComponent {
   Glyph: typeof Anatomy.WidgetGlyph;
 }
 
+const NOTHING_MORE_MS = 2000;
+
 function WidgetBase(props: WidgetProps): JSX.Element {
   const parentCtx = useContext(WidgetCtx);
   // An empty tile says "Hold to configure": holding it opens the widget's settings, whatever the widget wired.
@@ -99,7 +102,9 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   }));
   onCleanup(emptyGestures.dispose);
   const registry = widgetRegistry(parentCtx);
-  // A widget that wires no gestures still holds to open its sheet.
+  // The outermost <Widget> speaks for the widget; an empty one's hold opens settings, not "see more".
+  const reportsHold = !!parentCtx && !(REGISTRY_KEY in parentCtx);
+  // A widget that wires no gestures still holds: to its sheet, or to "nothing more here".
   const sheetGestures = useWidgetGestures(() => ({
     hold: registry?.hasSheet()
       ? {
@@ -111,13 +116,16 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const gestures = () =>
     props.emptyState && parentCtx
       ? emptyGestures
-      : (props.gestures ?? (registry?.hasSheet() ? sheetGestures : undefined));
-  // The outermost <Widget> speaks for the widget; an empty one's hold opens settings, not "see more".
-  const reportsHold = !!parentCtx && !(REGISTRY_KEY in parentCtx);
+      : (props.gestures ?? (reportsHold ? sheetGestures : undefined));
   if (reportsHold) {
     createEffect(() => parentCtx?.onHoldable?.(!props.emptyState && !!gestures()?.holds?.()));
     onCleanup(() => parentCtx?.onHoldable?.(false));
   }
+  createEffect(() => {
+    if (!reportsHold || !registry?.nothingMore()) return;
+    const timer = setTimeout(() => registry.setNothingMore(false), NOTHING_MORE_MS);
+    onCleanup(() => clearTimeout(timer));
+  });
   createEffect(() =>
     registry?.setTone(props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined)),
   );
@@ -282,6 +290,20 @@ function WidgetBase(props: WidgetProps): JSX.Element {
               />
             )}
           </div>
+          <Show when={reportsHold}>
+            <Popover
+              open={registry?.nothingMore() ?? false}
+              onOpenChange={(open) => {
+                if (!open) registry?.setNothingMore(false);
+              }}
+              anchorRef={shellEl}
+            >
+              <PopoverContent class="flex w-auto items-center gap-2 p-3 text-sm">
+                <Icon icon="mdi:information-outline" />
+                No more controls for this widget
+              </PopoverContent>
+            </Popover>
+          </Show>
         </WidgetSizeCtx.Provider>
       </WidgetConfirmedCtx.Provider>
     </WidgetCtx.Provider>

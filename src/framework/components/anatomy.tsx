@@ -136,13 +136,10 @@ export function WidgetHero(props: {
   );
 }
 
-/** The tile's control row: beside the value on a wide tile, under it on a narrow one, hidden on a short one. */
+/** The tile's control row: beside the value on a wide tile, under it on a narrow one, hidden on a short one.
+    A press here belongs to the row's controls; the widget only takes a hold from it. */
 export function WidgetControls(props: { children: JSX.Element }): JSX.Element {
-  return (
-    <div class="glasshome-widget-controls" on:pointerdown={(e) => e.stopPropagation()}>
-      {props.children}
-    </div>
-  );
+  return <div class="glasshome-widget-controls">{props.children}</div>;
 }
 
 export function WidgetStepper(props: {
