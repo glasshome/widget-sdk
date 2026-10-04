@@ -184,15 +184,19 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   const toned = () => (!!props.tone && props.tone !== "neutral") || !!props.color;
 
+  const toneStyle = createMemo((): JSX.CSSProperties => ({
+    ...(variantStyles()?.cssVars || {}),
+    ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
+    ...(props.color ? { "--widget-color": props.color } : {}),
+    ...(toned() ? { "--glass-tone": "var(--widget-color)" } : {}),
+  }));
+
   const channelStyle = createMemo((): JSX.CSSProperties => ({
     "container-type": "size",
     "container-name": "widget",
     "touch-action": gestures() && !props.isEditMode ? gestures()?.touchAction() : undefined,
     ...variantStyles()?.container,
-    ...(variantStyles()?.cssVars || {}),
-    ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
-    ...(props.color ? { "--widget-color": props.color } : {}),
-    ...(toned() ? { "--glass-tone": "var(--widget-color)" } : {}),
+    ...toneStyle(),
     ...(props.colorTo
       ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo }
       : {}),
@@ -236,60 +240,68 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     <WidgetCtx.Provider value={contextValue}>
       <WidgetConfirmedCtx.Provider value={() => props.confirmed === true}>
         <WidgetSizeCtx.Provider value={measured}>
-          <div
-            ref={(el) => {
-              setShellEl(el);
-              // Gesture lib has its own size observer (used for "auto" slide
-              // orientation); we just hand it the element.
-              props.gestures?.bindElement(el);
-              emptyGestures.bindElement(el);
-            }}
-            class={cn(
-              "glasshome-widget glass",
-              "relative h-full w-full overflow-hidden rounded-xl select-none",
-              variantStyles()?.class,
-              props.class,
-            )}
-            style={channelStyle()}
-            data-toned={toned() ? "" : undefined}
-            data-confirmed={props.confirmed || undefined}
-            on:pointerenter={onPointerEnter}
-            on:pointerdown={onPointerDown}
-            on:pointermove={onPointerMove}
-            on:pointerup={onPointerUp}
-            on:pointercancel={onPointerCancel}
-            tabIndex={gestureEnabled() ? 0 : undefined}
-            onKeyDown={(e) => {
-              if (gestureEnabled()) gestures()?.onKeyDown?.(e);
-            }}
-          >
-            <Show when={gestures()?.hold}>
-              <span
-                class="glasshome-widget-hold-flood"
-                aria-hidden="true"
-                data-hold={flood() && !flood()?.fired ? "" : undefined}
-                data-fired={flood()?.fired ? "" : undefined}
-                style={holdFloodStyle(flood())}
-              />
-            </Show>
-            <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
-              {props.emptyState ? (
-                <WidgetEmptyStateInner
-                  icon={props.emptyState.icon}
-                  title={props.emptyState.title}
-                  message={props.emptyState.message}
+          <div class="glasshome-widget-frame relative h-full w-full">
+            <div
+              ref={(el) => {
+                setShellEl(el);
+                // Gesture lib has its own size observer (used for "auto" slide
+                // orientation); we just hand it the element.
+                props.gestures?.bindElement(el);
+                emptyGestures.bindElement(el);
+              }}
+              class={cn(
+                "glasshome-widget glass",
+                "relative h-full w-full overflow-hidden rounded-xl select-none",
+                variantStyles()?.class,
+                props.class,
+              )}
+              style={channelStyle()}
+              data-toned={toned() ? "" : undefined}
+              data-confirmed={props.confirmed || undefined}
+              on:pointerenter={onPointerEnter}
+              on:pointerdown={onPointerDown}
+              on:pointermove={onPointerMove}
+              on:pointerup={onPointerUp}
+              on:pointercancel={onPointerCancel}
+              tabIndex={gestureEnabled() ? 0 : undefined}
+              onKeyDown={(e) => {
+                if (gestureEnabled()) gestures()?.onKeyDown?.(e);
+              }}
+            >
+              <Show when={gestures()?.hold}>
+                <span
+                  class="glasshome-widget-hold-flood"
+                  aria-hidden="true"
+                  data-hold={flood() && !flood()?.fired ? "" : undefined}
+                  data-fired={flood()?.fired ? "" : undefined}
+                  style={holdFloodStyle(flood())}
                 />
-              ) : (
-                props.children
+              </Show>
+              <div class="relative h-full w-full" style={{ "z-index": WIDGET_Z.CONTENT }}>
+                {props.emptyState ? (
+                  <WidgetEmptyStateInner
+                    icon={props.emptyState.icon}
+                    title={props.emptyState.title}
+                    message={props.emptyState.message}
+                  />
+                ) : (
+                  props.children
+                )}
+              </div>
+
+              {props.loading && (
+                <div
+                  class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
+                  style={{ "z-index": WIDGET_Z.OVERLAY }}
+                />
               )}
             </div>
-
-            {props.loading && (
-              <div
-                class="glasshome-widget-loading pointer-events-none absolute inset-0 animate-pulse"
-                style={{ "z-index": WIDGET_Z.OVERLAY }}
-              />
-            )}
+            <div
+              class="glasshome-widget-halo glass-halo rounded-xl"
+              style={toneStyle()}
+              data-toned={toned() ? "" : undefined}
+              aria-hidden="true"
+            />
           </div>
           <Show when={reportsHold}>
             <Popover

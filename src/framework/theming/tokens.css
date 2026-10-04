@@ -111,11 +111,17 @@
   --glass-lift: 0.45;
   --glass-shade: 0.05;
   --glass-grain: var(--_material-grain, none);
+  --glass-halo: 1;
   backdrop-filter: var(--widget-backdrop, none);
   -webkit-backdrop-filter: var(--widget-backdrop, none);
 }
+/* The shell's outer glow, beside it so the glow can lie over neighbouring widgets. */
+.glasshome-widget-halo {
+  --glass-lift: 0.45;
+}
 /* The material's fill: an accent wash on a widget that passes no tone of its own. */
-.glasshome-widget:not([data-toned]) {
+.glasshome-widget:not([data-toned]),
+.glasshome-widget-halo:not([data-toned]) {
   --glass-tone: color-mix(
     in srgb,
     var(--material-accent, var(--primary)) calc(var(--_material-fill, 0) * 100%),
