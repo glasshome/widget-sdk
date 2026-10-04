@@ -98,6 +98,34 @@ describe("registry integrity", () => {
     expect(re.test("import 'iconify-icon';")).toBe(true);
     expect(re.test('import { Icon } from "@glasshome/widget-sdk";')).toBe(false);
   });
+
+  test("reading --glass-*, --_* or a retired --material-* name warns; the --material-* variables, --surface-* and knob writes do not", () => {
+    const entry = deprecations.find((d) => d.id === "internal-material-vars");
+    const re = new RegExp(entry?.sourcePattern ?? "$^");
+    for (const internal of [
+      "box-shadow: var(--glass-rim-shine);",
+      "angle: var( --glass-wash-angle, 135deg);",
+      "blur: calc(var(--material-reach) * 2px);",
+      "background: var(--_material-face-raised);",
+      "opacity: var(--material-edge-accent);",
+      "transform: scale(var(--material-depth));",
+      "color: var(--material-hue);",
+    ]) {
+      expect(re.test(internal), internal).toBe(true);
+    }
+    for (const contract of [
+      "background: var(--material-face);",
+      "box-shadow: var(--material-raised), var(--material-pressed);",
+      "color: var(--material-accent, #ff007f);",
+      "background: var(--material-control-fill);",
+      "backdrop-filter: blur(var(--material-blur));",
+      "opacity: calc(var(--material-clarity) / 100%);",
+      "color: var(--surface-tone);",
+      'class="glass [--glass-base:transparent]"',
+    ]) {
+      expect(re.test(contract), contract).toBe(false);
+    }
+  });
 });
 
 describe("widgetFields runtime is wrapped and still works", () => {

@@ -182,6 +182,8 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   const gradient = deprecate(() => props.gradient, "widget.gradient");
 
+  const toned = () => (!!props.tone && props.tone !== "neutral") || !!props.color;
+
   const channelStyle = createMemo((): JSX.CSSProperties => ({
     "container-type": "size",
     "container-name": "widget",
@@ -190,9 +192,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     ...(variantStyles()?.cssVars || {}),
     ...(props.tone ? { "--widget-color": `var(--tone-${props.tone})` } : {}),
     ...(props.color ? { "--widget-color": props.color } : {}),
-    ...((props.tone && props.tone !== "neutral") || props.color
-      ? { "--glass-tone": "var(--widget-color)" }
-      : {}),
+    ...(toned() ? { "--glass-tone": "var(--widget-color)" } : {}),
     ...(props.colorTo
       ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo }
       : {}),
@@ -251,6 +251,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
               props.class,
             )}
             style={channelStyle()}
+            data-toned={toned() ? "" : undefined}
             data-confirmed={props.confirmed || undefined}
             on:pointerenter={onPointerEnter}
             on:pointerdown={onPointerDown}

@@ -100,14 +100,29 @@
   --widget-wash: 22%;
   --widget-wash-2: 11%;
   --glass-wash: var(--widget-wash);
-  --glass-wash-2: var(--widget-wash-2);
-  --glass-wash-angle: 135deg;
+  /* The material's wash style: fade keeps --widget-wash-2, flat runs it up to --widget-wash. */
+  --glass-wash-2: calc(
+    var(--widget-wash-2) + (var(--widget-wash) - var(--widget-wash-2)) *
+      (3 - var(--_material-wash-split, 3)) / 2
+  );
+  --glass-wash-angle: var(--_material-wash-angle, 135deg);
   --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
   --glass-rim: 0.3;
   --glass-lift: 0.45;
   --glass-shade: 0.05;
+  --glass-grain: var(--_material-grain, none);
   backdrop-filter: var(--widget-backdrop, none);
   -webkit-backdrop-filter: var(--widget-backdrop, none);
+}
+/* The material's fill: an accent wash on a widget that passes no tone of its own. */
+.glasshome-widget:not([data-toned]) {
+  --glass-tone: color-mix(
+    in srgb,
+    var(--material-accent, var(--primary)) calc(var(--_material-fill, 0) * 100%),
+    transparent
+  );
+  --glass-wash: 100%;
+  --glass-wash-2: 50%;
 }
 /* A fill widget keeps a neutral card; the fill carries the tone, so a full fill is the toned card. */
 .glasshome-widget:has(.glasshome-widget-slider-fill) {
@@ -116,6 +131,12 @@
 }
 .dark .glasshome-widget {
   --glass-shade: 0;
+}
+/* Ink: the shell's line goes above every widget layer (they stack to 30), or full-bleed media buries it. */
+@container not style(--material-ink-level: 0) {
+  .glasshome-widget::after {
+    z-index: 40;
+  }
 }
 
 /* === Slot: content layout === */

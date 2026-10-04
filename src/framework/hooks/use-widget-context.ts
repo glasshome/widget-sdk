@@ -1,3 +1,4 @@
+import type { MaterialTerms } from "@glasshome/ui/tokens";
 import { createContext, useContext } from "solid-js";
 
 /**
@@ -38,6 +39,12 @@ export interface WidgetViewer {
   name: string | null;
 }
 
+export interface WidgetMaterial {
+  /** The preset today; a shared material's id once materials can be shared. */
+  id: string;
+  terms: MaterialTerms;
+}
+
 export interface ReactiveWidgetContext {
   updateConfig: (config: Record<string, unknown>) => void;
   /**
@@ -56,6 +63,8 @@ export interface ReactiveWidgetContext {
   dashboard?: () => WidgetDashboard;
   /** Who is looking. Absent on hosts that predate this field. */
   viewer?: () => WidgetViewer;
+  /** The material the home wears. Absent on hosts that predate this field. */
+  material?: () => WidgetMaterial;
   /** True when the household turned on Developer Mode; widget dialogs show Debug only then. */
   developer?: () => boolean;
   /** The tile's box on the page, so a held tile's sheet opens beside it. Absent: it opens centred. */
