@@ -132,6 +132,12 @@
 .dark .glasshome-widget {
   --glass-shade: 0;
 }
+/* Ink: the shell's line goes above every widget layer (they stack to 30), or full-bleed media buries it. */
+@container not style(--material-ink-level: 0) {
+  .glasshome-widget::after {
+    z-index: 40;
+  }
+}
 
 /* === Slot: content layout === */
 /* Default: column. Flip to row only on wide-and-short widgets (matches the
