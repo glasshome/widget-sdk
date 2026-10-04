@@ -130,6 +130,18 @@ export const deprecations: readonly DeprecationEntry[] = [
     sourcePattern: "<WidgetSliderFill[^>]*\\scolor=",
   },
   {
+    // No wrappable runtime symbol: a stylesheet reading the glass formula's
+    // internals breaks on every ui refactor. Setting a .glass knob stays fine.
+    id: "internal-material-vars",
+    since: "1.21.0",
+    removeIn: "2.0.0",
+    replacement:
+      "the public material contract (--material-accent, -face, -well, -raised, -pressed, -control-track, -control-fill, -control-knob, --surface-tone, --surface-wash) or useMaterial()",
+    docsUrl: "https://glasshome.app/docs/widget-sdk/materials",
+    sourcePattern:
+      "var\\(\\s*--(?:glass-[a-z0-9-]+|material-(?!(?:accent|face|well|raised|pressed|control-track|control-fill|control-knob)(?![a-z0-9-]))[a-z0-9-]+)",
+  },
+  {
     // Type-only: layout, elements, plugins, interactions and extends were never read by the shell.
     id: "WidgetVariantConfig.layout",
     since: "1.18.0",

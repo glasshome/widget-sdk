@@ -11,12 +11,14 @@ export {
   useWidgetContext,
   WidgetCtx,
   type WidgetDashboard,
+  type WidgetMaterial,
   type WidgetViewer,
   type WidgetDimensions,
 } from "./use-widget-context";
 // Dashboard (host-fed; empty fallback outside a host)
 export { useWidgetDashboard } from "./use-widget-dashboard";
 export { useWidgetViewer } from "./use-widget-viewer";
+export { useMaterial } from "./use-material";
 // Dimensions (provided only inside <Widget>)
 export {
   useWidgetDimensions,
