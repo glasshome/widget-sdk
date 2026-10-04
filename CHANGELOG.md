@@ -5,6 +5,15 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.1](https://github.com/glasshome/widget-sdk/compare/v1.20.0...v1.20.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **deps:** ui 1.24.0, for the shared hold length ([4495c66](https://github.com/glasshome/widget-sdk/commit/4495c6698b3c7e4df55949513eb44dda8fede20a))
+* every widget answers a hold, from anywhere on it, at the shared hold length ([12ff605](https://github.com/glasshome/widget-sdk/commit/12ff605ad9624be836a6649902d9200e25e74607))
+* every widget answers a hold, from anywhere on it, at the shared hold length ([4454ad4](https://github.com/glasshome/widget-sdk/commit/4454ad457aa1d15c3c95067a6bfe2cd15bd8440e))
+
 ## [1.20.0](https://github.com/glasshome/widget-sdk/compare/v1.19.0...v1.20.0) (2026-09-29)
 
 
