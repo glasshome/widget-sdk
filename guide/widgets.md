@@ -57,6 +57,7 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 
 - No hand-rolling what the SDK has: sliders, steppers, dialogs, sheets, hold gestures, loading/error states.
 - Theme vars only (`--foreground`, `--muted-foreground`, `--card`, `--primary`, `--border`, `--success`, `--warning`, `--destructive`, `--radius`). Never declare them on `:host`; no own colour/radius tokens; no `--color-*`.
+- Material: a part you draw follows the home's material through `--material-accent`, `--material-face`, `--material-well`, `--material-raised`, `--material-pressed`, `--material-control-track|fill|knob`, `--surface-tone`, `--surface-wash`. `useMaterial()` to decide (`terms.face`, `terms.glow`), never to paint. Never read any other `--glass-*` or `--material-*`; the build warns.
 - Own CSS = layout and bespoke art. No custom panel/row/chip/button chrome.
 - Tailwind classes literal in source, never concatenated. `dark:` works; `isDark()` for the boolean.
 - No dot status lamps. No thin vertical bars (read as a text caret). No all-caps. Separator ` · `.
@@ -71,4 +72,4 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 
 ## More
 
-Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widgets as worked examples: https://github.com/glasshome/widgets (`src/button`, `src/sensor`); where they differ from this guide, the guide wins.
+Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-sdk/materials`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widgets as worked examples: https://github.com/glasshome/widgets (`src/button`, `src/sensor`); where they differ from this guide, the guide wins.
