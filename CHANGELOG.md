@@ -5,6 +5,23 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0](https://github.com/glasshome/widget-sdk/compare/v1.20.1...v1.21.0) (2026-10-04)
+
+
+### Features
+
+* **material:** the lint flags --glass-*, --_* and the retired --material-* names ([38aca4f](https://github.com/glasshome/widget-sdk/commit/38aca4f86cee2cd96d4e74f5397c2ab242ee22c8))
+* **material:** the widget shell wears the material's grain ([b3e34fa](https://github.com/glasshome/widget-sdk/commit/b3e34fa59dc51054537c09f7d5736e170979ea0b))
+* **material:** useMaterial(), the material fill, and a lint for internal material reads ([5074386](https://github.com/glasshome/widget-sdk/commit/507438617eabadf228ce2eab4b78e54589ceec8f))
+* **material:** useMaterial(), the material fill, and a lint for internal material reads ([0e4582b](https://github.com/glasshome/widget-sdk/commit/0e4582b4c2ef87976459c849e88909fa35e9b75c))
+* **material:** widgets read --surface-*; any --glass-* or --material-* read warns ([6cde8c9](https://github.com/glasshome/widget-sdk/commit/6cde8c92e977769ab01a96f5ea7570562922c6b0))
+
+
+### Bug Fixes
+
+* **deps:** ui 1.25.0, for the material terms useMaterial() returns ([9e4ee3e](https://github.com/glasshome/widget-sdk/commit/9e4ee3e05896f6306e2ca1dabf1fb8791e58b3da))
+* **material:** the inked widget shell keeps its line above every layer ([9fd10e4](https://github.com/glasshome/widget-sdk/commit/9fd10e422557729e7d4de47d420d8e57129c4b0c))
+
 ## [1.20.1](https://github.com/glasshome/widget-sdk/compare/v1.20.0...v1.20.1) (2026-10-04)
 
 
