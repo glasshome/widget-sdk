@@ -1,6 +1,6 @@
 import { type Accessor, createSignal, type Setter } from "solid-js";
 
-/** What a widget's parts tell each other: whether its dialog has a sheet, and the look the sheet wears. */
+/** What a widget's parts tell each other: whether its dialog has a sheet, the look the sheet wears, and a hold that found none. */
 export interface WidgetRegistry {
   hasSheet: Accessor<boolean>;
   setHasSheet: Setter<boolean>;
@@ -13,6 +13,9 @@ export interface WidgetRegistry {
   /** The head's icon. */
   icon: Accessor<string | undefined>;
   setIcon: Setter<string | undefined>;
+  /** A hold found no sheet: the shell says the widget has nothing more to show. */
+  nothingMore: Accessor<boolean>;
+  setNothingMore: Setter<boolean>;
 }
 
 const registries = new WeakMap<object, WidgetRegistry>();
@@ -34,6 +37,7 @@ export function widgetRegistry(ctx: object | undefined): WidgetRegistry | undefi
     const [tone, setTone] = createSignal<string>();
     const [accent, setAccent] = createSignal<string>();
     const [icon, setIcon] = createSignal<string>();
+    const [nothingMore, setNothingMore] = createSignal(false);
     registry = {
       hasSheet,
       setHasSheet,
@@ -43,6 +47,8 @@ export function widgetRegistry(ctx: object | undefined): WidgetRegistry | undefi
       setAccent,
       icon,
       setIcon,
+      nothingMore,
+      setNothingMore,
     };
     registries.set(key, registry);
   }
