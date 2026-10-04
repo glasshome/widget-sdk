@@ -103,14 +103,14 @@
   /* The material's wash style: fade keeps --widget-wash-2, flat runs it up to --widget-wash. */
   --glass-wash-2: calc(
     var(--widget-wash-2) + (var(--widget-wash) - var(--widget-wash-2)) *
-      (3 - var(--material-wash-split, 3)) / 2
+      (3 - var(--_material-wash-split, 3)) / 2
   );
-  --glass-wash-angle: var(--material-wash-angle, 135deg);
+  --glass-wash-angle: var(--_material-wash-angle, 135deg);
   --glass-base: color-mix(in srgb, var(--card) var(--material-clarity, 60%), transparent);
   --glass-rim: 0.3;
   --glass-lift: 0.45;
   --glass-shade: 0.05;
-  --glass-grain: var(--material-grain, none);
+  --glass-grain: var(--_material-grain, none);
   backdrop-filter: var(--widget-backdrop, none);
   -webkit-backdrop-filter: var(--widget-backdrop, none);
 }
@@ -118,7 +118,7 @@
 .glasshome-widget:not([data-toned]) {
   --glass-tone: color-mix(
     in srgb,
-    var(--surface-accent, var(--primary)) calc(var(--material-fill, 0) * 100%),
+    var(--material-accent, var(--primary)) calc(var(--_material-fill, 0) * 100%),
     transparent
   );
   --glass-wash: 100%;

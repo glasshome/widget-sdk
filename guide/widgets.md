@@ -57,7 +57,7 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 
 - No hand-rolling what the SDK has: sliders, steppers, dialogs, sheets, hold gestures, loading/error states.
 - Theme vars only (`--foreground`, `--muted-foreground`, `--card`, `--primary`, `--border`, `--success`, `--warning`, `--destructive`, `--radius`). Never declare them on `:host`; no own colour/radius tokens; no `--color-*`.
-- Material: a part you draw follows the home's material through the `--surface-*` variables (`--surface-accent`, `--surface-face`, `--surface-well`, `--surface-raised`, `--surface-pressed`, `--surface-control-track|fill|knob`, `--surface-tone`, `--surface-wash`). `useMaterial()` to decide (`terms.face`, `terms.glow`), never to paint. Never read `--glass-*` or `--material-*`; the build warns.
+- Material: a part you draw follows the home's material through `--material-*` (`--material-accent`, `--material-face`, `--material-well`, `--material-raised`, `--material-pressed`, `--material-control-track|fill|knob`, `--material-blur`, `--material-clarity`, `--material-tint`, `--material-glow`) and its own color through `--surface-tone`, `--surface-wash`. `useMaterial()` to decide (`terms.face`, `terms.glow`), never to paint. Never read `--glass-*` or `--_*`; the build warns, and names the retired `--material-*` ones.
 - Own CSS = layout and bespoke art. No custom panel/row/chip/button chrome.
 - Tailwind classes literal in source, never concatenated. `dark:` works; `isDark()` for the boolean.
 - No dot status lamps. No thin vertical bars (read as a text caret). No all-caps. Separator ` · `.
