@@ -135,11 +135,9 @@ export const deprecations: readonly DeprecationEntry[] = [
     id: "internal-material-vars",
     since: "1.21.0",
     removeIn: "2.0.0",
-    replacement:
-      "the public material contract (--material-accent, -face, -well, -raised, -pressed, -control-track, -control-fill, -control-knob, --surface-tone, --surface-wash) or useMaterial()",
+    replacement: "the --surface-* variables, or useMaterial()",
     docsUrl: "https://glasshome.app/docs/widgets/widget-sdk/materials",
-    sourcePattern:
-      "var\\(\\s*--(?:glass-[a-z0-9-]+|material-(?!(?:accent|face|well|raised|pressed|control-track|control-fill|control-knob)(?![a-z0-9-]))[a-z0-9-]+)",
+    sourcePattern: "var\\(\\s*--(?:glass|material)-[a-z0-9-]+",
   },
   {
     // Type-only: layout, elements, plugins, interactions and extends were never read by the shell.

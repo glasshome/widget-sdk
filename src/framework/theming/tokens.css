@@ -118,7 +118,7 @@
 .glasshome-widget:not([data-toned]) {
   --glass-tone: color-mix(
     in srgb,
-    var(--material-accent, var(--primary)) calc(var(--material-fill, 0) * 100%),
+    var(--surface-accent, var(--primary)) calc(var(--material-fill, 0) * 100%),
     transparent
   );
   --glass-wash: 100%;

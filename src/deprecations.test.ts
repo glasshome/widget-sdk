@@ -99,7 +99,7 @@ describe("registry integrity", () => {
     expect(re.test('import { Icon } from "@glasshome/widget-sdk";')).toBe(false);
   });
 
-  test("internal material reads warn; the public contract and knob writes do not", () => {
+  test("reading --glass-* or --material-* warns; --surface-* reads and knob writes do not", () => {
     const entry = deprecations.find((d) => d.id === "internal-material-vars");
     const re = new RegExp(entry?.sourcePattern ?? "$^");
     for (const internal of [
@@ -112,10 +112,10 @@ describe("registry integrity", () => {
       expect(re.test(internal), internal).toBe(true);
     }
     for (const contract of [
-      "background: var(--material-face);",
-      "box-shadow: var(--material-raised), var(--material-pressed);",
-      "color: var(--material-accent, #ff007f);",
-      "background: var(--material-control-fill);",
+      "background: var(--surface-face);",
+      "box-shadow: var(--surface-raised), var(--surface-pressed);",
+      "color: var(--surface-accent, #ff007f);",
+      "background: var(--surface-control-fill);",
       "color: var(--surface-tone);",
       'class="glass [--glass-base:transparent]"',
     ]) {
