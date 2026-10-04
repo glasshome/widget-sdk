@@ -110,6 +110,7 @@
   --glass-rim: 0.3;
   --glass-lift: 0.45;
   --glass-shade: 0.05;
+  --glass-grain: var(--material-grain, none);
   backdrop-filter: var(--widget-backdrop, none);
   -webkit-backdrop-filter: var(--widget-backdrop, none);
 }
