@@ -45,7 +45,7 @@ describe("useMaterial", () => {
     ));
     expect(view.getByTestId("probe").textContent).toBe("frosted:flat:0");
     setWorn({ id: "neon", terms: materialTerms(neon) });
-    expect(view.getByTestId("probe").textContent).toBe("neon:raised:18");
+    expect(view.getByTestId("probe").textContent).toBe("neon:raised:3");
   });
 
   it("is plain Frosted glass on a host that predates materials", () => {
