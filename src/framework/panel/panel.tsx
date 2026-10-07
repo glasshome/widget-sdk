@@ -1,4 +1,4 @@
-import { Button, buttonVariants, HOLD_MS, Icon } from "@glasshome/ui/solid";
+import { Button, buttonVariants, HOLD_MS, Icon, spendLongPress } from "@glasshome/ui/solid";
 import { For, type JSX, onCleanup, Show, useContext } from "solid-js";
 import { INTERACTIVE } from "../gestures/use-widget-gestures";
 import { WidgetCtx } from "../hooks/use-widget-context";
@@ -68,6 +68,7 @@ function pointerGestures(opts: {
       if (opts.onHold) {
         holdTimer = setTimeout(() => {
           held = true;
+          spendLongPress();
           opts.onHold?.();
           ctx?.onHeld?.();
         }, HOLD_MS);

@@ -6,7 +6,7 @@
  * movement is dominantly on the slide axis.
  */
 
-import { HOLD_GRACE_MS, HOLD_MS } from "@glasshome/ui/solid";
+import { HOLD_GRACE_MS, HOLD_MS, spendLongPress } from "@glasshome/ui/solid";
 import { createSignal, useContext } from "solid-js";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { dialogOpeners } from "../hooks/use-widget-dialog";
@@ -219,6 +219,7 @@ export function useWidgetGestures(
         if (!state.isDown || state.hasMoved) return;
         setHold((h) => (h ? { ...h, fired: true } : h));
         haptics.bump();
+        spendLongPress();
         if (state.element) swallowReleaseClick(state.element);
         cfg.hold?.action();
         ctx?.onHeld?.();
