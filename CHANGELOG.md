@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.1](https://github.com/glasshome/widget-sdk/compare/v1.22.0...v1.22.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** ui 1.28.0, for spendLongPress ([201c879](https://github.com/glasshome/widget-sdk/commit/201c879f63470256ef55d24467a3887c710af2b1))
+* **gestures:** a hold spends the press, so Android's long press stays off the sheet it opened ([ecf1a3c](https://github.com/glasshome/widget-sdk/commit/ecf1a3c1a7cb05d9a010b487645804656e2ff823))
+
 ## [1.22.0](https://github.com/glasshome/widget-sdk/compare/v1.21.0...v1.22.0) (2026-10-04)
 
 
