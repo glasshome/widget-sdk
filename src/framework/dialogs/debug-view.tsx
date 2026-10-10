@@ -17,10 +17,11 @@ import {
   SectionIcon,
   SectionMeta,
   SectionRow,
+  type CopyState,
+  useCopyText,
 } from "@glasshome/ui/solid";
 import { createMemo, For, type JSX, Show } from "solid-js";
 import type { EntityView } from "../types";
-import { type CopyState, useCopyText } from "../utils/clipboard";
 
 export interface WidgetDebugEntity {
   entity_id: string;

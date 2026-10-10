@@ -9,6 +9,7 @@ import type {
   SchemaForm as UISchemaForm,
 } from "@glasshome/ui/solid";
 import {
+  type CopyState,
   Empty,
   Icon,
   EmptyDescription,
@@ -20,6 +21,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  useCopyText,
 } from "@glasshome/ui/solid";
 import {
   type ComponentProps,
@@ -39,7 +41,6 @@ import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
-import { type CopyState, useCopyText } from "../utils/clipboard";
 import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
 
