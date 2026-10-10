@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.2](https://github.com/glasshome/widget-sdk/compare/v1.22.1...v1.22.2) (2026-10-10)
+
+
+### Bug Fixes
+
+* copyText and useCopyText come from @glasshome/ui, one clipboard implementation for host and widgets ([#29](https://github.com/glasshome/widget-sdk/issues/29)) ([cc77609](https://github.com/glasshome/widget-sdk/commit/cc7760917820d5d9e590e98db79a96fb96175609))
+
 ## [1.22.1](https://github.com/glasshome/widget-sdk/compare/v1.22.0...v1.22.1) (2026-10-07)
 
 
