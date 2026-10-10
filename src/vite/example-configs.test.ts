@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runSchemaGuard } from "./index";
+import { inProcessIntrospector } from "./in-process-introspector";
 
 // Fixture bundles live inside the repo so their `import "zod"` resolves
 // against this package's node_modules.
@@ -32,6 +33,7 @@ export default {
 function guard(schemaFields: string, examples: string) {
   const outFile = writeBundle(schemaFields, examples);
   return runSchemaGuard({
+    introspect: inProcessIntrospector,
     outFile,
     hashFile: join(tmpDir, `hash-${fixtureCount}.json`),
     widgetName: "config-test",
@@ -95,6 +97,7 @@ describe("example configs are parsed against the widget's own configSchema", () 
     );
     await expect(
       runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile,
         hashFile: join(tmpDir, "no-schema.json"),
         widgetName: "config-test",
@@ -111,6 +114,7 @@ export default { manifest: { name: "config-test" }, configSchema: z.object({ tit
     );
     await expect(
       runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile,
         hashFile: join(tmpDir, "no-examples.json"),
         widgetName: "config-test",

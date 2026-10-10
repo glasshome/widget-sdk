@@ -25,6 +25,7 @@ import { deprecations, formatDeprecation } from "../deprecations";
 import type { ExampleConfigIssue, WidgetIntrospection } from "./introspect-core";
 import {
   createIntrospectSession,
+  type IntrospectResult,
   type IntrospectSession,
   type IntrospectSessionOptions,
   introspectOnce,
@@ -274,6 +275,8 @@ export function assertHookReadsDeclared(
   }
 }
 
+export type Introspector = (outFile: string) => IntrospectResult | Promise<IntrospectResult>;
+
 export async function runSchemaGuard(args: {
   outFile: string;
   hashFile: string;
@@ -281,12 +284,14 @@ export async function runSchemaGuard(args: {
   manifestPath?: string;
   /** Persistent worker to reuse. Only `bun widget connect`'s watch loop passes one. */
   session?: IntrospectSession;
+  /** Reads the bundle when no session is given. Defaults to one subprocess per call. */
+  introspect?: Introspector;
 }): Promise<void> {
   if (!existsSync(args.outFile)) return;
 
   const read = args.session
     ? await args.session.introspect(args.outFile)
-    : introspectOnce(args.outFile);
+    : await (args.introspect ?? introspectOnce)(args.outFile);
   if (!read.ok) {
     // Fatal on purpose. This was a silent `return` for months, then a warning.
     // A warning is still wrong: the build stays green while the examples and

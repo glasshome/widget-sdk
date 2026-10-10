@@ -2,6 +2,7 @@ import { afterAll, describe, expect, spyOn, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runSchemaGuard } from "./index";
+import { inProcessIntrospector } from "./in-process-introspector";
 
 // Fixture bundles live inside the repo so their `import "zod"` resolves
 // against this package's node_modules.
@@ -31,7 +32,12 @@ describe("runSchemaGuard", () => {
   test("first build records hash + configVersion", async () => {
     const hashFile = join(tmpDir, "a.schema-hash");
     const outFile = writeBundle(`title: z.string()`, 1);
-    await runSchemaGuard({ outFile, hashFile, widgetName: "a" });
+    await runSchemaGuard({
+      introspect: inProcessIntrospector,
+      outFile,
+      hashFile,
+      widgetName: "a",
+    });
     const record = JSON.parse(readFileSync(hashFile, "utf-8"));
     expect(record.hash).toMatch(/^[a-f0-9]{16}$/);
     expect(record.configVersion).toBe(1);
@@ -40,12 +46,14 @@ describe("runSchemaGuard", () => {
   test("shape change without configVersion bump fails the build", async () => {
     const hashFile = join(tmpDir, "b.schema-hash");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "b",
     });
     await expect(
       runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile: writeBundle(`title: z.string(), count: z.number()`, 1),
         hashFile,
         widgetName: "b",
@@ -60,11 +68,13 @@ describe("runSchemaGuard", () => {
   test("shape change with configVersion bump passes and re-records", async () => {
     const hashFile = join(tmpDir, "c.schema-hash");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "c",
     });
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string(), count: z.number()`, 2),
       hashFile,
       widgetName: "c",
@@ -76,11 +86,13 @@ describe("runSchemaGuard", () => {
   test("unchanged shape passes with same configVersion", async () => {
     const hashFile = join(tmpDir, "d.schema-hash");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "d",
     });
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "d",
@@ -95,12 +107,14 @@ describe("runSchemaGuard", () => {
     // forever (bug 1543588417600753795).
     const hashFile = join(tmpDir, "unchanged.schema-hash");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "unchanged",
     });
     const mtimeBefore = statSync(hashFile).mtimeMs;
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "unchanged",
@@ -112,6 +126,7 @@ describe("runSchemaGuard", () => {
     const hashFile = join(tmpDir, "e.schema-hash");
     writeFileSync(hashFile, "0123456789abcdef");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "e",
@@ -125,12 +140,14 @@ describe("runSchemaGuard", () => {
     // visible to a serialiser that reaches inside `properties`.
     const hashFile = join(tmpDir, "rename.schema-hash");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string(), subtitle: z.string().optional()`, 1),
       hashFile,
       widgetName: "rename",
     });
     await expect(
       runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile: writeBundle(`title: z.string(), caption: z.string().optional()`, 1),
         hashFile,
         widgetName: "rename",
@@ -141,12 +158,14 @@ describe("runSchemaGuard", () => {
   test("changing an enum's members without a configVersion bump fails the build", async () => {
     const hashFile = join(tmpDir, "enum.schema-hash");
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`fit: z.enum(["cover", "contain"])`, 1),
       hashFile,
       widgetName: "enum",
     });
     await expect(
       runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile: writeBundle(`fit: z.enum(["cover", "stretch"])`, 1),
         hashFile,
         widgetName: "enum",
@@ -163,6 +182,7 @@ describe("runSchemaGuard", () => {
     const warn = spyOn(console, "warn").mockImplementation(() => {});
     try {
       await runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile: writeBundle(`title: z.string()`, 1),
         hashFile,
         widgetName: "unversioned",
@@ -179,6 +199,7 @@ describe("runSchemaGuard", () => {
     // Upgraded record is comparable, so the next shape change is caught.
     await expect(
       runSchemaGuard({
+        introspect: inProcessIntrospector,
         outFile: writeBundle(`title: z.number()`, 1),
         hashFile,
         widgetName: "unversioned",
@@ -190,7 +211,12 @@ describe("runSchemaGuard", () => {
     const hashFile = join(tmpDir, "f.schema-hash");
     const outFile = join(tmpDir, "no-schema.js");
     writeFileSync(outFile, `export default { manifest: { name: "f" } };\n`);
-    await runSchemaGuard({ outFile, hashFile, widgetName: "f" });
+    await runSchemaGuard({
+      introspect: inProcessIntrospector,
+      outFile,
+      hashFile,
+      widgetName: "f",
+    });
     expect(existsSync(hashFile)).toBe(false);
   });
 
@@ -199,6 +225,7 @@ describe("runSchemaGuard", () => {
     const manifestPath = join(tmpDir, "g-manifest.json");
     writeFileSync(manifestPath, JSON.stringify({ name: "g" }));
     await runSchemaGuard({
+      introspect: inProcessIntrospector,
       outFile: writeBundle(`title: z.string()`, 1),
       hashFile,
       widgetName: "g",

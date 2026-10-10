@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { MAX_EXAMPLES, runSchemaGuard } from "./index";
+import { inProcessIntrospector } from "./in-process-introspector";
 
 // Fixture bundles live inside the repo so their `import "zod"` resolves
 // against this package's node_modules.
@@ -27,6 +28,7 @@ function writeBundle(examples: string): string {
 function guard(examples: string) {
   const outFile = writeBundle(examples);
   return runSchemaGuard({
+    introspect: inProcessIntrospector,
     outFile,
     hashFile: join(tmpDir, `hash-${fixtureCount}.json`),
     widgetName: "examples-test",
@@ -46,7 +48,12 @@ describe("examples guard", () => {
     const outFile = join(tmpDir, "no-examples.js");
     writeFileSync(outFile, `export default { manifest: { name: "examples-test" } };\n`);
     expect(
-      runSchemaGuard({ outFile, hashFile: join(tmpDir, "h.json"), widgetName: "examples-test" }),
+      runSchemaGuard({
+        introspect: inProcessIntrospector,
+        outFile,
+        hashFile: join(tmpDir, "h.json"),
+        widgetName: "examples-test",
+      }),
     ).resolves.toBeUndefined();
   });
 
