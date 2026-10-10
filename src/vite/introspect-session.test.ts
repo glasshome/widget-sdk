@@ -105,7 +105,8 @@ describe("createIntrospectSession", () => {
   });
 
   test("kills and respawns after a module-eval hang", async () => {
-    const session = createIntrospectSession({ timeoutMs: 1_500 });
+    // The successor's cold DOM install runs under this budget too, so it stays far above that work.
+    const session = createIntrospectSession({ timeoutMs: 5_000 });
     try {
       const hung = await session.introspect(writeBundle(`while (true) {}\nexport default {};\n`));
       expect(hung.ok).toBe(false);
@@ -119,25 +120,39 @@ describe("createIntrospectSession", () => {
   }, 20_000);
 
   test("a replaced worker's late exit does not fail the successor's request", async () => {
-    const session = createIntrospectSession({ timeoutMs: 1_500 });
+    const started = join(tmpDir, "successor-started");
+    const release = join(tmpDir, "successor-release");
+    const waitFor = (path: string) =>
+      `await new Promise((done) => { const t = setInterval(() => { if (existsSync(${JSON.stringify(path)})) { clearInterval(t); done(); } }, 10); });\n`;
+    // An RSS limit of 1 byte retires the worker after every request.
+    const session = createIntrospectSession({ rssLimitBytes: 1 });
     try {
-      // Hangs at import, and takes its time leaving once killed.
-      const hung = await session.introspect(
+      // Once killed, leaves only after the successor's request has started.
+      const first = await session.introspect(
         writeBundle(
-          `process.on("SIGTERM", () => setTimeout(() => process.exit(0), 500));\n` +
-            `await new Promise(() => {});\nexport default {};\n`,
+          `import { existsSync } from "node:fs";\n` +
+            `process.on("SIGTERM", async () => { ${waitFor(started)} process.exit(0); });\n` +
+            namedWidget("predecessor"),
         ),
       );
-      expect(hung.ok).toBe(false);
+      expect(first.ok).toBe(true);
+      const oldPid = session.childPid as number;
 
-      // Still in flight on the new worker when the old one finally exits.
-      const next = await session.introspect(
+      const next = session.introspect(
         writeBundle(
-          `const until = Date.now() + 800;\nwhile (Date.now() < until) {}\n` +
+          `import { existsSync, writeFileSync } from "node:fs";\n` +
+            `writeFileSync(${JSON.stringify(started)}, "");\n` +
+            waitFor(release) +
             namedWidget("after-stale-exit"),
         ),
       );
-      expect(next.ok ? next.value.manifest?.name : next.reason).toBe("after-stale-exit");
+      expect(await waitUntil(() => !alive(oldPid), 10_000)).toBe(true);
+      expect(session.childPid).not.toBeNull();
+      expect(session.childPid).not.toBe(oldPid);
+      writeFileSync(release, "");
+
+      const result = await next;
+      expect(result.ok ? result.value.manifest?.name : result.reason).toBe("after-stale-exit");
     } finally {
       await session.dispose();
     }
