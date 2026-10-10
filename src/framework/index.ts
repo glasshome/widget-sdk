@@ -154,18 +154,16 @@ export { imageSrc } from "./image-src";
 // Utilities
 // ============================================================================
 
+export { type CopyState, copyText, useCopyText } from "@glasshome/ui/solid";
 export {
   calculateLightGroup,
   calculateSensorGroup,
-  type CopyState,
-  copyText,
   countActiveEntities,
   getEntityAttribute,
   isEntityActive,
   type LightGroupResult,
   type SensorGroupResult,
   type SensorGroupType,
-  useCopyText,
 } from "./utils";
 
 // ============================================================================
