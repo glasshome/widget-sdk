@@ -5,6 +5,23 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0](https://github.com/glasshome/widget-sdk/compare/v1.22.2...v1.23.0) (2026-10-11)
+
+
+### Features
+
+* **vite:** introspect session takes a clock and a worker transport, introspectOnce takes timeoutMs ([152a4ad](https://github.com/glasshome/widget-sdk/commit/152a4adca9a28148a4d564e7a1aa77da788e01e3))
+
+
+### Bug Fixes
+
+* **deps:** widget-contract 0.4.0 and ui 1.33.0, for the clock and the test doors ([d82f404](https://github.com/glasshome/widget-sdk/commit/d82f404c8f030c6f42bdffab9679032153ac2dde))
+
+
+### Performance Improvements
+
+* **vite:** schema and example guards take an introspector, one real subprocess test remains ([bd74d01](https://github.com/glasshome/widget-sdk/commit/bd74d010730f8e8017c110f9eb88e8b76f509b49))
+
 ## [1.22.2](https://github.com/glasshome/widget-sdk/compare/v1.22.1...v1.22.2) (2026-10-10)
 
 
