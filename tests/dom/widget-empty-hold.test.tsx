@@ -1,8 +1,10 @@
+import { HOLD_MS } from "@glasshome/ui/solid";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetDialog } from "../../src/framework/hooks/use-widget-dialog";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
+import { useFakeTime } from "./harness/fake-time";
 
 function EmptyWidget() {
   const dialog = useWidgetDialog();
@@ -14,11 +16,10 @@ function EmptyWidget() {
   );
 }
 
-afterEach(() => vi.useRealTimers());
 
 describe("an empty tile", () => {
-  it("opens the widget's settings when held", () => {
-    vi.useFakeTimers();
+  it("opens the widget's settings when held", async () => {
+    useFakeTime();
     const ctx = { updateConfig: () => {}, dimensions: () => ({ width: 0, height: 0 }) };
     render(() => (
       <WidgetCtx.Provider value={ctx}>
@@ -29,7 +30,7 @@ describe("an empty tile", () => {
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
     if (!shell) throw new Error("shell did not render");
     fireEvent.pointerDown(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    vi.advanceTimersByTime(600);
+    await vi.advanceTimersByTimeAsync(HOLD_MS);
 
     expect(screen.getByTestId("dialog").textContent).toBe("edit");
   });

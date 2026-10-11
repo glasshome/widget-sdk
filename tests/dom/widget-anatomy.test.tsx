@@ -1,14 +1,15 @@
+import { HOLD_MS } from "@glasshome/ui/solid";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { onCleanup } from "solid-js";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import { useConfirm } from "../../src/framework/hooks/use-confirm";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
 import { useWidgetDialog } from "../../src/framework/hooks/use-widget-dialog";
 import { widgetRegistry } from "../../src/framework/hooks/widget-registry";
+import { useFakeTime } from "./harness/fake-time";
 
-afterEach(() => vi.useRealTimers());
 
 const hostCtx = () => ({
   updateConfig: () => {},
@@ -118,8 +119,8 @@ describe("Widget.Action", () => {
 });
 
 describe("a widget with a sheet", () => {
-  it("holds to open it without wiring a hold, and not before it has one", () => {
-    vi.useFakeTimers();
+  it("holds to open it without wiring a hold, and not before it has one", async () => {
+    useFakeTime();
     const ctx = hostCtx();
     let dialog: ReturnType<typeof useWidgetDialog> | undefined;
     function Tile() {
@@ -139,14 +140,14 @@ describe("a widget with a sheet", () => {
     ));
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
     if (!shell) throw new Error("shell did not render");
-    const hold = () => {
+    const hold = async () => {
       fireEvent.pointerDown(shell, {
         button: 0,
         pointerId: 1,
         clientX: 10,
         clientY: 10,
       });
-      vi.advanceTimersByTime(600);
+      await vi.advanceTimersByTimeAsync(HOLD_MS);
       fireEvent.pointerUp(shell, {
         button: 0,
         pointerId: 1,
@@ -155,17 +156,17 @@ describe("a widget with a sheet", () => {
       });
     };
 
-    hold();
+    await hold();
     expect(dialog?.showDialog()).toBe(false);
 
     widgetRegistry(ctx)?.setHasSheet(true);
-    hold();
+    await hold();
     expect(dialog?.showDialog()).toBe(true);
     expect(widgetRegistry(ctx)?.icon()).toBe("mdi:fan");
   });
 
-  it("holds to open it when the widget wires a tap and no hold", () => {
-    vi.useFakeTimers();
+  it("holds to open it when the widget wires a tap and no hold", async () => {
+    useFakeTime();
     const ctx = hostCtx();
     const taps: string[] = [];
     let dialog: ReturnType<typeof useWidgetDialog> | undefined;
@@ -190,7 +191,7 @@ describe("a widget with a sheet", () => {
     if (!shell) throw new Error("shell did not render");
     widgetRegistry(ctx)?.setHasSheet(true);
     fireEvent.pointerDown(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    vi.advanceTimersByTime(600);
+    await vi.advanceTimersByTimeAsync(HOLD_MS);
     fireEvent.pointerUp(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
     expect(dialog?.showDialog()).toBe(true);
     expect(taps).toEqual([]);

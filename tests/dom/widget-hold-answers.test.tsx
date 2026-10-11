@@ -1,14 +1,14 @@
 import { HOLD_MS } from "@glasshome/ui/solid";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import {
   type ReactiveWidgetContext,
   WidgetCtx,
 } from "../../src/framework/hooks/use-widget-context";
+import { useFakeTime } from "./harness/fake-time";
 
-afterEach(() => vi.useRealTimers());
 
 function hostCtx() {
   const reports: boolean[] = [];
@@ -34,8 +34,8 @@ const release = (el: Element) =>
   fireEvent.pointerUp(el, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
 
 describe("every widget answers a hold", () => {
-  it("fires at the shared hold length, not before", () => {
-    vi.useFakeTimers();
+  it("fires at the shared hold length, not before", async () => {
+    useFakeTime();
     const host = hostCtx();
     function Tile() {
       const gestures = useWidgetGestures(() => ({ hold: { action: () => {} } }));
@@ -47,14 +47,14 @@ describe("every widget answers a hold", () => {
       </WidgetCtx.Provider>
     ));
     press(shell());
-    vi.advanceTimersByTime(HOLD_MS - 1);
+    await vi.advanceTimersByTimeAsync(HOLD_MS - 1);
     expect(host.held()).toBe(0);
-    vi.advanceTimersByTime(1);
+    await vi.advanceTimersByTimeAsync(1);
     expect(host.held()).toBe(1);
   });
 
-  it("a widget with nothing more to open says so, and the tour does not count it", () => {
-    vi.useFakeTimers();
+  it("a widget with nothing more to open says so, and the tour does not count it", async () => {
+    useFakeTime();
     const host = hostCtx();
     render(() => (
       <WidgetCtx.Provider value={host.ctx}>
@@ -64,15 +64,15 @@ describe("every widget answers a hold", () => {
     expect(host.reports.at(-1)).toBe(false);
 
     press(shell());
-    vi.advanceTimersByTime(HOLD_MS);
+    await vi.advanceTimersByTimeAsync(HOLD_MS);
     const notice = screen.getByText("No more controls for this widget");
     expect(notice.hasAttribute("data-closed")).toBe(false);
-    vi.advanceTimersByTime(2000);
+    await vi.advanceTimersByTimeAsync(2000);
     expect(notice.hasAttribute("data-closed") || !notice.isConnected).toBe(true);
   });
 
-  it("holds from a control row, while a short press there stays the control's", () => {
-    vi.useFakeTimers();
+  it("holds from a control row, while a short press there stays the control's", async () => {
+    useFakeTime();
     const counts = { tap: 0, held: 0, button: 0 };
     function Tile() {
       const gestures = useWidgetGestures(() => ({
@@ -98,7 +98,7 @@ describe("every widget answers a hold", () => {
     expect(counts).toEqual({ tap: 0, held: 0, button: 1 });
 
     press(button);
-    vi.advanceTimersByTime(HOLD_MS);
+    await vi.advanceTimersByTimeAsync(HOLD_MS);
     release(button);
     fireEvent.click(button);
     expect(counts).toEqual({ tap: 0, held: 1, button: 1 });

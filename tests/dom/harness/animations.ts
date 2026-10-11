@@ -5,7 +5,10 @@ window.getComputedStyle = ((el: Element, pseudo?: string | null) => {
   const style = realGetComputedStyle(el, pseudo);
   if (style.animationName) return style;
   return new Proxy(style, {
-    get: (target, key) =>
-      key === "animationName" ? "none" : Reflect.get(target, key as keyof CSSStyleDeclaration),
+    get: (target, key) => {
+      if (key === "animationName") return "none";
+      const value = Reflect.get(target, key);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
   });
 }) as typeof window.getComputedStyle;

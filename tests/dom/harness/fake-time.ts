@@ -4,6 +4,8 @@ afterEach(() => {
   if (vi.isFakeTimers()) vi.useRealTimers();
 });
 
-export function useFakeTime(): void {
-  vi.useFakeTimers();
+export function useFakeTime(config?: {
+  toFake?: NonNullable<Parameters<typeof vi.useFakeTimers>[0]>["toFake"];
+}): void {
+  vi.useFakeTimers(config);
 }

@@ -1,5 +1,6 @@
+import { HOLD_MS } from "@glasshome/ui/solid";
 import { fireEvent, render } from "@solidjs/testing-library";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import {
@@ -7,8 +8,8 @@ import {
   WidgetCtx,
 } from "../../src/framework/hooks/use-widget-context";
 import { PanelRow } from "../../src/framework/panel/panel";
+import { useFakeTime } from "./harness/fake-time";
 
-afterEach(() => vi.useRealTimers());
 
 function hostCtx() {
   const reports: boolean[] = [];
@@ -85,8 +86,8 @@ describe("the host hears about holds", () => {
     expect(host.reports.at(-1)).toBe(false);
   });
 
-  it("a fired hold is announced, a short press is not", () => {
-    vi.useFakeTimers();
+  it("a fired hold is announced, a short press is not", async () => {
+    useFakeTime();
     const host = hostCtx();
     render(() => (
       <WidgetCtx.Provider value={host.ctx}>
@@ -94,12 +95,12 @@ describe("the host hears about holds", () => {
       </WidgetCtx.Provider>
     ));
     fireEvent.pointerDown(shell(), { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    vi.advanceTimersByTime(100);
+    await vi.advanceTimersByTimeAsync(100);
     fireEvent.pointerUp(shell(), { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
     expect(host.held()).toBe(0);
 
     fireEvent.pointerDown(shell(), { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    vi.advanceTimersByTime(600);
+    await vi.advanceTimersByTimeAsync(HOLD_MS);
     expect(host.held()).toBe(1);
   });
 
@@ -114,8 +115,8 @@ describe("the host hears about holds", () => {
     expect(host.held()).toBe(1);
   });
 
-  it("a held panel row is announced", () => {
-    vi.useFakeTimers();
+  it("a held panel row is announced", async () => {
+    useFakeTime();
     const host = hostCtx();
     let opened = 0;
     const view = render(() => (
@@ -129,7 +130,7 @@ describe("the host hears about holds", () => {
       clientX: 5,
       clientY: 5,
     });
-    vi.advanceTimersByTime(600);
+    await vi.advanceTimersByTimeAsync(HOLD_MS);
     expect({ opened, held: host.held() }).toEqual({ opened: 1, held: 1 });
   });
 });
