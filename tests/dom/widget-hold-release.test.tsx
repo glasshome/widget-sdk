@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
-import { useFakeTime } from "./harness/fake-time";
+import { useFakeTime } from "@glasshome/ui/testing";
 
 describe("a held tile", () => {
   it("keeps the release click from the chip under the finger, and lets the next tap through", async () => {

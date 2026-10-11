@@ -1,1 +1,3 @@
-import "./animations";
+import { installSettledAnimations } from "@glasshome/ui/testing";
+
+installSettledAnimations();

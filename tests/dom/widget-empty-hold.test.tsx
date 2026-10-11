@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetDialog } from "../../src/framework/hooks/use-widget-dialog";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
-import { useFakeTime } from "./harness/fake-time";
+import { useFakeTime } from "@glasshome/ui/testing";
 
 function EmptyWidget() {
   const dialog = useWidgetDialog();

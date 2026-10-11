@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { useFakeTime } from "./harness/fake-time";
+import { useFakeTime } from "@glasshome/ui/testing";
 
 it("useFakeTime turns fake timers on", () => {
   useFakeTime();

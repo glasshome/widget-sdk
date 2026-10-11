@@ -7,7 +7,7 @@ import {
   type ReactiveWidgetContext,
   WidgetCtx,
 } from "../../src/framework/hooks/use-widget-context";
-import { useFakeTime } from "./harness/fake-time";
+import { useFakeTime } from "@glasshome/ui/testing";
 
 function hostCtx() {
   const reports: boolean[] = [];

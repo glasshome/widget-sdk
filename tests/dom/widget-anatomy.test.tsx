@@ -8,7 +8,7 @@ import { useConfirm } from "../../src/framework/hooks/use-confirm";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
 import { useWidgetDialog } from "../../src/framework/hooks/use-widget-dialog";
 import { widgetRegistry } from "../../src/framework/hooks/widget-registry";
-import { useFakeTime } from "./harness/fake-time";
+import { useFakeTime } from "@glasshome/ui/testing";
 
 const hostCtx = () => ({
   updateConfig: () => {},

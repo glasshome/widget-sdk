@@ -8,7 +8,7 @@ import {
   WidgetCtx,
 } from "../../src/framework/hooks/use-widget-context";
 import { PanelRow } from "../../src/framework/panel/panel";
-import { useFakeTime } from "./harness/fake-time";
+import { useFakeTime } from "@glasshome/ui/testing";
 
 function hostCtx() {
   const reports: boolean[] = [];
