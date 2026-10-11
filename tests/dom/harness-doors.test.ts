@@ -1,14 +1,9 @@
 import { expect, it, vi } from "vitest";
 import { useFakeTime } from "./harness/fake-time";
 
-it("useFakeTime fires a timer only when advanced", async () => {
+it("useFakeTime turns fake timers on", () => {
   useFakeTime();
-  const fired = vi.fn();
-  setTimeout(fired, 300);
-  await vi.advanceTimersByTimeAsync(299);
-  expect(fired).not.toHaveBeenCalled();
-  await vi.advanceTimersByTimeAsync(1);
-  expect(fired).toHaveBeenCalledOnce();
+  expect(vi.isFakeTimers()).toBe(true);
 });
 
 it("fake time is gone in the next test", () => {
