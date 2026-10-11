@@ -1,7 +1,8 @@
-import { type ChildProcess, spawn, spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { type Clock, systemClock } from "@glasshome/widget-contract/clock";
 import type { WidgetIntrospection } from "./introspect-core";
 
 export type IntrospectResult =
@@ -15,6 +16,16 @@ export interface IntrospectSessionOptions {
   timeoutMs?: number;
   /** Log spawn and import durations above this. */
   slowMs?: number;
+  clock?: Clock;
+  spawnWorker?: (probe: string) => WorkerTransport;
+}
+
+export interface WorkerTransport {
+  write(line: string): boolean;
+  onLine(cb: (line: string) => void): void;
+  onExit(cb: (reason: string) => void): void;
+  kill(): void;
+  readonly pid: number | null;
 }
 
 export interface IntrospectSession {
@@ -35,14 +46,17 @@ function resolveEntry(base: string): string | null {
 }
 
 /** One process per check. The path `build`, `capture` and the fallback take. */
-export function introspectOnce(outFile: string): IntrospectResult {
+export function introspectOnce(
+  outFile: string,
+  options?: { timeoutMs?: number },
+): IntrospectResult {
   const probe = resolveEntry("introspect");
   if (!probe) return { ok: false, reason: "introspect not found next to the sdk" };
 
   const run = spawnSync(process.execPath, ["--conditions", "browser", probe, outFile], {
     encoding: "utf-8",
     // A widget that loops at import time must not hang the build.
-    timeout: DEFAULT_TIMEOUT_MS,
+    timeout: options?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   });
 
   if (run.error) return { ok: false, reason: run.error.message };
@@ -67,9 +81,48 @@ interface WorkerResponse {
   importMs?: number;
 }
 
-function oneShotSession(): IntrospectSession {
+function spawnProcessTransport(probe: string): WorkerTransport {
+  const proc = spawn(process.execPath, ["--conditions", "browser", probe], {
+    stdio: ["pipe", "pipe", "inherit"],
+  });
   return {
-    introspect: async (outFile) => introspectOnce(outFile),
+    write(line) {
+      if (!proc.stdin?.writable) return false;
+      proc.stdin.write(line);
+      return true;
+    },
+    onLine(cb) {
+      let buffer = "";
+      proc.stdout?.setEncoding("utf-8");
+      proc.stdout?.on("data", (chunk: string) => {
+        buffer += chunk;
+        let nl = buffer.indexOf("\n");
+        while (nl >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (line) cb(line);
+          nl = buffer.indexOf("\n");
+        }
+      });
+    },
+    onExit(cb) {
+      proc.on("error", (err) => cb(err.message));
+      proc.on("exit", (code, signal) =>
+        cb(`introspect worker exited (${signal ?? `code ${code}`})`),
+      );
+    },
+    kill() {
+      proc.kill();
+    },
+    get pid() {
+      return proc.pid ?? null;
+    },
+  };
+}
+
+function oneShotSession(timeoutMs: number | undefined): IntrospectSession {
+  return {
+    introspect: async (outFile) => introspectOnce(outFile, { timeoutMs }),
     dispose: async () => {},
     childPid: null,
   };
@@ -82,18 +135,20 @@ function oneShotSession(): IntrospectSession {
  * re-pays the per-check process boot tax on every save.
  */
 export function createIntrospectSession(options?: IntrospectSessionOptions): IntrospectSession {
-  if (process.env.GLASSHOME_WIDGET_NO_WORKER === "1") return oneShotSession();
+  if (process.env.GLASSHOME_WIDGET_NO_WORKER === "1") return oneShotSession(options?.timeoutMs);
 
   const rssLimit = options?.rssLimitBytes ?? DEFAULT_RSS_LIMIT;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const slowMs = options?.slowMs ?? DEFAULT_SLOW_MS;
+  const clock = options?.clock ?? systemClock;
+  const startTransport = options?.spawnWorker ?? spawnProcessTransport;
 
   type Resolve = (result: IntrospectResult) => void;
 
   // One generation of the child process. Its requests live on it, so a worker
   // that dies late can only ever settle its own.
   interface Worker {
-    proc: ChildProcess;
+    proc: WorkerTransport;
     ready: Promise<void>;
     pending: Map<number, Resolve>;
     retireAfterRequest: boolean;
@@ -139,53 +194,35 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
   }
 
   function spawnWorker(probe: string): Worker {
-    const spawnedAt = Date.now();
-    const proc = spawn(process.execPath, ["--conditions", "browser", probe], {
-      stdio: ["pipe", "pipe", "inherit"],
-    });
+    const spawnedAt = clock.now();
     const worker: Worker = {
-      proc,
+      proc: startTransport(probe),
       ready: Promise.resolve(),
       pending: new Map(),
       retireAfterRequest: false,
     };
 
     worker.ready = new Promise<void>((resolve, reject) => {
-      let buffer = "";
       let booted = false;
 
-      proc.stdout?.setEncoding("utf-8");
-      proc.stdout?.on("data", (chunk: string) => {
-        buffer += chunk;
-        let nl = buffer.indexOf("\n");
-        while (nl >= 0) {
-          const line = buffer.slice(0, nl).trim();
-          buffer = buffer.slice(nl + 1);
-          if (line) {
-            if (!booted && line.includes('"ready"')) {
-              booted = true;
-              const bootMs = Date.now() - spawnedAt;
-              if (bootMs > slowMs) {
-                console.warn(`[widget-sdk] introspect worker took ${bootMs}ms to boot`);
-              }
-              resolve();
-            } else {
-              onLine(worker, line);
-            }
+      worker.proc.onLine((line) => {
+        if (!booted && line.includes('"ready"')) {
+          booted = true;
+          const bootMs = clock.now() - spawnedAt;
+          if (bootMs > slowMs) {
+            console.warn(`[widget-sdk] introspect worker took ${bootMs}ms to boot`);
           }
-          nl = buffer.indexOf("\n");
+          resolve();
+        } else {
+          onLine(worker, line);
         }
       });
 
-      const gone = (why: string) => {
+      worker.proc.onExit((why) => {
         if (!booted) reject(new Error(why));
         if (current === worker) current = null;
         settle(worker, why);
-      };
-      proc.on("error", (err) => gone(err.message));
-      proc.on("exit", (code, signal) =>
-        gone(`introspect worker exited (${signal ?? `code ${code}`})`),
-      );
+      });
     });
 
     return worker;
@@ -203,13 +240,9 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
     } catch (err) {
       return { ok: false, reason: err instanceof Error ? err.message : String(err) };
     }
-    if (!worker.proc.stdin?.writable) {
-      return { ok: false, reason: "introspect worker is not writable" };
-    }
-
     const id = ++nextId;
     return new Promise<IntrospectResult>((resolve) => {
-      const timer = setTimeout(() => {
+      const timer = clock.setTimeout(() => {
         worker.pending.delete(id);
         // An in-process hang cannot be cancelled; only the kill ends it.
         retire(worker, `introspection timed out after ${timeoutMs}ms`);
@@ -217,14 +250,16 @@ export function createIntrospectSession(options?: IntrospectSessionOptions): Int
       }, timeoutMs);
 
       worker.pending.set(id, (result) => {
-        clearTimeout(timer);
+        clock.clearTimeout(timer);
         resolve(result);
       });
 
       try {
-        worker.proc.stdin?.write(`${JSON.stringify({ id, outFile })}\n`);
+        if (!worker.proc.write(`${JSON.stringify({ id, outFile })}\n`)) {
+          throw new Error("introspect worker is not writable");
+        }
       } catch (err) {
-        clearTimeout(timer);
+        clock.clearTimeout(timer);
         worker.pending.delete(id);
         worker.retireAfterRequest = true;
         resolve({ ok: false, reason: err instanceof Error ? err.message : String(err) });

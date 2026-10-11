@@ -2,10 +2,13 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createIntrospectSession } from "./introspect-session";
+import { createManualClock, sleep, systemClock } from "@glasshome/widget-contract/clock";
+import {
+  createIntrospectSession,
+  type IntrospectSessionOptions,
+  type WorkerTransport,
+} from "./introspect-session";
 
-// Fixture bundles live inside the repo so their imports resolve against this
-// package's node_modules.
 const tmpDir = mkdtempSync(join(import.meta.dir, ".introspect-session-test-"));
 
 afterAll(() => {
@@ -33,182 +36,53 @@ function alive(pid: number): boolean {
   }
 }
 
-async function waitUntil(predicate: () => boolean, ms: number): Promise<boolean> {
-  const deadline = Date.now() + ms;
-  while (Date.now() < deadline) {
-    if (predicate()) return true;
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
+async function waitUntil(predicate: () => boolean, attempts: number): Promise<boolean> {
+  for (let i = 0; i < attempts && !predicate(); i++) await sleep(systemClock, 50);
   return predicate();
 }
 
-describe("createIntrospectSession", () => {
-  test("round-trips two requests through one worker", async () => {
+describe("createIntrospectSession on a real worker", () => {
+  test("round-trips requests through one worker and falls back without one", async () => {
     const session = createIntrospectSession();
     try {
       const first = await session.introspect(writeBundle(namedWidget("alpha")));
       const pid = session.childPid;
       const second = await session.introspect(writeBundle(namedWidget("beta")));
-
       expect(first.ok && first.value.manifest?.name).toBe("alpha");
       expect(second.ok && second.value.manifest?.name).toBe("beta");
       expect(session.childPid).toBe(pid);
-    } finally {
-      await session.dispose();
-    }
-  });
 
-  test("survives a stray stdout line from the bundle", async () => {
-    const session = createIntrospectSession();
-    try {
-      const noisy = writeBundle(
-        `console.log("stray line from the widget");\n${namedWidget("noisy")}`,
-      );
-      const first = await session.introspect(noisy);
-      const second = await session.introspect(writeBundle(namedWidget("after-noise")));
+      const noisy = writeBundle(`console.log("stray line");\n${namedWidget("noisy")}`);
+      const afterNoise = await session.introspect(noisy);
+      expect(afterNoise.ok && afterNoise.value.manifest?.name).toBe("noisy");
 
-      expect(first.ok && first.value.manifest?.name).toBe("noisy");
-      expect(second.ok && second.value.manifest?.name).toBe("after-noise");
-    } finally {
-      await session.dispose();
-    }
-  });
-
-  test("re-reads the same path after it is rewritten", async () => {
-    const session = createIntrospectSession();
-    try {
       const path = join(tmpDir, "rewritten.js");
       writeBundle(namedWidget("before"), path);
-      const first = await session.introspect(path);
+      const before = await session.introspect(path);
       writeBundle(namedWidget("after"), path);
-      const second = await session.introspect(path);
+      const after = await session.introspect(path);
+      expect(before.ok && before.value.manifest?.name).toBe("before");
+      expect(after.ok && after.value.manifest?.name).toBe("after");
 
-      expect(first.ok && first.value.manifest?.name).toBe("before");
-      expect(second.ok && second.value.manifest?.name).toBe("after");
-    } finally {
-      await session.dispose();
-    }
-  });
-
-  test("does not leak globals between requests", async () => {
-    const session = createIntrospectSession();
-    try {
       await session.introspect(writeBundle(`window.__poisoned = 1;\n${namedWidget("poisoner")}`));
-      const result = await session.introspect(
+      const leak = await session.introspect(
         writeBundle(`export default { manifest: { name: String(window.__poisoned) } };\n`),
       );
-
-      expect(result.ok && result.value.manifest?.name).toBe("undefined");
+      expect(leak.ok && leak.value.manifest?.name).toBe("undefined");
     } finally {
       await session.dispose();
     }
-  });
 
-  test("kills and respawns after a module-eval hang", async () => {
-    // The successor's cold DOM install runs under this budget too, so it stays far above that work.
-    const session = createIntrospectSession({ timeoutMs: 5_000 });
-    try {
-      const hung = await session.introspect(writeBundle(`while (true) {}\nexport default {};\n`));
-      expect(hung.ok).toBe(false);
-      expect(hung.ok === false && hung.reason).toMatch(/timed out/);
-
-      const next = await session.introspect(writeBundle(namedWidget("after-hang")));
-      expect(next.ok ? next.value.manifest?.name : next.reason).toBe("after-hang");
-    } finally {
-      await session.dispose();
-    }
-  }, 20_000);
-
-  test("a replaced worker's late exit does not fail the successor's request", async () => {
-    const started = join(tmpDir, "successor-started");
-    const release = join(tmpDir, "successor-release");
-    const waitFor = (path: string) =>
-      `await new Promise((done) => { const t = setInterval(() => { if (existsSync(${JSON.stringify(path)})) { clearInterval(t); done(); } }, 10); });\n`;
-    // An RSS limit of 1 byte retires the worker after every request.
-    const session = createIntrospectSession({ rssLimitBytes: 1 });
-    try {
-      // Once killed, leaves only after the successor's request has started.
-      const first = await session.introspect(
-        writeBundle(
-          `import { existsSync } from "node:fs";\n` +
-            `process.on("SIGTERM", async () => { ${waitFor(started)} process.exit(0); });\n` +
-            namedWidget("predecessor"),
-        ),
-      );
-      expect(first.ok).toBe(true);
-      const oldPid = session.childPid as number;
-
-      const next = session.introspect(
-        writeBundle(
-          `import { existsSync, writeFileSync } from "node:fs";\n` +
-            `writeFileSync(${JSON.stringify(started)}, "");\n` +
-            waitFor(release) +
-            namedWidget("after-stale-exit"),
-        ),
-      );
-      expect(await waitUntil(() => !alive(oldPid), 10_000)).toBe(true);
-      expect(session.childPid).not.toBeNull();
-      expect(session.childPid).not.toBe(oldPid);
-      writeFileSync(release, "");
-
-      const result = await next;
-      expect(result.ok ? result.value.manifest?.name : result.reason).toBe("after-stale-exit");
-    } finally {
-      await session.dispose();
-    }
-  }, 20_000);
-
-  test("resolves rather than hangs when the worker dies mid-request", async () => {
-    const session = createIntrospectSession();
-    try {
-      const crashed = await session.introspect(
-        writeBundle(`process.exit(0);\nexport default {};\n`),
-      );
-      expect(crashed.ok).toBe(false);
-
-      const next = await session.introspect(writeBundle(namedWidget("after-crash")));
-      expect(next.ok && next.value.manifest?.name).toBe("after-crash");
-    } finally {
-      await session.dispose();
-    }
-  }, 20_000);
-
-  test("respawns once RSS crosses the limit", async () => {
-    const session = createIntrospectSession({ rssLimitBytes: 1 });
-    try {
-      await session.introspect(writeBundle(namedWidget("first")));
-      const firstPid = session.childPid;
-      const second = await session.introspect(writeBundle(namedWidget("second")));
-
-      expect(second.ok && second.value.manifest?.name).toBe("second");
-      expect(session.childPid).not.toBe(firstPid);
-    } finally {
-      await session.dispose();
-    }
-  }, 20_000);
-
-  test("dispose kills the worker", async () => {
-    const session = createIntrospectSession();
-    await session.introspect(writeBundle(namedWidget("disposable")));
-    const pid = session.childPid;
-    expect(pid).not.toBeNull();
-    await session.dispose();
-
-    expect(await waitUntil(() => !alive(pid as number), 5_000)).toBe(true);
-  });
-
-  test("GLASSHOME_WIDGET_NO_WORKER falls back to one process per check", async () => {
     process.env.GLASSHOME_WIDGET_NO_WORKER = "1";
     try {
-      const session = createIntrospectSession();
-      const result = await session.introspect(writeBundle(namedWidget("fallback")));
-      expect(session.childPid).toBeNull();
+      const oneShot = createIntrospectSession();
+      const result = await oneShot.introspect(writeBundle(namedWidget("fallback")));
+      expect(oneShot.childPid).toBeNull();
       expect(result.ok && result.value.manifest?.name).toBe("fallback");
-      await session.dispose();
     } finally {
       delete process.env.GLASSHOME_WIDGET_NO_WORKER;
     }
-  }, 20_000);
+  }, 60_000);
 
   test("worker exits when its parent is hard-killed", async () => {
     const bundle = writeBundle(namedWidget("orphan"));
@@ -218,23 +92,228 @@ describe("createIntrospectSession", () => {
       { stdio: ["ignore", "pipe", "inherit"] },
     );
 
-    const childPid = await new Promise<number>((resolve, reject) => {
+    const childPid = await new Promise<number>((resolve) => {
       let out = "";
-      const timer = setTimeout(() => reject(new Error("fixture never reported a pid")), 15_000);
       parent.stdout?.setEncoding("utf-8");
       parent.stdout?.on("data", (chunk: string) => {
         out += chunk;
         const nl = out.indexOf("\n");
-        if (nl >= 0) {
-          clearTimeout(timer);
-          resolve(Number(out.slice(0, nl).trim()));
-        }
+        if (nl >= 0) resolve(Number(out.slice(0, nl).trim()));
       });
     });
 
     expect(Number.isFinite(childPid)).toBe(true);
     parent.kill("SIGKILL");
 
-    expect(await waitUntil(() => !alive(childPid), 15_000)).toBe(true);
+    expect(await waitUntil(() => !alive(childPid), 300)).toBe(true);
   }, 30_000);
+});
+
+const READY = JSON.stringify({ id: 0, ready: true });
+
+interface FakeWorker {
+  transport: WorkerTransport;
+  written: string[];
+  killed: boolean;
+  writable: boolean;
+  say(msg: object | string): void;
+  exit(reason: string): void;
+  answer(name: string, extra?: object): void;
+}
+
+function fakeTransports() {
+  const workers: FakeWorker[] = [];
+  const spawnWorker = (): WorkerTransport => {
+    let lineCb: (line: string) => void = () => {};
+    let exitCb: (reason: string) => void = () => {};
+    const worker: FakeWorker = {
+      written: [],
+      killed: false,
+      writable: true,
+      say: (msg) => lineCb(typeof msg === "string" ? msg : JSON.stringify(msg)),
+      exit: (reason) => exitCb(reason),
+      answer(name, extra) {
+        const id = JSON.parse(worker.written[worker.written.length - 1] ?? "{}").id;
+        worker.say({ id, ok: true, value: { manifest: { name } }, ...extra });
+      },
+      transport: {
+        write(line) {
+          if (!worker.writable) return false;
+          worker.written.push(line);
+          return true;
+        },
+        onLine: (cb) => {
+          lineCb = cb;
+        },
+        onExit: (cb) => {
+          exitCb = cb;
+        },
+        kill() {
+          worker.killed = true;
+        },
+        pid: 1000 + workers.length,
+      },
+    };
+    workers.push(worker);
+    return worker.transport;
+  };
+  return { workers, spawnWorker };
+}
+
+function setup(options?: IntrospectSessionOptions) {
+  const clock = createManualClock();
+  const fake = fakeTransports();
+  const session = createIntrospectSession({ ...options, clock, spawnWorker: fake.spawnWorker });
+  return { clock, session, ...fake };
+}
+
+const nameOf = (
+  r: { ok: true; value: { manifest?: { name?: string } } } | { ok: false; reason: string },
+) => (r.ok ? r.value.manifest?.name : r.reason);
+
+describe("createIntrospectSession on a fake transport", () => {
+  test("queues a second request until the first answers", async () => {
+    const { clock, session, workers } = setup();
+    const first = session.introspect("a.js");
+    const second = session.introspect("b.js");
+    await clock.advance(0);
+    workers[0]?.say(READY);
+    await clock.advance(0);
+
+    expect(workers[0]?.written).toHaveLength(1);
+    workers[0]?.answer("first");
+    expect(nameOf(await first)).toBe("first");
+    await clock.advance(0);
+
+    expect(workers[0]?.written).toHaveLength(2);
+    workers[0]?.answer("second");
+    expect(nameOf(await second)).toBe("second");
+    expect(workers).toHaveLength(1);
+  });
+
+  test("kills a hung worker at the timeout and serves the next request from a new one", async () => {
+    const { clock, session, workers } = setup({ timeoutMs: 5_000 });
+    const hung = session.introspect("hang.js");
+    await clock.advance(0);
+    workers[0]?.say(READY);
+    await clock.advance(4_999);
+    expect(workers[0]?.killed).toBe(false);
+
+    await clock.advance(1);
+    const result = await hung;
+    expect(result.ok === false && result.reason).toMatch(/timed out after 5000ms/);
+    expect(workers[0]?.killed).toBe(true);
+
+    const next = session.introspect("ok.js");
+    await clock.advance(0);
+    workers[1]?.say(READY);
+    await clock.advance(0);
+    workers[1]?.answer("after-hang");
+    expect(nameOf(await next)).toBe("after-hang");
+    expect(clock.pending()).toBe(0);
+  });
+
+  test("a replaced worker's late exit does not fail the successor's request", async () => {
+    const { clock, session, workers } = setup({ rssLimitBytes: 1 });
+    const first = session.introspect("a.js");
+    await clock.advance(0);
+    workers[0]?.say(READY);
+    await clock.advance(0);
+    workers[0]?.answer("predecessor", { rss: 2 });
+    expect((await first).ok).toBe(true);
+
+    const next = session.introspect("b.js");
+    await clock.advance(0);
+    expect(workers[0]?.killed).toBe(true);
+    workers[1]?.say(READY);
+    await clock.advance(0);
+    expect(workers[1]?.written).toHaveLength(1);
+
+    workers[0]?.exit("introspect worker exited (signal SIGTERM)");
+    await clock.advance(0);
+    expect(session.childPid).toBe(workers[1]?.transport.pid ?? -1);
+
+    workers[1]?.answer("after-stale-exit");
+    expect(nameOf(await next)).toBe("after-stale-exit");
+  });
+
+  test("resolves rather than hangs when the worker dies mid-request", async () => {
+    const { clock, session, workers } = setup();
+    const crashed = session.introspect("crash.js");
+    await clock.advance(0);
+    workers[0]?.say(READY);
+    await clock.advance(0);
+    workers[0]?.exit("introspect worker exited (code 0)");
+    const result = await crashed;
+    expect(result.ok === false && result.reason).toMatch(/exited/);
+    expect(session.childPid).toBeNull();
+
+    const next = session.introspect("ok.js");
+    await clock.advance(0);
+    workers[1]?.say(READY);
+    await clock.advance(0);
+    workers[1]?.answer("after-crash");
+    expect(nameOf(await next)).toBe("after-crash");
+  });
+
+  test("fails the request when the worker exits before it is ready", async () => {
+    const { clock, session, workers } = setup();
+    const request = session.introspect("a.js");
+    await clock.advance(0);
+    workers[0]?.exit("spawn ENOENT");
+    const result = await request;
+    expect(result.ok === false && result.reason).toBe("spawn ENOENT");
+  });
+
+  test("respawns once RSS crosses the limit", async () => {
+    const { clock, session, workers } = setup({ rssLimitBytes: 100 });
+    const first = session.introspect("a.js");
+    await clock.advance(0);
+    workers[0]?.say(READY);
+    await clock.advance(0);
+    workers[0]?.answer("first", { rss: 50 });
+    await first;
+
+    const second = session.introspect("b.js");
+    await clock.advance(0);
+    expect(workers).toHaveLength(1);
+    workers[0]?.answer("second", { rss: 500 });
+    await second;
+
+    const third = session.introspect("c.js");
+    await clock.advance(0);
+    expect(workers[0]?.killed).toBe(true);
+    expect(workers).toHaveLength(2);
+    workers[1]?.say(READY);
+    await clock.advance(0);
+    workers[1]?.answer("third");
+    expect(nameOf(await third)).toBe("third");
+  });
+
+  test("retires a worker whose stdin is not writable", async () => {
+    const { clock, session, workers } = setup();
+    const request = session.introspect("a.js");
+    await clock.advance(0);
+    if (workers[0]) workers[0].writable = false;
+    workers[0]?.say(READY);
+    const result = await request;
+    expect(result.ok === false && result.reason).toMatch(/not writable/);
+    expect(clock.pending()).toBe(0);
+  });
+
+  test("dispose kills the worker and refuses new requests", async () => {
+    const { clock, session, workers } = setup();
+    const request = session.introspect("a.js");
+    await clock.advance(0);
+    workers[0]?.say(READY);
+    await clock.advance(0);
+    await session.dispose();
+
+    const result = await request;
+    expect(result.ok === false && result.reason).toMatch(/disposed/);
+    expect(workers[0]?.killed).toBe(true);
+    expect(session.childPid).toBeNull();
+    const after = await session.introspect("b.js");
+    expect(after.ok === false && after.reason).toMatch(/disposed/);
+  });
 });
