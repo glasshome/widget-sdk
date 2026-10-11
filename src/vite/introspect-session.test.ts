@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { createManualClock } from "@glasshome/widget-contract/clock";
 import {
   createIntrospectSession,
+  type IntrospectResult,
   type IntrospectSessionOptions,
   type WorkerTransport,
 } from "./introspect-session";
@@ -156,9 +157,7 @@ function setup(options?: IntrospectSessionOptions) {
   return { clock, session, ...fake };
 }
 
-const nameOf = (
-  r: { ok: true; value: { manifest?: { name?: string } } } | { ok: false; reason: string },
-) => (r.ok ? r.value.manifest?.name : r.reason);
+const nameOf = (r: IntrospectResult) => (r.ok ? r.value.manifest?.name : r.reason);
 
 describe("createIntrospectSession on a fake transport", () => {
   test("queues a second request until the first answers", async () => {
