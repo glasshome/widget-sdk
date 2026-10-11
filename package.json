@@ -75,7 +75,7 @@
     "lint": "oxlint --type-aware . && oxfmt --check ."
   },
   "dependencies": {
-    "@glasshome/widget-contract": "0.3.0",
+    "@glasshome/widget-contract": "0.4.0",
     "@tailwindcss/vite": "^4.1.13",
     "clsx": "^2.1.1",
     "happy-dom": "^20.0.0",
@@ -85,7 +85,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@glasshome/ui": "1.30.0",
+    "@glasshome/ui": "1.33.0",
     "@solidjs/testing-library": "^0.8.10",
     "@types/bun": "^1.4.0",
     "@types/node": "^25.2.2",
