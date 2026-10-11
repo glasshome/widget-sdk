@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createManualClock, sleep, systemClock } from "@glasshome/widget-contract/clock";
+import { createManualClock } from "@glasshome/widget-contract/clock";
 import {
   createIntrospectSession,
   type IntrospectSessionOptions,
@@ -25,20 +25,6 @@ function writeBundle(body: string, file?: string): string {
 
 function namedWidget(name: string): string {
   return `export default { manifest: { name: ${JSON.stringify(name)} } };\n`;
-}
-
-function alive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function waitUntil(predicate: () => boolean, attempts: number): Promise<boolean> {
-  for (let i = 0; i < attempts && !predicate(); i++) await sleep(systemClock, 50);
-  return predicate();
 }
 
 describe("createIntrospectSession on a real worker", () => {
@@ -89,8 +75,11 @@ describe("createIntrospectSession on a real worker", () => {
     const parent = spawn(
       process.execPath,
       [join(import.meta.dir, "fixtures", "orphan-parent.ts"), bundle],
-      { stdio: ["ignore", "pipe", "inherit"] },
+      { stdio: ["ignore", "pipe", "pipe"] },
     );
+    // The worker inherits this stderr pipe, so it closes only once the worker has exited too.
+    const stderrClosed = new Promise<void>((resolve) => parent.stderr?.on("close", resolve));
+    parent.stderr?.pipe(process.stderr);
 
     const childPid = await new Promise<number>((resolve) => {
       let out = "";
@@ -105,7 +94,7 @@ describe("createIntrospectSession on a real worker", () => {
     expect(Number.isFinite(childPid)).toBe(true);
     parent.kill("SIGKILL");
 
-    expect(await waitUntil(() => !alive(childPid), 300)).toBe(true);
+    await stderrClosed;
   }, 30_000);
 });
 
