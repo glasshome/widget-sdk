@@ -1,5 +1,5 @@
 import { HOLD_MS } from "@glasshome/ui/solid";
-import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { onCleanup } from "solid-js";
 import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
@@ -57,6 +57,7 @@ describe("a confirmed widget", () => {
 
 describe("Widget.Action", () => {
   it("ticks after the call succeeds and not after it fails", async () => {
+    useFakeTime();
     const calls: string[] = [];
     function Tile() {
       return (
@@ -86,12 +87,14 @@ describe("Widget.Action", () => {
     const fail = screen.getByLabelText("Fail");
     fireEvent.click(stop);
     fireEvent.click(fail);
-    await waitFor(() => expect(stop.hasAttribute("data-confirmed")).toBe(true));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stop.hasAttribute("data-confirmed")).toBe(true);
     expect(fail.hasAttribute("data-confirmed")).toBe(false);
     expect(calls).toEqual(["stop"]);
   });
 
   it("shares one confirm with the tile", async () => {
+    useFakeTime();
     let confirm: ReturnType<typeof useConfirm> | undefined;
     function Tile() {
       confirm = useConfirm();
@@ -108,11 +111,8 @@ describe("Widget.Action", () => {
     }
     render(() => <Tile />);
     fireEvent.click(screen.getByText("Movie"));
-    await waitFor(() =>
-      expect(document.querySelector(".glasshome-widget")?.hasAttribute("data-confirmed")).toBe(
-        true,
-      ),
-    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.querySelector(".glasshome-widget")?.hasAttribute("data-confirmed")).toBe(true);
     expect(confirm?.has("movie")).toBe(true);
   });
 });
