@@ -10,7 +10,6 @@ import {
 import { PanelRow } from "../../src/framework/panel/panel";
 import { useFakeTime } from "./harness/fake-time";
 
-
 function hostCtx() {
   const reports: boolean[] = [];
   let held = 0;

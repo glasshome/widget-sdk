@@ -9,7 +9,6 @@ import {
 } from "../../src/framework/hooks/use-widget-context";
 import { useFakeTime } from "./harness/fake-time";
 
-
 function hostCtx() {
   const reports: boolean[] = [];
   let held = 0;

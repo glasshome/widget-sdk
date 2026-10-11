@@ -16,7 +16,6 @@ function EmptyWidget() {
   );
 }
 
-
 describe("an empty tile", () => {
   it("opens the widget's settings when held", async () => {
     useFakeTime();

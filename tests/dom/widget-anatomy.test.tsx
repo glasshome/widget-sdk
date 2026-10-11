@@ -10,7 +10,6 @@ import { useWidgetDialog } from "../../src/framework/hooks/use-widget-dialog";
 import { widgetRegistry } from "../../src/framework/hooks/widget-registry";
 import { useFakeTime } from "./harness/fake-time";
 
-
 const hostCtx = () => ({
   updateConfig: () => {},
   dimensions: () => ({ width: 0, height: 0 }),

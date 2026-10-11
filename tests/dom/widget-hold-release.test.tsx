@@ -5,7 +5,6 @@ import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import { useFakeTime } from "./harness/fake-time";
 
-
 describe("a held tile", () => {
   it("keeps the release click from the chip under the finger, and lets the next tap through", async () => {
     useFakeTime();
