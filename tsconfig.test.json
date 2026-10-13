@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  // rootDir is src/ for the build; the test program spans both trees.
-  "compilerOptions": { "rootDir": "." },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
