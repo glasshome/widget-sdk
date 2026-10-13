@@ -65,12 +65,12 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vite build && tsc && bun scripts/check-host-singleton.ts",
+    "build": "vite build && tsc -p tsconfig.build.json && bun scripts/check-host-singleton.ts",
     "dev": "vite build --watch",
     "test": "bun test src && vitest run",
     "test:dom": "vitest run",
     "test:dom:watch": "vitest",
-    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
+    "typecheck:test": "tsc --noEmit",
     "check:dead": "fallow dead-code --fail-on-issues",
     "lint": "oxlint --type-aware . && oxfmt --check ."
   },

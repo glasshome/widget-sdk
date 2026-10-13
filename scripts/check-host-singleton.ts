@@ -61,7 +61,7 @@ if (!selfImport) {
   );
 } else {
   // Imports survive minification as `{ WidgetCtx as r }`, so match the source name.
-  const imported = selfImport[1];
+  const imported = selfImport[1] ?? "";
   for (const [name, why] of Object.entries(SINGLETONS)) {
     if (!new RegExp(`\\b${name}\\b`).test(imported)) {
       failures.push(
