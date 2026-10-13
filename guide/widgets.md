@@ -70,6 +70,18 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 - Everything sits on an edge; text left, values/actions right. One accent per view; defaults quiet. No card in a card.
 - Motion: colours morph, never snap; time transitions with `--duration-state` / `--ease-morph` (zeroed under reduced motion). Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()`; pause offscreen with `useIntersectionPause()`.
 
+## Sealed engine
+
+Dash 1.5 previews the engine every widget will run in: QuickJS, no page access. Test there before publishing: Settings, Developer Mode, Sealed widgets (preview), reload, then `bun widget connect`. `bun widget preview` still renders in the page, so it does not prove a widget runs sealed.
+
+- Import only `@glasshome/widget-sdk` and `solid-js` (`/store`, `/web`).
+- No `fetch`, `XMLHttpRequest`, `WebSocket`, cookies, Capacitor. `localStorage` is in-memory and empties on reload. Built-ins are frozen: no `z.config`, no global patches.
+- DOM is mirrored through an allowlist: no `<style>`, `<link>`, `<script>`, no `el.click()`; images only `data:image/…`, same-origin `blob:` or `/ha-proxy/media`.
+- Limits: CPU 250 ms per second, setup 1.5 s per 10 s (both stop the widget until the homeowner turns it back on), 500 ms per run and 256 MB (both crash it), 20,000 elements, 512 timers, 128 observers.
+- Refusals and CPU use: Settings > Sealed widgets (Developer Mode). Each refusal has a sentence and a code; fix every one.
+
+Full page: https://glasshome.app/md/widgets/widget-sealed-engine.
+
 ## More
 
 Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-sdk/materials`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widgets as worked examples: https://github.com/glasshome/widgets (`src/button`, `src/sensor`); where they differ from this guide, the guide wins.
