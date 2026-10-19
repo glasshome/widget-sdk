@@ -40,6 +40,7 @@ export default defineConfig({
         "@glasshome/ui",
         "@glasshome/ui/solid",
         "@glasshome/widget-contract",
+        "@glasshome/widget-contract/sdk-floor",
         "@tailwindcss/vite",
         "@solid-primitives/resize-observer",
         "clsx",
