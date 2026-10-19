@@ -2,31 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Glob } from "bun";
 import { describe, expect, test } from "bun:test";
-import { assertHookReadsDeclared, HOOK_READS, sdkImportsOf } from "./index";
+import { assertHookReadsDeclared, HOOK_READS } from "./index";
 
-const minified = `import{Widget as a,useDaylight as b}from"@glasshome/widget-sdk";`;
 const spaced = `import { Badge as p, useDaylight as pe, useService as O } from "@glasshome/widget-sdk";`;
 const sunRead = [{ domain: "sun", access: "read" as const }];
-
-describe("sdkImportsOf", () => {
-  test("reads imported names, not local aliases, in minified and spaced output", () => {
-    expect([...sdkImportsOf(minified)]).toEqual(["Widget", "useDaylight"]);
-    expect(sdkImportsOf(spaced).has("useDaylight")).toBe(true);
-    expect(sdkImportsOf(spaced).has("pe")).toBe(false);
-  });
-
-  test("a namespace import counts as every export", () => {
-    expect([...sdkImportsOf(`import*as s from"@glasshome/widget-sdk";`)]).toEqual(["*"]);
-  });
-
-  test("a dynamic import counts as every export", () => {
-    expect(sdkImportsOf(`const s=await import("@glasshome/widget-sdk");`).has("*")).toBe(true);
-  });
-
-  test("imports from other modules are ignored", () => {
-    expect(sdkImportsOf(`import{useDaylight}from"./local";`).size).toBe(0);
-  });
-});
 
 describe("assertHookReadsDeclared", () => {
   test("useDaylight without a sun read fails the build and names the fix", () => {

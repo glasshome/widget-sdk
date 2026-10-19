@@ -58,6 +58,7 @@
       "types": "./dist/vite/index.d.ts",
       "import": "./dist/vite/index.js"
     },
+    "./export-history": "./dist/export-history.json",
     "./tailwind-sources": "./tailwind-sources.css",
     "./package.json": "./package.json"
   },
@@ -65,9 +66,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json && bun scripts/check-host-singleton.ts",
+    "build": "vite build && tsc -p tsconfig.build.json && bun scripts/check-host-singleton.ts && bun scripts/export-names.ts --emit",
     "dev": "vite build --watch",
-    "test": "bun test src && vitest run",
+    "test": "bun test src scripts && vitest run",
     "test:dom": "vitest run",
     "test:dom:watch": "vitest",
     "typecheck:test": "tsc --noEmit",
