@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
-import { exportNames } from "@glasshome/widget-contract/sdk-floor";
+import { compareSdkVersions, exportNames } from "@glasshome/widget-contract/sdk-floor";
 
 export type ExportHistory = Record<string, string[]>;
 
@@ -37,10 +37,12 @@ export function historyWithBuild(pkgDir: string, committed: ExportHistory): Expo
 }
 
 export function sortHistory(history: ExportHistory): ExportHistory {
-  const keys = Object.keys(history).sort((a, b) =>
-    a.localeCompare(b, undefined, { numeric: true }),
-  );
+  const keys = Object.keys(history).sort(compareSdkVersions);
   return Object.fromEntries(keys.map((k) => [k, history[k] ?? []]));
+}
+
+export function isRelease(version: string): boolean {
+  return /^\d+\.\d+\.\d+$/.test(version);
 }
 
 if (import.meta.main && process.argv.includes("--emit")) {

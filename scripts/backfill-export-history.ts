@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
-// Usage: bun scripts/backfill-export-history.ts [--all]
-// Adds every published release below this package's version that the history lacks.
+// Usage: bun scripts/backfill-export-history.ts [--all]. Publish runs it before the build.
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type ExportHistory, scanPackage, sortHistory } from "./export-names";
+import { compareSdkVersions } from "@glasshome/widget-contract/sdk-floor";
+import { type ExportHistory, isRelease, scanPackage, sortHistory } from "./export-names";
 
 const PACKAGE = "@glasshome/widget-sdk";
 const pkgDir = join(import.meta.dir, "..");
@@ -15,18 +15,6 @@ function run(cmd: string, args: string[], cwd: string): string {
   const res = spawnSync(cmd, args, { cwd, encoding: "utf-8" });
   if (res.status !== 0) throw new Error(`${cmd} ${args.join(" ")} failed:\n${res.stderr}`);
   return res.stdout;
-}
-
-function core(v: string): number[] | null {
-  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v);
-  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
-}
-
-function below(a: number[], b: number[]): boolean {
-  for (let i = 0; i < 3; i++) {
-    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) < (b[i] ?? 0);
-  }
-  return false;
 }
 
 function scanPublished(version: string): string[] | null {
@@ -55,26 +43,27 @@ function scanPublished(version: string): string[] | null {
   }
 }
 
-const own = core(JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8")).version);
-if (!own) throw new Error("package.json version is not x.y.z");
+const own: string = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8")).version;
 const history: ExportHistory = process.argv.includes("--all")
   ? {}
   : JSON.parse(readFileSync(historyPath, "utf-8"));
 const published: string[] = JSON.parse(run("npm", ["view", PACKAGE, "versions", "--json"], pkgDir));
-const wanted = published.filter((v) => {
-  const c = core(v);
-  return c !== null && (c[0] ?? 0) >= 1 && below(c, own) && !(v in history);
-});
+const wanted = published.filter(
+  (v) => isRelease(v) && compareSdkVersions(v, "1.0.0") >= 0 && compareSdkVersions(v, own) < 0,
+);
+const missing = wanted.filter((v) => !(v in history));
 
 const leftOut: string[] = [];
-for (const version of wanted) {
+for (const version of missing) {
   const names = scanPublished(version);
   if (names) history[version] = names;
   else leftOut.push(version);
-  console.log(`${version}: ${names ? `${names.length} exports` : "cannot scan, left out"}`);
+  console.log(`${version}: ${names ? `${names.length} exports` : "cannot scan"}`);
 }
 
 writeFileSync(historyPath, `${JSON.stringify(sortHistory(history), null, 2)}\n`);
-console.log(
-  `Wrote ${Object.keys(history).length} versions. Left out: ${leftOut.join(", ") || "none"}.`,
-);
+console.log(`Export history: ${Object.keys(history).length} versions, ${missing.length} added.`);
+if (leftOut.length > 0) {
+  console.error(`Cannot scan ${leftOut.join(", ")}; the history would hide a release.`);
+  process.exit(1);
+}

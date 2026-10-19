@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
-import { historyWithBuild, scanPackage } from "./export-names";
+import { historyWithBuild, scanPackage, sortHistory } from "./export-names";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -59,5 +59,24 @@ describe("historyWithBuild", () => {
       "1.0.0": ["Widget"],
       "1.3.0": ["Widget", "useEntity"],
     });
+  });
+});
+
+describe("sortHistory", () => {
+  test("orders by semver, prereleases before their release", () => {
+    const sorted = sortHistory({
+      "1.10.0": [],
+      "1.9.0": [],
+      "1.10.0-rc.1": [],
+      "1.10.0-beta.2": [],
+      "1.10.0-beta.10": [],
+    });
+    expect(Object.keys(sorted)).toEqual([
+      "1.9.0",
+      "1.10.0-beta.2",
+      "1.10.0-beta.10",
+      "1.10.0-rc.1",
+      "1.10.0",
+    ]);
   });
 });

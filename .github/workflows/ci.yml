@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Release tags feed the export history coverage test.
+          fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun run build
