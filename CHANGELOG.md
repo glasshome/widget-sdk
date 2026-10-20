@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0](https://github.com/glasshome/widget-sdk/compare/v1.23.1...v1.24.0) (2026-10-20)
+
+
+### Features
+
+* **host:** export delegateInside, with event types to listen to passively ([3840525](https://github.com/glasshome/widget-sdk/commit/3840525852492741c4db63e26c138dfc9b8443ce))
+
 ## [1.23.1](https://github.com/glasshome/widget-sdk/compare/v1.23.0...v1.23.1) (2026-10-14)
 
 
