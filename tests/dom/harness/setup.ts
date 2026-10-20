@@ -1,4 +1,9 @@
-import { installDenyFetch, installSettledAnimations } from "@glasshome/ui/testing";
+import {
+  installDenyFetch,
+  installHappyDomFidelity,
+  installSettledAnimations,
+} from "@glasshome/ui/testing";
 
+installHappyDomFidelity();
 installSettledAnimations();
 installDenyFetch();
