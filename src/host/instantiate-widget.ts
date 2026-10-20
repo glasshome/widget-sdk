@@ -108,10 +108,23 @@ if (typeof document !== "undefined") {
   for (const name of events) document.addEventListener(name, unpin);
 }
 
-function delegateInside(shadow: ShadowRoot): () => void {
+/**
+ * Solid handlers inside a closed root run; anything a host renders into one it owns needs this.
+ * Event types in `passive` are listened to passively, so they never hold up scrolling.
+ */
+export function delegateInside(
+  shadow: ShadowRoot,
+  passive: ReadonlySet<string> = new Set(),
+): () => void {
   if (shadow.mode !== "closed") return () => {};
   const events = [...DelegatedEvents];
-  const root = shadow as unknown as Document;
+  // Solid listens on whatever it is handed; this hands it the root, passive where asked.
+  const root = {
+    addEventListener: (type: string, listener: EventListener) =>
+      shadow.addEventListener(type, listener, { passive: passive.has(type) }),
+    removeEventListener: (type: string, listener: EventListener) =>
+      shadow.removeEventListener(type, listener),
+  } as unknown as Document;
   delegateEvents(events, root);
   for (const name of events) shadow.addEventListener(name, unpin);
   return () => {

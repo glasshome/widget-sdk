@@ -3,6 +3,7 @@
 // document-level MutationObserver — code a widget bundle must never load, only
 // a host (dash, the preview harness, the hub render worker).
 export {
+  delegateInside,
   instantiateWidget,
   type MountOptions,
   type WidgetInstanceHandle,
