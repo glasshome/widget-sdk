@@ -18,6 +18,7 @@ import {
   matchesRead,
   widgetManifestSchema,
 } from "@glasshome/widget-contract";
+import { sdkImportsOf } from "@glasshome/widget-contract/sdk-floor";
 import tailwindcss from "@tailwindcss/vite";
 import type { Features as LightningFeatures } from "lightningcss";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
@@ -232,27 +233,6 @@ function writeGeneratedManifest(
 
   const next = `${JSON.stringify(manifest, null, 2)}\n`;
   if (next !== current) writeFileSync(manifestPath, next);
-}
-
-const SDK_IMPORT_RE =
-  /import\s*(\{[^}]*\}|\*\s*as\s+[\w$]+)\s*from\s*["']@glasshome\/widget-sdk["']/g;
-const SDK_DYNAMIC_IMPORT_RE = /import\(\s*["']@glasshome\/widget-sdk["']\s*\)/;
-
-/** What a built bundle imports from the SDK, by exported name; `*` for a namespace or dynamic import. */
-export function sdkImportsOf(code: string): Set<string> {
-  const names = new Set<string>();
-  if (SDK_DYNAMIC_IMPORT_RE.test(code)) names.add("*");
-  for (const [, clause = ""] of code.matchAll(SDK_IMPORT_RE)) {
-    if (!clause.startsWith("{")) {
-      names.add("*");
-      continue;
-    }
-    for (const part of clause.slice(1, -1).split(",")) {
-      const name = part.trim().split(/\s+as\s+/)[0];
-      if (name) names.add(name);
-    }
-  }
-  return names;
 }
 
 /** SDK hooks that read a fixed entity on the widget's behalf, so the widget must declare that read. */

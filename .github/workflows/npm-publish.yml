@@ -98,11 +98,17 @@ jobs:
           done
           exit 1
         if: ${{ steps.gate.outputs.go == 'true' }}
+      # The shipped export history must cover every release; the committed file is a cache.
+      - run: bun scripts/backfill-export-history.ts
+        if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run build
         if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run typecheck:test
         if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run test
         if: ${{ steps.gate.outputs.go == 'true' }}
+        env:
+          EXPORT_HISTORY_COMPLETE: "1"
+          EXPORT_HISTORY_REQUIRE_TAGS: "1"
       - run: npm publish --provenance --access public
         if: ${{ steps.gate.outputs.go == 'true' }}
