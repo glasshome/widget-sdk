@@ -6,6 +6,10 @@ import { defineConfig } from "vitest/config";
 // blind to behaviour by construction. Logic tests stay on `bun test src`;
 // anything that renders or reacts lives in tests/dom/ and runs here. The two
 // runners never see each other's files.
+
+// Forked workers inherit it, so a direct run matches the gate; bun test is UTC already.
+process.env.TZ = "UTC";
+
 export default defineConfig({
   plugins: [solid()],
   resolve: {
