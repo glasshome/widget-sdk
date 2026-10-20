@@ -69,7 +69,7 @@ describe("createIntrospectSession on a real worker", () => {
     } finally {
       delete process.env.GLASSHOME_WIDGET_NO_WORKER;
     }
-  }, 60_000);
+  });
 
   test("worker exits when its parent is hard-killed", async () => {
     const bundle = writeBundle(namedWidget("orphan"));
@@ -96,7 +96,7 @@ describe("createIntrospectSession on a real worker", () => {
     parent.kill("SIGKILL");
 
     await stderrClosed;
-  }, 30_000);
+  });
 });
 
 const READY = JSON.stringify({ id: 0, ready: true });
