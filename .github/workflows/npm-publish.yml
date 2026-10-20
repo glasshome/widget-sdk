@@ -109,5 +109,6 @@ jobs:
         if: ${{ steps.gate.outputs.go == 'true' }}
         env:
           EXPORT_HISTORY_COMPLETE: "1"
+          EXPORT_HISTORY_REQUIRE_TAGS: "1"
       - run: npm publish --provenance --access public
         if: ${{ steps.gate.outputs.go == 'true' }}
