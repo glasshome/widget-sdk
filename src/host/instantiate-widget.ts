@@ -105,7 +105,7 @@ const unpin = (e: Event) => {
 if (typeof document !== "undefined") {
   const events = [...DelegatedEvents];
   delegateEvents(events);
-  for (const name of events) document.addEventListener(name, unpin);
+  for (const name of events) document.addEventListener(name, unpin, { passive: true });
 }
 
 /**
@@ -126,7 +126,7 @@ export function delegateInside(
       shadow.removeEventListener(type, listener),
   } as unknown as Document;
   delegateEvents(events, root);
-  for (const name of events) shadow.addEventListener(name, unpin);
+  for (const name of events) shadow.addEventListener(name, unpin, { passive: true });
   return () => {
     clearDelegatedEvents(root);
     for (const name of events) shadow.removeEventListener(name, unpin);
