@@ -1,28 +1,26 @@
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
 import { PanelRow } from "../../src/framework/panel/panel";
+import { mouseOn } from "./harness/press";
 
-const box = { left: 0, top: 0, width: 200, height: 56, right: 200, bottom: 56, x: 0, y: 0 };
-
-function press(el: HTMLElement, from: number, to = from) {
-  el.getBoundingClientRect = () => ({ ...box, toJSON: () => box }) as DOMRect;
-  el.setPointerCapture = () => {};
-  fireEvent.pointerDown(el, { button: 0, pointerId: 1, clientX: from, clientY: 20 });
-  if (to !== from) fireEvent.pointerMove(el, { pointerId: 1, clientX: to, clientY: 20 });
-  fireEvent.pointerUp(el, { pointerId: 1, clientX: to, clientY: 20 });
+/** Presses at `from` of the row's width and lets go at `to`. */
+async function press(el: HTMLElement, from: number, to = from) {
+  await mouseOn("down", el, { x: from, y: 0.5 });
+  if (to !== from) await mouseOn("move", el, { x: to, y: 0.5 });
+  await mouseOn("up", el, { x: to, y: 0.5 });
 }
 
 describe("PanelRow", () => {
-  it("taps once on a short press", () => {
+  it("taps once on a short press", async () => {
     const onTap = vi.fn();
     render(() => <PanelRow icon="mdi:lightbulb" name="Ceiling" on={false} onTap={onTap} />);
 
-    press(screen.getByRole("button", { name: /Ceiling/ }), 50);
+    await press(screen.getByRole("button", { name: /Ceiling/ }), 0.25);
 
     expect(onTap).toHaveBeenCalledOnce();
   });
 
-  it("sets the level from where a drag across it ends, and does not tap", () => {
+  it("sets the level from where a drag across it ends, and does not tap", async () => {
     const onTap = vi.fn();
     const onChange = vi.fn();
     const onCommit = vi.fn();
@@ -36,7 +34,7 @@ describe("PanelRow", () => {
       />
     ));
 
-    press(screen.getByRole("button", { name: /Ceiling/ }), 20, 150);
+    await press(screen.getByRole("button", { name: /Ceiling/ }), 0.1, 0.75);
 
     expect(onChange).toHaveBeenLastCalledWith(75);
     expect(onCommit).toHaveBeenCalledWith(75);

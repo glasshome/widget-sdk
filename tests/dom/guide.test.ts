@@ -1,10 +1,8 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import guide from "../../guide/widgets.md?raw";
 import * as sdk from "../../src";
 import { Widget } from "../../src/framework/core/Widget";
 
-const guide = readFileSync(resolve(import.meta.dirname, "../../guide/widgets.md"), "utf-8");
 const code = [...guide.matchAll(/`([^`]+)`/g)].map((m) => m[1] ?? "");
 
 describe("the widget guide", () => {

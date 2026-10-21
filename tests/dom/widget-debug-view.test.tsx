@@ -17,8 +17,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@glasshome/ui/solid";
-import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import { buildDebugData, WidgetDebugTab } from "../../src/framework/dialogs/debug-view";
 import { WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
 import { WidgetCtx } from "../../src/framework/hooks/use-widget-context";
@@ -70,7 +71,8 @@ function setClipboard(value: unknown) {
 }
 
 afterEach(() => {
-  setClipboard(undefined);
+  Reflect.deleteProperty(navigator, "clipboard");
+  Reflect.deleteProperty(document, "execCommand");
   vi.restoreAllMocks();
 });
 
@@ -91,11 +93,12 @@ describe("WidgetDebugTab", () => {
   });
 
   it("copies from a section without a clipboard API", async () => {
+    setClipboard(undefined);
     const exec = vi.fn(() => true);
     document.execCommand = exec;
     render(() => <WidgetDebugTab data={data()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy Desk lamp" }));
+    await userEvent.click(screen.getByRole("button", { name: "Copy Desk lamp" }));
 
     await waitFor(() => expect(exec).toHaveBeenCalledWith("copy"));
   });
@@ -109,8 +112,6 @@ const developerCtx = {
 
 describe("the dialog's copy action", () => {
   it("reports the copy it made", async () => {
-    const writeText = vi.fn(async () => {});
-    setClipboard({ writeText });
     render(() => (
       <WidgetCtx.Provider value={developerCtx}>
         <WidgetDialog
@@ -124,10 +125,10 @@ describe("the dialog's copy action", () => {
       </WidgetCtx.Provider>
     ));
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy all" }));
+    await userEvent.click(screen.getByRole("button", { name: "Copy all" }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy());
-    expect(writeText).toHaveBeenCalledOnce();
+    expect(await navigator.clipboard.readText()).toBe(JSON.stringify(data(), null, 2));
   });
 
   it("reports the copy it could not make", async () => {
@@ -150,7 +151,7 @@ describe("the dialog's copy action", () => {
       </WidgetCtx.Provider>
     ));
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy all" }));
+    await userEvent.click(screen.getByRole("button", { name: "Copy all" }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Copy failed" })).toBeTruthy());
   });

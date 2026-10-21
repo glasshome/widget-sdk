@@ -4,9 +4,10 @@
  * seam test, where ui and the SDK meet at their pinned versions.
  */
 
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { render, screen } from "@solidjs/testing-library";
 import { createSignal, type JSX } from "solid-js";
 import { describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import { z } from "zod";
 import { WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
 
@@ -89,44 +90,44 @@ describe("WidgetDialog draft lifecycle", () => {
     expect(field().value).toBe("Lamp");
   });
 
-  it("shows the edited value, not the value the dialog opened with", () => {
+  it("shows the edited value, not the value the dialog opened with", async () => {
     mount();
-    fireEvent.input(field(), { target: { value: "Desk lamp" } });
+    await userEvent.fill(field(), "Desk lamp");
     expect(field().value).toBe("Desk lamp");
   });
 
-  it("enables Save only once the draft differs from the stored config", () => {
+  it("enables Save only once the draft differs from the stored config", async () => {
     mount();
     expect(save().disabled).toBe(true);
-    fireEvent.input(field(), { target: { value: "Desk lamp" } });
+    await userEvent.fill(field(), "Desk lamp");
     expect(save().disabled).toBe(false);
   });
 
-  it("saves the draft when it validates", () => {
+  it("saves the draft when it validates", async () => {
     const { onConfigSave } = mount();
-    fireEvent.input(field(), { target: { value: "Desk lamp" } });
-    fireEvent.click(save());
+    await userEvent.fill(field(), "Desk lamp");
+    await userEvent.click(save());
     expect(onConfigSave).toHaveBeenCalledWith({ title: "Desk lamp" });
   });
 
   // The host's resolveConfig falls back to defaults on a parse failure, so an
   // invalid draft reaching onConfigSave silently wipes the user's config.
-  it("blocks an invalid draft and surfaces the issue instead", () => {
+  it("blocks an invalid draft and surfaces the issue instead", async () => {
     const { onConfigSave } = mount();
-    fireEvent.input(field(), { target: { value: "x" } });
-    fireEvent.click(save());
+    await userEvent.fill(field(), "x");
+    await userEvent.click(save());
 
     expect(onConfigSave).not.toHaveBeenCalled();
     expect(document.querySelector('[data-slot="error"]')?.textContent).toContain("title");
   });
 
-  it("drops the draft and stale errors when the dialog is dismissed", () => {
+  it("drops the draft and stale errors when the dialog is dismissed", async () => {
     const { onConfigSave, onOpenChange } = mount();
-    fireEvent.input(field(), { target: { value: "x" } });
-    fireEvent.click(save());
+    await userEvent.fill(field(), "x");
+    await userEvent.click(save());
     expect(document.querySelector('[data-slot="error"]')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onConfigSave).not.toHaveBeenCalled();
@@ -136,7 +137,7 @@ describe("WidgetDialog draft lifecycle", () => {
 
   // The host owns the stored config: a revert, an upgrade migration or another
   // device's edit replaces it under an open dialog, and the draft must follow.
-  it("resets the draft when the host replaces the stored config", () => {
+  it("resets the draft when the host replaces the stored config", async () => {
     const [config, setConfig] = createSignal<Record<string, unknown>>({ title: "Lamp" });
     render(() => (
       <WidgetDialog
@@ -151,7 +152,7 @@ describe("WidgetDialog draft lifecycle", () => {
       />
     ));
 
-    fireEvent.input(field(), { target: { value: "Desk lamp" } });
+    await userEvent.fill(field(), "Desk lamp");
     expect(save().disabled).toBe(false);
 
     setConfig({ title: "Reverted" });

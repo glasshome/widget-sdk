@@ -1,5 +1,5 @@
 import { HOLD_MS } from "@glasshome/ui/solid";
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
@@ -8,6 +8,8 @@ import {
   WidgetCtx,
 } from "../../src/framework/hooks/use-widget-context";
 import { useFakeTime } from "@glasshome/ui/testing";
+import { Cell } from "./harness/cell";
+import { mouseOn } from "./harness/press";
 
 function hostCtx() {
   const reports: boolean[] = [];
@@ -27,10 +29,8 @@ const shell = () => {
   return el;
 };
 
-const press = (el: Element) =>
-  fireEvent.pointerDown(el, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-const release = (el: Element) =>
-  fireEvent.pointerUp(el, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+const press = (el: Element) => mouseOn("down", el);
+const release = (el: Element) => mouseOn("up", el);
 
 describe("every widget answers a hold", () => {
   it("fires at the shared hold length, not before", async () => {
@@ -42,14 +42,17 @@ describe("every widget answers a hold", () => {
     }
     render(() => (
       <WidgetCtx.Provider value={host.ctx}>
-        <Tile />
+        <Cell>
+          <Tile />
+        </Cell>
       </WidgetCtx.Provider>
     ));
-    press(shell());
+    await press(shell());
     await vi.advanceTimersByTimeAsync(HOLD_MS - 1);
     expect(host.held()).toBe(0);
     await vi.advanceTimersByTimeAsync(1);
     expect(host.held()).toBe(1);
+    await release(shell());
   });
 
   it("a widget with nothing more to open says so, and the tour does not count it", async () => {
@@ -57,17 +60,20 @@ describe("every widget answers a hold", () => {
     const host = hostCtx();
     render(() => (
       <WidgetCtx.Provider value={host.ctx}>
-        <Widget>Clock</Widget>
+        <Cell>
+          <Widget>Clock</Widget>
+        </Cell>
       </WidgetCtx.Provider>
     ));
     expect(host.reports.at(-1)).toBe(false);
 
-    press(shell());
+    await press(shell());
     await vi.advanceTimersByTimeAsync(HOLD_MS);
     const notice = screen.getByText("No more controls for this widget");
     expect(notice.hasAttribute("data-closed")).toBe(false);
     await vi.advanceTimersByTimeAsync(2000);
     expect(notice.hasAttribute("data-closed") || !notice.isConnected).toBe(true);
+    await release(shell());
   });
 
   it("holds from a control row, while a short press there stays the control's", async () => {
@@ -88,18 +94,20 @@ describe("every widget answers a hold", () => {
         </Widget>
       );
     }
-    render(() => <Tile />);
+    render(() => (
+      <Cell>
+        <Tile />
+      </Cell>
+    ));
     const button = screen.getByText("Press");
 
-    press(button);
-    release(button);
-    fireEvent.click(button);
+    await press(button);
+    await release(button);
     expect(counts).toEqual({ tap: 0, held: 0, button: 1 });
 
-    press(button);
+    await press(button);
     await vi.advanceTimersByTimeAsync(HOLD_MS);
-    release(button);
-    fireEvent.click(button);
+    await release(button);
     expect(counts).toEqual({ tap: 0, held: 1, button: 1 });
   });
 });

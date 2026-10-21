@@ -1,35 +1,59 @@
+import { resolve } from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import { playwright } from "@vitest/browser-playwright";
 import solid from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
-
-// Mount tests for SDK components. `bun test` cannot compile Solid JSX, which is
-// why the component tests here used to assert their own source text; that is
-// blind to behaviour by construction. Logic tests stay on `bun test src`;
-// anything that renders or reacts lives in tests/dom/ and runs here. The two
-// runners never see each other's files.
+import { mouse } from "./tests/dom/harness/commands";
 
 // Forked workers inherit it, so a direct run matches the gate; bun test is UTC already.
 process.env.TZ = "UTC";
 
 export default defineConfig({
-  plugins: [solid()],
+  plugins: [solid({ dev: false, hot: false }), tailwindcss()],
   resolve: {
-    // No "@glasshome/source" here: ui publishes dist, not src/solid, so that
-    // condition only resolves inside the monorepo. This suite runs in the
-    // standalone clone too, and reading the package entry is what a consumer
-    // of WidgetDialog actually gets.
-    conditions: ["browser", "development"],
+    // No "@glasshome/source": ui publishes dist, and this suite runs in the standalone clone too.
+    conditions: ["browser"],
     dedupe: ["solid-js", "solid-js/web", "solid-js/store"],
+    // The host imports the SDK by name to share its module state; here that is the source under test.
+    alias: [{ find: /^@glasshome\/widget-sdk$/, replacement: resolve(import.meta.dirname, "src/index.ts") }],
+  },
+  optimizeDeps: {
+    include: [
+      "solid-js",
+      "solid-js/web",
+      "solid-js/store",
+      "@solidjs/testing-library",
+      "clsx",
+      "tailwind-merge",
+      "zod",
+      "@glasshome/ui > cva",
+      "@glasshome/ui > embla-carousel",
+      "@glasshome/ui > embla-carousel-autoplay",
+      "@glasshome/ui > embla-carousel-fade",
+      "@glasshome/ui > @iconify/utils",
+      "@glasshome/sync-layer > home-assistant-js-websocket",
+    ],
   },
   test: {
-    environment: "happy-dom",
-    // @solidjs/testing-library registers its cleanup on a global afterEach;
-    // without globals every mount leaks into the next test's document.
+    // Unset, vite-plugin-solid asks for jsdom, which a standalone clone does not install.
+    environment: "node",
+    // @solidjs/testing-library registers its cleanup on a global afterEach.
     globals: true,
     include: ["tests/dom/**/*.test.{ts,tsx}"],
     setupFiles: ["./tests/dom/harness/setup.ts"],
-    // Bound workers and per-worker heap: a leaking suite must fail with a heap
-    // error, not exhaust system memory (unbounded forks each default to ~4GB).
-    maxWorkers: 2,
-    execArgv: ["--max-old-space-size=2048"],
+    maxWorkers: 4,
+    browser: {
+      enabled: true,
+      headless: true,
+      screenshotFailures: false,
+      viewport: { width: 1024, height: 768 },
+      provider: playwright({
+        // test-change-ok a press that cannot land fails in 5 s instead of waiting out the test
+        actionTimeout: 5000,
+        contextOptions: { permissions: ["clipboard-read", "clipboard-write"] },
+      }),
+      instances: [{ browser: "chromium" }],
+      commands: { mouse },
+    },
   },
 });

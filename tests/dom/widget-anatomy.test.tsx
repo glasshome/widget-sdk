@@ -1,7 +1,10 @@
 import { HOLD_MS } from "@glasshome/ui/solid";
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { render, screen } from "@solidjs/testing-library";
 import { onCleanup } from "solid-js";
 import { describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+import { Cell } from "./harness/cell";
+import { mouseOn } from "./harness/press";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import { useConfirm } from "../../src/framework/hooks/use-confirm";
@@ -82,11 +85,15 @@ describe("Widget.Action", () => {
         </Widget>
       );
     }
-    render(() => <Tile />);
+    render(() => (
+      <Cell>
+        <Tile />
+      </Cell>
+    ));
     const stop = screen.getByLabelText("Stop");
     const fail = screen.getByLabelText("Fail");
-    fireEvent.click(stop);
-    fireEvent.click(fail);
+    await userEvent.click(stop);
+    await userEvent.click(fail);
     await vi.advanceTimersByTimeAsync(0);
     expect(stop.hasAttribute("data-confirmed")).toBe(true);
     expect(fail.hasAttribute("data-confirmed")).toBe(false);
@@ -109,8 +116,12 @@ describe("Widget.Action", () => {
         </Widget>
       );
     }
-    render(() => <Tile />);
-    fireEvent.click(screen.getByText("Movie"));
+    render(() => (
+      <Cell>
+        <Tile />
+      </Cell>
+    ));
+    await userEvent.click(screen.getByText("Movie"));
     await vi.advanceTimersByTimeAsync(0);
     expect(document.querySelector(".glasshome-widget")?.hasAttribute("data-confirmed")).toBe(true);
     expect(confirm?.has("movie")).toBe(true);
@@ -134,25 +145,17 @@ describe("a widget with a sheet", () => {
     }
     render(() => (
       <WidgetCtx.Provider value={ctx}>
-        <Tile />
+        <Cell>
+          <Tile />
+        </Cell>
       </WidgetCtx.Provider>
     ));
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
     if (!shell) throw new Error("shell did not render");
     const hold = async () => {
-      fireEvent.pointerDown(shell, {
-        button: 0,
-        pointerId: 1,
-        clientX: 10,
-        clientY: 10,
-      });
+      await mouseOn("down", shell);
       await vi.advanceTimersByTimeAsync(HOLD_MS);
-      fireEvent.pointerUp(shell, {
-        button: 0,
-        pointerId: 1,
-        clientX: 10,
-        clientY: 10,
-      });
+      await mouseOn("up", shell);
     };
 
     await hold();
@@ -183,15 +186,17 @@ describe("a widget with a sheet", () => {
     }
     render(() => (
       <WidgetCtx.Provider value={ctx}>
-        <Tile />
+        <Cell>
+          <Tile />
+        </Cell>
       </WidgetCtx.Provider>
     ));
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
     if (!shell) throw new Error("shell did not render");
     widgetRegistry(ctx)?.setHasSheet(true);
-    fireEvent.pointerDown(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    await mouseOn("down", shell);
     await vi.advanceTimersByTimeAsync(HOLD_MS);
-    fireEvent.pointerUp(shell, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    await mouseOn("up", shell);
     expect(dialog?.showDialog()).toBe(true);
     expect(taps).toEqual([]);
   });

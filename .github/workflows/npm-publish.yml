@@ -107,6 +107,8 @@ jobs:
         if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run typecheck:test
         if: ${{ steps.gate.outputs.go == 'true' }}
+      - run: bunx playwright install --with-deps chromium
+        if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run test
         if: ${{ steps.gate.outputs.go == 'true' }}
         env:

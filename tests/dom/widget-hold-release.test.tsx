@@ -1,6 +1,9 @@
 import { HOLD_MS } from "@glasshome/ui/solid";
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+import { Cell } from "./harness/cell";
+import { mouseOn } from "./harness/press";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import { useFakeTime } from "@glasshome/ui/testing";
@@ -19,17 +22,20 @@ describe("a held tile", () => {
         </Widget>
       );
     }
-    render(() => <Tile />);
+    render(() => (
+      <Cell>
+        <Tile />
+      </Cell>
+    ));
     const chip = screen.getByText("Scene");
 
-    fireEvent.pointerDown(chip, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    await mouseOn("down", chip);
     await vi.advanceTimersByTimeAsync(HOLD_MS);
-    fireEvent.pointerUp(chip, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    fireEvent.click(chip);
+    await mouseOn("up", chip);
     expect(counts).toEqual({ held: 1, chip: 0 });
 
     await vi.runAllTimersAsync();
-    fireEvent.click(chip);
+    await userEvent.click(chip);
     expect(counts).toEqual({ held: 1, chip: 1 });
   });
 });

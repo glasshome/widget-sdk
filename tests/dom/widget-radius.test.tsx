@@ -4,21 +4,12 @@
  * scale. A fixed radius on the shell, or a square clip inside it, is the bleed
  * a household sees when it drags Border Radius.
  *
- * The stylesheet is read from disk: vitest stubs CSS modules, and happy-dom
- * computes no cascade, so the shipped text is the only place this contract
- * exists at test time.
  */
 
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { render } from "@solidjs/testing-library";
 import { describe, expect, it } from "vitest";
+import tokensCss from "../../src/framework/theming/tokens.css?raw";
 import { Widget } from "../../src/framework/core/Widget";
-
-// happy-dom replaces the URL global, and node:fs rejects that class.
-const here = dirname(fileURLToPath(import.meta.url));
-const tokensCss = readFileSync(resolve(here, "../../src/framework/theming/tokens.css"), "utf-8");
 
 function shell(container: HTMLElement) {
   const el = container.querySelector<HTMLElement>(".glasshome-widget");

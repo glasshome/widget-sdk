@@ -71,7 +71,7 @@ const panel = () => {
 
 const scrollersInPanel = () =>
   [...panel().querySelectorAll<HTMLElement>("*")].filter((el) =>
-    el.className.includes("overflow-y-auto"),
+    (el.getAttribute("class") ?? "").includes("overflow-y-auto"),
   );
 
 describe("WidgetDialog shell", () => {

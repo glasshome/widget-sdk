@@ -1,6 +1,9 @@
 import { HOLD_MS } from "@glasshome/ui/solid";
-import { fireEvent, render } from "@solidjs/testing-library";
+import { render } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+import { Cell } from "./harness/cell";
+import { mouseOn } from "./harness/press";
 import { Widget } from "../../src/framework/core/Widget";
 import { useWidgetGestures } from "../../src/framework/gestures/use-widget-gestures";
 import {
@@ -25,9 +28,11 @@ function hostCtx() {
 function HoldTile() {
   const gestures = useWidgetGestures(() => ({ hold: { action: () => {} } }));
   return (
-    <Widget gestures={gestures}>
-      <Widget>Lamp</Widget>
-    </Widget>
+    <Cell>
+      <Widget gestures={gestures}>
+        <Widget>Lamp</Widget>
+      </Widget>
+    </Cell>
   );
 }
 
@@ -93,24 +98,26 @@ describe("the host hears about holds", () => {
         <HoldTile />
       </WidgetCtx.Provider>
     ));
-    fireEvent.pointerDown(shell(), { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    await mouseOn("down", shell());
     await vi.advanceTimersByTimeAsync(100);
-    fireEvent.pointerUp(shell(), { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    await mouseOn("up", shell());
     expect(host.held()).toBe(0);
 
-    fireEvent.pointerDown(shell(), { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    await mouseOn("down", shell());
     await vi.advanceTimersByTimeAsync(HOLD_MS);
     expect(host.held()).toBe(1);
+    await mouseOn("up", shell());
   });
 
-  it("the context-menu key is a hold too", () => {
+  it("the context-menu key is a hold too", async () => {
     const host = hostCtx();
     render(() => (
       <WidgetCtx.Provider value={host.ctx}>
         <HoldTile />
       </WidgetCtx.Provider>
     ));
-    fireEvent.keyDown(shell(), { key: "ContextMenu" });
+    shell().focus();
+    await userEvent.keyboard("{ContextMenu}");
     expect(host.held()).toBe(1);
   });
 
@@ -123,13 +130,9 @@ describe("the host hears about holds", () => {
         <PanelRow icon="lucide:lamp" name="Hallway" on={false} onHold={() => opened++} />
       </WidgetCtx.Provider>
     ));
-    fireEvent.pointerDown(view.getByText("Hallway"), {
-      button: 0,
-      pointerId: 1,
-      clientX: 5,
-      clientY: 5,
-    });
+    await mouseOn("down", view.getByText("Hallway"));
     await vi.advanceTimersByTimeAsync(HOLD_MS);
     expect({ opened, held: host.held() }).toEqual({ opened: 1, held: 1 });
+    await mouseOn("up", view.getByText("Hallway"));
   });
 });
