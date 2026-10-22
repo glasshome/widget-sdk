@@ -15,7 +15,12 @@ export default defineConfig({
     conditions: ["browser"],
     dedupe: ["solid-js", "solid-js/web", "solid-js/store"],
     // The host imports the SDK by name to share its module state; here that is the source under test.
-    alias: [{ find: /^@glasshome\/widget-sdk$/, replacement: resolve(import.meta.dirname, "src/index.ts") }],
+    alias: [
+      {
+        find: /^@glasshome\/widget-sdk$/,
+        replacement: resolve(import.meta.dirname, "src/index.ts"),
+      },
+    ],
   },
   optimizeDeps: {
     include: [
