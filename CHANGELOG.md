@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.1](https://github.com/glasshome/widget-sdk/compare/v1.25.0...v1.25.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** pin @glasshome/widget-contract 0.5.1 ([dd6d3ac](https://github.com/glasshome/widget-sdk/commit/dd6d3ac7b52bd8206fc458fe824a2062922ab09e))
+
 ## [1.25.0](https://github.com/glasshome/widget-sdk/compare/v1.24.0...v1.25.0) (2026-10-22)
 
 
