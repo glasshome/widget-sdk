@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { PanelRow } from "../../src/framework/panel/panel";
 import { mouseOn } from "./harness/press";
 
-/** Presses at `from` of the row's width and lets go at `to`. */
+/** Presses at `from` of the row's width and lets go at `to`, once the row has finished its press feedback. */
 async function press(el: HTMLElement, from: number, to = from) {
   await mouseOn("down", el, { x: from, y: 0.5 });
+  await Promise.allSettled(el.getAnimations().map((animation) => animation.finished));
   if (to !== from) await mouseOn("move", el, { x: to, y: 0.5 });
   await mouseOn("up", el, { x: to, y: 0.5 });
 }
