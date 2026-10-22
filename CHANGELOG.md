@@ -5,6 +5,22 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.0](https://github.com/glasshome/widget-sdk/compare/v1.24.0...v1.25.0) (2026-10-22)
+
+
+### Features
+
+* **sdk:** ship the export history of every release ([5b0c16d](https://github.com/glasshome/widget-sdk/commit/5b0c16d51ff1be391488512b4419d08861c932fe))
+* ship the export history of every release ([f4f05aa](https://github.com/glasshome/widget-sdk/commit/f4f05aa2ec66a663e25416e929523e8b25f31017))
+
+
+### Bug Fixes
+
+* **deps:** widget-contract 0.5.0 ([312476b](https://github.com/glasshome/widget-sdk/commit/312476ba8339456a26196200837c7f73169858c2))
+* **host:** delegateInside's unpin listens passively, so a widget root holds up no touch scroll ([5831a20](https://github.com/glasshome/widget-sdk/commit/5831a2048ab22976ce6df872ce3ea2e7e6c14a72))
+* **sdk:** keep the contract's sdk-floor entry external ([744e032](https://github.com/glasshome/widget-sdk/commit/744e0320c4231bacccfb695e38411c085580df99))
+* **sdk:** publish backfills the export history and CI checks it against release tags ([c3d577e](https://github.com/glasshome/widget-sdk/commit/c3d577ec328e1f31999f69d96460ed80528e3d38))
+
 ## [1.24.0](https://github.com/glasshome/widget-sdk/compare/v1.23.1...v1.24.0) (2026-10-20)
 
 
