@@ -191,6 +191,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     ...(toned() ? { "--glass-tone": "var(--widget-color)" } : {}),
   }));
 
+  const hostDrawsHalo = reportsHold && !!parentCtx?.onShell;
   if (reportsHold) {
     const tone = createMemo(() => (toned() ? (props.color ?? `var(--tone-${props.tone})`) : null));
     createEffect(() => parentCtx?.onShell?.({ tone: tone() }));
@@ -302,12 +303,14 @@ function WidgetBase(props: WidgetProps): JSX.Element {
                 />
               )}
             </div>
-            <div
-              class="glasshome-widget-halo glass-halo rounded-xl"
-              style={toneStyle()}
-              data-toned={toned() ? "" : undefined}
-              aria-hidden="true"
-            />
+            <Show when={!hostDrawsHalo}>
+              <div
+                class="glasshome-widget-halo glass-halo rounded-xl"
+                style={toneStyle()}
+                data-toned={toned() ? "" : undefined}
+                aria-hidden="true"
+              />
+            </Show>
           </div>
           <Show when={reportsHold}>
             <Popover
