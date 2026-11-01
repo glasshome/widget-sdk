@@ -1,7 +1,9 @@
 import { type Accessor, createSignal, onCleanup } from "solid-js";
+import { htmlHasClass } from "../../theme";
 
 /**
- * Reactive `prefers-reduced-motion` accessor.
+ * Reactive reduced-motion accessor: true when the device asks for reduced motion or the home's
+ * Reduce motion setting is on (the `reduce-motion` class on <html>).
  *
  * SSR-safe: returns a constant `false` when `window`/`matchMedia` are absent.
  */
@@ -11,11 +13,11 @@ export function useReducedMotion(): Accessor<boolean> {
   }
 
   const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const [reduced, setReduced] = createSignal(query.matches);
+  const [device, setDevice] = createSignal(query.matches);
 
-  const onChange = (event: MediaQueryListEvent) => setReduced(event.matches);
+  const onChange = (event: MediaQueryListEvent) => setDevice(event.matches);
   query.addEventListener("change", onChange);
   onCleanup(() => query.removeEventListener("change", onChange));
 
-  return reduced;
+  return () => device() || htmlHasClass("reduce-motion");
 }
