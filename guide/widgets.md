@@ -59,7 +59,8 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 - Theme vars only (`--foreground`, `--muted-foreground`, `--card`, `--primary`, `--border`, `--success`, `--warning`, `--destructive`, `--radius`). Never declare them on `:host`; no own colour/radius tokens; no `--color-*`.
 - Material: a part you draw follows the home's material through `--material-*` (`--material-accent`, `--material-face`, `--material-well`, `--material-raised`, `--material-pressed`, `--material-control-track|fill|knob`, `--material-blur`, `--material-clarity`, `--material-tint`, `--material-glow`) and its own color through `--surface-tone`, `--surface-wash`. `useMaterial()` to decide (`terms.face`, `terms.glow`), never to paint. Never read `--glass-*` or `--_*`; the build warns, and names the retired `--material-*` ones.
 - Own CSS = layout and bespoke art. No custom panel/row/chip/button chrome.
-- Tailwind classes literal in source, never concatenated. `dark:` works; `isDark()` for the boolean.
+- Tailwind classes literal in source, never concatenated.
+- Dark mode: style with `dark:` and theme vars, which follow the home everywhere. `isDark()` for logic, reactive in a memo or effect. `prefers-color-scheme` is the device's setting, not the home's mode.
 - No dot status lamps. No thin vertical bars (read as a text caret). No all-caps. Separator ` · `.
 - One icon per item, not per line. Icons, fills and pictures before text.
 - Lead with the answer (value + unit, or a verdict); one small line explains it. Never show a value twice. States per device class (Open/Closed, Detected/Clear).
@@ -68,14 +69,14 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 - Groups: one tap brings all members to one state; locks never unlock in one tap; doors, gates, garage doors never join bulk actions.
 - Readings update text in place; never rebuild DOM. `Index` for lists of readings. Over 20 s of changing demo data a widget adds and removes no DOM nodes.
 - Everything sits on an edge; text left, values/actions right. One accent per view; defaults quiet. No card in a card.
-- Motion: colours morph, never snap; time transitions with `--duration-state` / `--ease-morph` (zeroed under reduced motion). Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()`; pause offscreen with `useIntersectionPause()`.
+- Motion: colours morph, never snap; time transitions with `--duration-state` / `--ease-morph` (zeroed under reduced motion). Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()` (the device's setting or the home's Reduce motion); pause offscreen with `useIntersectionPause()`.
 
 ## Sealed engine
 
 Dash 1.5 previews the engine every widget will run in: QuickJS, no page access. Test there before publishing: Settings, Developer Mode, Sealed widgets (preview), reload, then `bun widget connect`. `bun widget preview` still renders in the page, so it does not prove a widget runs sealed.
 
 - Import only `@glasshome/widget-sdk` and `solid-js` (`/store`, `/web`).
-- No `fetch`, `XMLHttpRequest`, WebSocket, cookies, Capacitor. `localStorage` is in-memory and empties on reload. Built-ins are frozen: no `z.config`, no global patches.
+- No `fetch`, `XMLHttpRequest`, WebSocket, cookies, Capacitor. `localStorage` and `sessionStorage` are in memory, one pair per widget (every copy of a widget shares it), and empty on reload. They keep widgets apart but are no security boundary: widgets in one engine share its memory. Module top-level code uses its widget's store; a timer or listener set up there runs for no widget, so storage throws a catchable SecurityError in it and the engine runs on. Keep what must last in config through `updateConfig`. Built-ins are frozen: no `z.config`, no global patches.
 - DOM is mirrored through an allowlist: no `<style>`, `<link>`, `<script>`, no `el.click()`; images only `data:image/…`, same-origin `blob:` or `/ha-proxy/media`.
 - Limits: CPU 250 ms per second, setup 1.5 s per 10 s (both stop the widget until the homeowner turns it back on), 500 ms per run and 256 MB (both crash it), 20,000 elements, 512 timers, 128 observers.
 - Refusals and CPU use: Settings > Sealed widgets (Developer Mode). Each refusal has a sentence and a code; fix every one.

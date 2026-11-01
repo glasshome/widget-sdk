@@ -148,6 +148,14 @@ export const deprecations: readonly DeprecationEntry[] = [
     replacement: "WidgetVariantConfig.styles (container, class, cssVars)",
     docsUrl: "https://glasshome.app/docs/widgets/widget-sdk#variants",
   },
+  {
+    // Type-only: no host ever constructed a WidgetContext.
+    id: "WidgetContext.theme",
+    since: "1.26.0",
+    removeIn: "2.0.0",
+    replacement: "isDark()",
+    docsUrl: "https://glasshome.app/docs/widgets/widget-api-reference",
+  },
 ];
 
 /** Format a registry entry into the one-line notice shared by every channel. */

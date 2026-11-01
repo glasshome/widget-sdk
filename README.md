@@ -68,6 +68,17 @@ Provides a `@source` directive for Tailwind v4 so the compiler scans widget SDK 
 @source "@glasshome/widget-sdk/tailwind-sources";
 ```
 
+## Dark mode
+
+Style with Tailwind's `dark:` variant and the theme variables (`var(--foreground)`, `var(--card)`): they follow the home's mode in every engine and every SDK version. For logic, call `isDark()`; inside a memo or effect it runs again when the home switches mode. `matchMedia("(prefers-color-scheme: dark)")` answers the device's setting, which differs from the home's mode when the home follows a schedule or the sun.
+
+```tsx
+import { isDark } from "@glasshome/widget-sdk";
+import { createMemo } from "solid-js";
+
+const palette = createMemo(() => (isDark() ? DARK_COLORS : LIGHT_COLORS));
+```
+
 ## Escape patterns, when widgets own their visual surface
 
 Most widgets route through the channel API: `<Widget tone>` / `<Widget color colorTo>` / `<Widget.Icon color>`. A small number of widgets intentionally own their entire visual surface and bypass the channel. These are supported escape patterns, not anti-patterns.
