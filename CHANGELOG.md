@@ -5,6 +5,19 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.26.0](https://github.com/glasshome/widget-sdk/compare/v1.25.2...v1.26.0) (2026-11-01)
+
+
+### Features
+
+* **widget:** the outer Widget reports its shell and tone through onShell, so a host that clips it can draw the outer glow and shadow ([1dc6c7e](https://github.com/glasshome/widget-sdk/commit/1dc6c7eff56294dfe7851499373c1fc99c041586))
+
+
+### Bug Fixes
+
+* **widget:** a widget whose host draws its halo draws none of its own, so the host's clip leaves no hard-edged shadow at its corners ([57fcd10](https://github.com/glasshome/widget-sdk/commit/57fcd108d6d520d25c0c98db695811b1eeaff4c4))
+* **widget:** the outer Widget reports its variant's lift and tone with its shell, so a host that draws its halo matches a minimal or custom variant ([4c699ef](https://github.com/glasshome/widget-sdk/commit/4c699ef30a81ef0f36d3510f84aee244502e57f8))
+
 ## [1.25.2](https://github.com/glasshome/widget-sdk/compare/v1.25.1...v1.25.2) (2026-10-23)
 
 
