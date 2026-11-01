@@ -28,7 +28,7 @@ describe("the host hears a widget's shell", () => {
         </Widget>
       </WidgetCtx.Provider>
     ));
-    expect(host.reports.at(-1)).toEqual({ tone: "var(--tone-info)" });
+    expect(host.reports.at(-1)).toEqual({ tone: "var(--tone-info)", lift: null });
     unmount();
     expect(host.reports.at(-1)).toBeNull();
   });
@@ -40,7 +40,33 @@ describe("the host hears a widget's shell", () => {
         <Widget>Clock</Widget>
       </WidgetCtx.Provider>
     ));
-    expect(host.reports.at(-1)).toEqual({ tone: null });
+    expect(host.reports.at(-1)).toEqual({ tone: null, lift: null });
+  });
+
+  it("a variant that sets the shell's lift or tone reports them", () => {
+    const minimal = hostCtx(true);
+    render(() => (
+      <WidgetCtx.Provider value={minimal.ctx}>
+        <Widget variant="minimal">Clock</Widget>
+      </WidgetCtx.Provider>
+    ));
+    expect(minimal.reports.at(-1)).toEqual({ tone: null, lift: 0 });
+
+    const custom = hostCtx(true);
+    render(() => (
+      <WidgetCtx.Provider value={custom.ctx}>
+        <Widget
+          variant={{
+            id: "teal",
+            name: "Teal",
+            styles: { cssVars: { "--glass-tone": "#00aaaa", "--glass-lift": "0.2" } },
+          }}
+        >
+          Clock
+        </Widget>
+      </WidgetCtx.Provider>
+    ));
+    expect(custom.reports.at(-1)).toEqual({ tone: "#00aaaa", lift: 0.2 });
   });
 
   it("a host that hears the shell draws its halo, so the outer widget draws none of its own", () => {
