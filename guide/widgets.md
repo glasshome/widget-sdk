@@ -76,7 +76,7 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 Dash 1.5 previews the engine every widget will run in: QuickJS, no page access. Test there before publishing: Settings, Developer Mode, Sealed widgets (preview), reload, then `bun widget connect`. `bun widget preview` still renders in the page, so it does not prove a widget runs sealed.
 
 - Import only `@glasshome/widget-sdk` and `solid-js` (`/store`, `/web`).
-- No `fetch`, `XMLHttpRequest`, WebSocket, cookies, Capacitor. `localStorage` and `sessionStorage` are in memory, one pair per widget, and empty on reload; keep what must last in config through `updateConfig`. Built-ins are frozen: no `z.config`, no global patches.
+- No `fetch`, `XMLHttpRequest`, WebSocket, cookies, Capacitor. `localStorage` and `sessionStorage` are in memory, one pair per widget (every copy of a widget shares it), and empty on reload. They keep widgets apart but are no security boundary: widgets in one engine share its memory. Keep what must last in config through `updateConfig`. Built-ins are frozen: no `z.config`, no global patches.
 - DOM is mirrored through an allowlist: no `<style>`, `<link>`, `<script>`, no `el.click()`; images only `data:image/…`, same-origin `blob:` or `/ha-proxy/media`.
 - Limits: CPU 250 ms per second, setup 1.5 s per 10 s (both stop the widget until the homeowner turns it back on), 500 ms per run and 256 MB (both crash it), 20,000 elements, 512 timers, 128 observers.
 - Refusals and CPU use: Settings > Sealed widgets (Developer Mode). Each refusal has a sentence and a code; fix every one.
