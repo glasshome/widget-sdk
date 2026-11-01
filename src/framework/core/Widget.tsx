@@ -191,6 +191,12 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     ...(toned() ? { "--glass-tone": "var(--widget-color)" } : {}),
   }));
 
+  if (reportsHold) {
+    const tone = createMemo(() => (toned() ? (props.color ?? `var(--tone-${props.tone})`) : null));
+    createEffect(() => parentCtx?.onShell?.({ tone: tone() }));
+    onCleanup(() => parentCtx?.onShell?.(null));
+  }
+
   const channelStyle = createMemo((): JSX.CSSProperties => ({
     "container-type": "size",
     "container-name": "widget",
