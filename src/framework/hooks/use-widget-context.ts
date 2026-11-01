@@ -73,8 +73,8 @@ export interface ReactiveWidgetContext {
   onHoldable?: (holds: boolean) => void;
   /** Host hook: a hold on this widget fired. Absent on hosts that predate this field. */
   onHeld?: () => void;
-  /** Host hook: the widget's shell and its tone; null when the shell goes. A host that sets it draws the shell's outer glow and shadow, and the widget draws none of its own. Absent on hosts that predate this field. */
-  onShell?: (shell: { tone: string | null } | null) => void;
+  /** Host hook: the widget's shell, its tone and its lift (null for the defaults); null when the shell goes. A host that sets it draws the shell's outer glow and shadow, and the widget draws none of its own. Absent on hosts that predate this field. */
+  onShell?: (shell: { tone: string | null; lift: number | null } | null) => void;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();

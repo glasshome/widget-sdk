@@ -193,8 +193,26 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   const hostDrawsHalo = reportsHold && !!parentCtx?.onShell;
   if (reportsHold) {
-    const tone = createMemo(() => (toned() ? (props.color ?? `var(--tone-${props.tone})`) : null));
-    createEffect(() => parentCtx?.onShell?.({ tone: tone() }));
+    const shell = createMemo(
+      () => {
+        const vars = variantStyles()?.cssVars;
+        const varTone = vars?.["--glass-tone"];
+        const rawLift = vars?.["--glass-lift"];
+        const lift =
+          typeof rawLift === "string" && rawLift.trim() !== "" ? Number(rawLift) : rawLift;
+        return {
+          tone: toned()
+            ? (props.color ?? `var(--tone-${props.tone})`)
+            : typeof varTone === "string"
+              ? varTone
+              : null,
+          lift: typeof lift === "number" && Number.isFinite(lift) ? lift : null,
+        };
+      },
+      undefined,
+      { equals: (a, b) => a.tone === b.tone && a.lift === b.lift },
+    );
+    createEffect(() => parentCtx?.onShell?.(shell()));
     onCleanup(() => parentCtx?.onShell?.(null));
   }
 
