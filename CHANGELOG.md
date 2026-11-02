@@ -5,6 +5,15 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.0](https://github.com/glasshome/widget-sdk/compare/v1.26.0...v1.27.0) (2026-11-01)
+
+
+### Features
+
+* **theme:** isDark() and useReducedMotion() follow the home live ([f0d0c04](https://github.com/glasshome/widget-sdk/commit/f0d0c04a0211d0fe6a8966244187524ee59dc157))
+* **theme:** isDark() and useReducedMotion() follow the home live ([781d4cc](https://github.com/glasshome/widget-sdk/commit/781d4cccb88a53665c818d6c55c83f09660a882d))
+* **types:** deprecate WidgetContext, which no host provides ([3df41b9](https://github.com/glasshome/widget-sdk/commit/3df41b9d5193cf048ee333115966e8979c31882a))
+
 ## [1.26.0](https://github.com/glasshome/widget-sdk/compare/v1.25.2...v1.26.0) (2026-11-01)
 
 
