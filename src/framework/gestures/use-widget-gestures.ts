@@ -68,6 +68,8 @@ interface GestureState {
   holdTimer: ReturnType<typeof setTimeout> | null;
   graceTimer: ReturnType<typeof setTimeout> | null;
   element: HTMLElement | null;
+  /** The slide value when the press began, restored if a second finger takes the press away. */
+  startValue: number | undefined;
 }
 
 export function useWidgetGestures(
@@ -102,6 +104,7 @@ export function useWidgetGestures(
     holdTimer: null,
     graceTimer: null,
     element: null,
+    startValue: undefined,
   };
   const [hold, setHold] = createSignal<HoldFlood | null>(null);
 
@@ -163,6 +166,7 @@ export function useWidgetGestures(
     state.hasMoved = false;
     state.sliding = false;
     state.holdOnly = false;
+    state.startValue = undefined;
   };
 
   const getSlideOrientation = (el?: HTMLElement): "horizontal" | "vertical" => {
@@ -181,6 +185,7 @@ export function useWidgetGestures(
   };
 
   const onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType === "touch" && !e.isPrimary) return;
     const cfg = config();
     const own =
       e.target instanceof Element
@@ -199,6 +204,7 @@ export function useWidgetGestures(
     state.startTime = Date.now();
     state.hasMoved = false;
     state.sliding = false;
+    state.startValue = cfg.slide?.value;
 
     // Hold timer — same on touch and mouse. Cancelled by movement.
     if (cfg.hold) {
@@ -306,8 +312,11 @@ export function useWidgetGestures(
     resetState();
   };
 
+  // The browser or the page took the press (a scroll, a second finger), so the slide never happened.
   const onPointerCancel = (e: PointerEvent) => {
     clearHold();
+    const slide = config().slide;
+    if (state.sliding && slide && state.startValue !== undefined) slide.onChange(state.startValue);
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {

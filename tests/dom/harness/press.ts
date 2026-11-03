@@ -1,9 +1,10 @@
 import { commands } from "vitest/browser";
-import type { MouseAction } from "./commands";
+import type { MouseAction, TouchAction } from "./commands";
 
 declare module "vitest/browser" {
   interface BrowserCommands {
     mouse(action: MouseAction, x: number, y: number): Promise<void>;
+    touch(action: TouchAction, points: { x: number; y: number }[]): Promise<void>;
   }
 }
 
@@ -19,3 +20,11 @@ export function mouseOn(action: MouseAction, el: Element, at?: { x: number; y: n
 }
 
 export const mouseAt = (action: MouseAction, x: number, y: number) => commands.mouse(action, x, y);
+
+/** Fingers at points relative to `el`'s box, as fractions across and down. */
+export function touchOn(action: TouchAction, el: Element, fingers: { x: number; y: number }[]) {
+  return commands.touch(
+    action,
+    fingers.map((at) => point(el, at)),
+  );
+}
