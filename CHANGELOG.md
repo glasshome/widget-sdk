@@ -5,6 +5,15 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.1](https://github.com/glasshome/widget-sdk/compare/v1.27.0...v1.27.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* **deps:** pin @glasshome/widget-contract 0.6.1 ([136ac71](https://github.com/glasshome/widget-sdk/commit/136ac710ca5c41b9e3e79606c439b53605fdb191))
+* **gestures:** a cancelled slide puts the value back, and a second finger never starts a widget gesture ([cc66413](https://github.com/glasshome/widget-sdk/commit/cc66413640b42934e1a272c060837dbb5742226c))
+* **gestures:** a cancelled slide puts the value back, and a second finger never starts a widget gesture ([a0c175d](https://github.com/glasshome/widget-sdk/commit/a0c175d7eb167c23e5b477062d2cde12380acad1))
+
 ## [1.27.0](https://github.com/glasshome/widget-sdk/compare/v1.26.0...v1.27.0) (2026-11-01)
 
 
