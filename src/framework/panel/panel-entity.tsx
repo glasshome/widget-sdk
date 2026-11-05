@@ -1,10 +1,31 @@
-import { useEntity } from "@glasshome/sync-layer/solid";
-import { createEffect, createSignal, type JSX, Show } from "solid-js";
+import { useEntity, useTemperatureUnit } from "@glasshome/sync-layer/solid";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  type JSX,
+  on,
+  onCleanup,
+  Show,
+  useContext,
+} from "solid-js";
 import { useService } from "../hooks/use-service";
+import { WidgetCtx } from "../hooks/use-widget-context";
 import { PanelRow } from "./panel";
 
 type Entity = NonNullable<ReturnType<ReturnType<typeof useEntity>>>;
-type CallService = ReturnType<typeof useService>["callService"];
+
+/** A service on the entity's own domain, aimed at the entity. */
+interface Call {
+  service: string;
+  data?: Record<string, unknown>;
+}
+
+interface Bounds {
+  min: number;
+  max: number;
+  step?: number;
+}
 
 interface DomainRow {
   icon: string | ((e: Entity) => string);
@@ -12,13 +33,34 @@ interface DomainRow {
   on: (e: Entity) => boolean;
   state: (e: Entity) => string;
   level?: (e: Entity) => number | undefined;
-  setLevel?: (call: CallService, e: Entity, value: number) => void;
-  tap?: (call: CallService, e: Entity) => void;
+  /** The level's range; unset is 0 to 100 in whole steps. */
+  bounds?: (e: Entity, unit: string) => Bounds;
+  setLevel?: (e: Entity, value: number) => Call;
+  tap?: (e: Entity) => Call;
 }
 
+// Long enough for Home Assistant to report the new value back, short enough that a refused call springs back.
+const SETTLE_MS = 5000;
+// Climate and water heater share the TARGET_TEMPERATURE bit.
+const TARGET_TEMPERATURE = 1;
+const VALVE_SET_POSITION = 4;
+
+const num = (n: unknown) => (typeof n === "number" ? n : undefined);
 const pct = (n: unknown) => (typeof n === "number" ? Math.round(n) : undefined);
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replaceAll("_", " ");
-const target = (e: Entity) => ({ entity_id: e.id });
+const supports = (e: Entity, bit: number) =>
+  ((num(e.attributes.supported_features) ?? 0) & bit) > 0;
+const fahrenheit = (e: Entity, unit: string) =>
+  String(e.attributes.temperature_unit ?? unit).includes("F");
+
+const setpoint = (e: Entity) =>
+  supports(e, TARGET_TEMPERATURE) ? num(e.attributes.temperature) : undefined;
+const setpointBounds =
+  (fallbackStep: (e: Entity, unit: string) => number) => (e: Entity, unit: string) => ({
+    min: num(e.attributes.min_temp) ?? 0,
+    max: num(e.attributes.max_temp) ?? 100,
+    step: num(e.attributes.target_temp_step) ?? fallbackStep(e, unit),
+  });
 
 const DOMAINS: Record<string, DomainRow> = {
   light: {
@@ -39,23 +81,23 @@ const DOMAINS: Record<string, DomainRow> = {
       const b = e.attributes.brightness;
       return e.state === "on" ? (typeof b === "number" ? Math.round((b / 255) * 100) : 100) : 0;
     },
-    setLevel: (call, e, v) =>
-      call("light", v > 0 ? "turn_on" : "turn_off", v > 0 ? { brightness_pct: v } : {}, target(e)),
-    tap: (call, e) => call("light", "toggle", {}, target(e)),
+    setLevel: (_e, v) =>
+      v > 0 ? { service: "turn_on", data: { brightness_pct: v } } : { service: "turn_off" },
+    tap: () => ({ service: "toggle" }),
   },
   switch: {
     icon: "mdi:toggle-switch-variant",
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
     state: (e) => (e.state === "on" ? "On" : "Off"),
-    tap: (call, e) => call("switch", "toggle", {}, target(e)),
+    tap: () => ({ service: "toggle" }),
   },
   input_boolean: {
     icon: "mdi:toggle-switch-variant",
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
     state: (e) => (e.state === "on" ? "On" : "Off"),
-    tap: (call, e) => call("input_boolean", "toggle", {}, target(e)),
+    tap: () => ({ service: "toggle" }),
   },
   fan: {
     icon: "mdi:fan",
@@ -67,8 +109,8 @@ const DOMAINS: Record<string, DomainRow> = {
       return p === undefined ? "On" : `${p}%`;
     },
     level: (e) => (e.state === "on" ? (pct(e.attributes.percentage) ?? 100) : 0),
-    setLevel: (call, e, v) => call("fan", "set_percentage", { percentage: v }, target(e)),
-    tap: (call, e) => call("fan", "toggle", {}, target(e)),
+    setLevel: (_e, v) => ({ service: "set_percentage", data: { percentage: v } }),
+    tap: () => ({ service: "toggle" }),
   },
   cover: {
     icon: "mdi:blinds",
@@ -80,17 +122,31 @@ const DOMAINS: Record<string, DomainRow> = {
       return p !== undefined && e.state === "open" ? `${word} · ${p}%` : word;
     },
     level: (e) => pct(e.attributes.current_position),
-    setLevel: (call, e, v) => call("cover", "set_cover_position", { position: v }, target(e)),
-    tap: (call, e) =>
-      call("cover", e.state === "closed" ? "open_cover" : "close_cover", {}, target(e)),
+    setLevel: (_e, v) => ({ service: "set_cover_position", data: { position: v } }),
+    tap: (e) => ({ service: e.state === "closed" ? "open_cover" : "close_cover" }),
+  },
+  valve: {
+    icon: "mdi:valve",
+    tone: "var(--tone-info)",
+    on: (e) => e.state !== "closed",
+    state: (e) => {
+      const p = pct(e.attributes.current_position);
+      const word = titleCase(e.state);
+      return p !== undefined && e.state === "open" ? `${word} · ${p}%` : word;
+    },
+    level: (e) =>
+      supports(e, VALVE_SET_POSITION) ? pct(e.attributes.current_position) : undefined,
+    setLevel: (_e, v) => ({ service: "set_valve_position", data: { position: v } }),
+    tap: (e) => ({ service: e.state === "closed" ? "open_valve" : "close_valve" }),
   },
   lock: {
     icon: (e) => (e.state === "locked" ? "mdi:lock" : "mdi:lock-open-variant"),
     tone: "var(--tone-success)",
     on: (e) => e.state === "locked",
     state: (e) => titleCase(e.state),
-    tap: (call, e) => call("lock", e.state === "locked" ? "unlock" : "lock", {}, target(e)),
+    tap: (e) => ({ service: e.state === "locked" ? "unlock" : "lock" }),
   },
+  // No tap: a tap that turns the heating off is a trap. Power lives in the thermostat's modes.
   climate: {
     icon: "mdi:thermostat",
     tone: "var(--tone-danger)",
@@ -100,6 +156,39 @@ const DOMAINS: Record<string, DomainRow> = {
       const t = e.attributes.temperature;
       return typeof t === "number" ? `${titleCase(e.state)} · ${t}°` : titleCase(e.state);
     },
+    level: setpoint,
+    bounds: setpointBounds((e, unit) => (fahrenheit(e, unit) ? 1 : 0.5)),
+    setLevel: (_e, v) => ({ service: "set_temperature", data: { temperature: v } }),
+  },
+  water_heater: {
+    icon: "mdi:water-boiler",
+    tone: "var(--tone-danger)",
+    on: (e) => e.state !== "off",
+    state: (e) => {
+      if (e.state === "off") return "Off";
+      const t = e.attributes.temperature;
+      return typeof t === "number" ? `${titleCase(e.state)} · ${t}°` : titleCase(e.state);
+    },
+    level: setpoint,
+    bounds: setpointBounds(() => 1),
+    setLevel: (_e, v) => ({ service: "set_temperature", data: { temperature: v } }),
+  },
+  humidifier: {
+    icon: "mdi:air-humidifier",
+    tone: "var(--tone-info)",
+    on: (e) => e.state === "on",
+    state: (e) => {
+      if (e.state !== "on") return "Off";
+      const h = pct(e.attributes.humidity);
+      return h === undefined ? "On" : `${h}%`;
+    },
+    level: (e) => pct(e.attributes.humidity),
+    bounds: (e) => ({
+      min: num(e.attributes.min_humidity) ?? 0,
+      max: num(e.attributes.max_humidity) ?? 100,
+    }),
+    setLevel: (_e, v) => ({ service: "set_humidity", data: { humidity: v } }),
+    tap: () => ({ service: "toggle" }),
   },
   media_player: {
     icon: "mdi:speaker",
@@ -113,9 +202,8 @@ const DOMAINS: Record<string, DomainRow> = {
       typeof e.attributes.volume_level === "number"
         ? Math.round(e.attributes.volume_level * 100)
         : undefined,
-    setLevel: (call, e, v) =>
-      call("media_player", "volume_set", { volume_level: v / 100 }, target(e)),
-    tap: (call, e) => call("media_player", "media_play_pause", {}, target(e)),
+    setLevel: (_e, v) => ({ service: "volume_set", data: { volume_level: v / 100 } }),
+    tap: () => ({ service: "media_play_pause" }),
   },
   binary_sensor: {
     icon: "mdi:eye",
@@ -131,28 +219,28 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-accent)",
     on: () => false,
     state: (e) => pressedAt(e.state),
-    tap: (call, e) => call("button", "press", {}, target(e)),
+    tap: () => ({ service: "press" }),
   },
   input_button: {
     icon: "mdi:gesture-tap-button",
     tone: "var(--tone-accent)",
     on: () => false,
     state: (e) => pressedAt(e.state),
-    tap: (call, e) => call("input_button", "press", {}, target(e)),
+    tap: () => ({ service: "press" }),
   },
   scene: {
     icon: "mdi:palette",
     tone: "var(--tone-accent)",
     on: () => false,
     state: () => "Tap to run",
-    tap: (call, e) => call("scene", "turn_on", {}, target(e)),
+    tap: () => ({ service: "turn_on" }),
   },
   script: {
     icon: "mdi:script-text",
     tone: "var(--tone-accent)",
     on: (e) => e.state === "on",
     state: (e) => (e.state === "on" ? "Running" : "Tap to run"),
-    tap: (call, e) => call("script", "turn_on", {}, target(e)),
+    tap: () => ({ service: "turn_on" }),
   },
 };
 
@@ -194,6 +282,8 @@ const FALLBACK: DomainRow = {
   state: (e) => titleCase(e.state),
 };
 
+const WHOLE: Bounds = { min: 0, max: 100 };
+
 /** "Living Room Thermostat" in the Living Room reads "Thermostat". */
 function trimPlace(name: string, place: string | undefined): string {
   if (!place || name.length <= place.length) return name;
@@ -210,6 +300,7 @@ export function isPanelControllable(domain: string): boolean {
 /**
  * A row for any entity, drawn and wired from its domain: a light dims, a cover
  * opens, a lock locks. The same row the area panel and every group panel use.
+ * A call the widget's grant refuses draws no control; the row still reads.
  */
 export function PanelEntityRow(props: {
   entityId: string;
@@ -223,18 +314,63 @@ export function PanelEntityRow(props: {
   onHold?: () => void;
 }): JSX.Element {
   const entity = useEntity(() => props.entityId);
+  const unit = useTemperatureUnit();
   const { callService } = useService();
-  const [dragging, setDragging] = createSignal<number | undefined>();
-  createEffect(() => {
-    entity();
-    setDragging(undefined);
-  });
+  const canCall = useContext(WidgetCtx)?.canCall;
+  // The value a drag set, shown until the entity reports it or SETTLE_MS passes.
+  const [pending, setPending] = createSignal<number | undefined>();
+  let settle: ReturnType<typeof setTimeout> | undefined;
+  const hold = (value: number | undefined) => {
+    clearTimeout(settle);
+    setPending(value);
+    if (value !== undefined) settle = setTimeout(() => setPending(undefined), SETTLE_MS);
+  };
+  createEffect(
+    on(
+      () => props.entityId,
+      () => hold(undefined),
+      { defer: true },
+    ),
+  );
+  onCleanup(() => clearTimeout(settle));
   return (
     <Show when={entity()}>
       {(e) => {
         const d = () => DOMAINS[e().domain] ?? FALLBACK;
-        const level = () => dragging() ?? d().level?.(e());
-        const setLevel = () => d().setLevel;
+        const reported = () => d().level?.(e());
+        createEffect(() => {
+          if (pending() !== undefined && reported() === pending()) hold(undefined);
+        });
+        const level = () => pending() ?? reported();
+        const bounds = createMemo(() => d().bounds?.(e(), unit()) ?? WHOLE);
+        const allowed = (call: Call) => canCall?.(e().domain, call.service, [e().id]) ?? true;
+        const run = (call: Call) =>
+          void callService(e().domain, call.service, call.data ?? {}, { entity_id: e().id });
+        // Asked once per entity change, never per pointer move: in a sealed realm each ask crosses to the host.
+        const tap = createMemo(() => {
+          const t = d().tap?.(e());
+          return t && allowed(t) ? t : undefined;
+        });
+        const setLevel = createMemo(() => {
+          const set = d().setLevel;
+          const b = bounds();
+          return set && allowed(set(e(), b.min)) && allowed(set(e(), b.max)) ? set : undefined;
+        });
+        const isOn = () => d().on(e());
+        const slide = createMemo(() => {
+          const set = setLevel();
+          const v = level();
+          if (!set || v === undefined) return undefined;
+          return {
+            value: v,
+            ...bounds(),
+            onChange: hold,
+            onCommit: (next: number) => {
+              hold(next);
+              run(set(e(), next));
+            },
+          };
+        });
         return (
           <PanelRow
             icon={(() => {
@@ -255,17 +391,18 @@ export function PanelEntityRow(props: {
               const t = d().tone;
               return typeof t === "function" ? t(e()) : t;
             })()}
-            on={d().on(e())}
-            slide={
-              setLevel() && level() !== undefined
-                ? {
-                    value: level() ?? 0,
-                    onChange: setDragging,
-                    onCommit: (v) => setLevel()?.(callService, e(), v),
-                  }
-                : undefined
-            }
-            onTap={d().tap ? () => d().tap?.(callService, e()) : undefined}
+            on={isOn()}
+            slide={slide()}
+            fill={(() => {
+              const v = level();
+              if (setLevel() || !d().setLevel || v === undefined || !isOn()) return undefined;
+              const b = bounds();
+              return ((v - b.min) / (b.max - b.min || 1)) * 100;
+            })()}
+            onTap={(() => {
+              const t = tap();
+              return t ? () => run(t) : undefined;
+            })()}
             onHold={props.onHold}
           />
         );
