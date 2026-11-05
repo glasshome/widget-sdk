@@ -59,6 +59,9 @@ export interface ReactiveWidgetContext {
   /** Present when the host mounts the widget; the service hooks route
       through it. Absent in previews/tests (direct sync-layer fallback). */
   callService?: ServiceCallFn;
+  /** Whether the widget's own grant lets it make this call, so a control it cannot run is never drawn.
+      Absent on hosts that predate this field: draw the control and let the call answer. */
+  canCall?: (domain: string, service: string, entityIds: string[]) => boolean;
   /** The dashboard this instance sits on. Absent on hosts that predate this field. */
   dashboard?: () => WidgetDashboard;
   /** Who is looking. Absent on hosts that predate this field. */
