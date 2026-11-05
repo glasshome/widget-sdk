@@ -6,6 +6,7 @@ import {
   useWidgetContext,
   type WidgetStateStore,
 } from "./use-widget-context";
+import { REGISTRY_KEY } from "./widget-registry";
 
 function toJson(value: unknown): string | null | undefined {
   if (value === undefined) return null;
@@ -48,22 +49,42 @@ function createMemoryStore(): WidgetStateStore {
   };
 }
 
-const memoryStores = new WeakMap<ReactiveWidgetContext, WidgetStateStore>();
+const memoryStores = new WeakMap<object, WidgetStateStore>();
+
+const parentOf = (ctx: object) => (ctx as { [REGISTRY_KEY]?: object })[REGISTRY_KEY];
+
+function hostContextOf(ctx: ReactiveWidgetContext): object {
+  let host: object = ctx;
+  let parent = parentOf(host);
+  while (parent) {
+    host = parent;
+    parent = parentOf(host);
+  }
+  return host;
+}
 
 function storeFor(ctx: ReactiveWidgetContext): WidgetStateStore {
   if (ctx.state) return ctx.state;
-  let store = memoryStores.get(ctx);
+  const host = hostContextOf(ctx);
+  let store = memoryStores.get(host);
   if (!store) {
     store = createMemoryStore();
-    memoryStores.set(ctx, store);
+    memoryStores.set(host, store);
   }
   return store;
+}
+
+function readsBack<T>(schema: z.ZodType<T>, value: T): boolean {
+  if (value === undefined) return true;
+  const json = toJson(value);
+  return typeof json === "string" && schema.safeParse(JSON.parse(json)).success;
 }
 
 /**
  * A small value this widget keeps across reloads, for this widget on this board and this person.
  * The stored value is read through `schema`; anything it refuses reads as `fallback`.
- * The setter returns the host's verdict: anything but "ok" changed nothing.
+ * The setter returns the host's verdict: anything but "ok" changed nothing. A value that would not read back
+ * through `schema` after a JSON round trip (a Date, NaN) is refused as "value".
  */
 export function useWidgetState<T>(
   key: string,
@@ -77,6 +98,7 @@ export function useWidgetState<T>(
   });
   const set = (next: T | ((prev: T) => T)): WidgetStateVerdict => {
     const resolved = typeof next === "function" ? (next as (prev: T) => T)(untrack(value)) : next;
+    if (!readsBack(schema, resolved)) return "value";
     return store.write(key, resolved);
   };
   return [value, set];

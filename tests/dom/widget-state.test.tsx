@@ -1,7 +1,9 @@
 import { render, screen } from "@solidjs/testing-library";
 import { checkWidgetStateWrite } from "@glasshome/widget-contract/state";
 import { createSignal, type Signal } from "solid-js";
+import { createSignal as signal, Show } from "solid-js";
 import { describe, expect, it } from "vitest";
+import { Widget } from "../../src/framework/core/Widget";
 import { z } from "zod";
 import {
   type ReactiveWidgetContext,
@@ -132,6 +134,61 @@ describe("useWidgetState", () => {
     expect(text("b")).toBe("7,8");
     expect(setRecent(Array.from({ length: 2000 }, () => [123.456, 78.9]))).toBe("value");
     expect(text("a")).toBe("7,8");
+  });
+
+  it("without a host store the body and the parts inside <Widget> share one store, across a remount", () => {
+    const [shown, setShown] = signal(true);
+    let setInBody: (next: Recent) => WidgetStateVerdict = () => "off";
+    function Body() {
+      const [recent, set] = useWidgetState("recent", RecentSchema, []);
+      setInBody = set;
+      return (
+        <>
+          <span data-testid="body">
+            {recent()
+              .map((pair) => pair.join(","))
+              .join(" ")}
+          </span>
+          <Show when={shown()}>
+            <Widget>
+              <Probe id="part" />
+            </Widget>
+          </Show>
+        </>
+      );
+    }
+    render(() => (
+      <WidgetCtx.Provider value={ctxWith()}>
+        <Body />
+      </WidgetCtx.Provider>
+    ));
+    expect(setRecent([[1, 2]])).toBe("ok");
+    expect(text("body")).toBe("1,2");
+    expect(setInBody([[3, 4]])).toBe("ok");
+    expect(text("part")).toBe("3,4");
+    setShown(false);
+    setShown(true);
+    expect(text("part")).toBe("3,4");
+  });
+
+  it("a value that would not read back through the schema is refused", () => {
+    const host = hostStore();
+    let setSince: (next: Date) => WidgetStateVerdict = () => "ok";
+    let setCount: (next: number) => WidgetStateVerdict = () => "ok";
+    function Dates() {
+      setSince = useWidgetState("since", z.date(), new Date(0))[1];
+      setCount = useWidgetState("count", z.number(), 0)[1];
+      return null;
+    }
+    render(() => (
+      <WidgetCtx.Provider value={ctxWith(host.store)}>
+        <Dates />
+      </WidgetCtx.Provider>
+    ));
+    expect(setSince(new Date(5))).toBe("value");
+    expect(setCount(Number.NaN)).toBe("value");
+    expect(setCount(2)).toBe("ok");
+    expect(host.writes).toEqual([["count", "2"]]);
   });
 
   it("throws outside a widget", () => {
