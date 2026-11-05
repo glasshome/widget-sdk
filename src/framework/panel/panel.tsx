@@ -44,6 +44,7 @@ function pointerGestures(opts: {
   let held = false;
   let holdTimer: ReturnType<typeof setTimeout> | undefined;
   let last = 0;
+  let from = 0;
 
   const valueAt = (el: HTMLElement, e: PointerEvent) => {
     const s = opts.slide?.();
@@ -85,8 +86,10 @@ function pointerGestures(opts: {
       if (!start || e.pointerId !== start.id || held) return;
       const el = e.currentTarget as HTMLElement;
       const d = opts.axis === "x" ? Math.abs(e.clientX - start.x) : Math.abs(e.clientY - start.y);
-      if (!sliding && opts.slide?.() && d > SLOP_PX) {
+      const s = opts.slide?.();
+      if (!sliding && s && d > SLOP_PX) {
         sliding = true;
+        from = s.value;
         clearTimeout(holdTimer);
       }
       if (sliding) {
@@ -102,7 +105,12 @@ function pointerGestures(opts: {
       else if (!held) opts.onTap?.();
       end();
     },
-    onPointerCancel: end,
+    // A cancelled slide sent nothing, so the value goes back to where the drag began.
+    onPointerCancel: (e: PointerEvent) => {
+      if (!start || e.pointerId !== start.id) return;
+      if (sliding) opts.slide?.()?.onChange(from);
+      end();
+    },
   };
 }
 

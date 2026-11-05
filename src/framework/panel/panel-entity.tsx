@@ -1,5 +1,14 @@
 import { useEntity, useTemperatureUnit } from "@glasshome/sync-layer/solid";
-import { createEffect, createSignal, type JSX, onCleanup, Show, useContext } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  type JSX,
+  on,
+  onCleanup,
+  Show,
+  useContext,
+} from "solid-js";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { PanelRow } from "./panel";
@@ -311,6 +320,18 @@ export function PanelEntityRow(props: {
   // The value a drag set, shown until the entity reports it or SETTLE_MS passes.
   const [pending, setPending] = createSignal<number | undefined>();
   let settle: ReturnType<typeof setTimeout> | undefined;
+  const hold = (value: number | undefined) => {
+    clearTimeout(settle);
+    setPending(value);
+    if (value !== undefined) settle = setTimeout(() => setPending(undefined), SETTLE_MS);
+  };
+  createEffect(
+    on(
+      () => props.entityId,
+      () => hold(undefined),
+      { defer: true },
+    ),
+  );
   onCleanup(() => clearTimeout(settle));
   return (
     <Show when={entity()}>
@@ -318,23 +339,38 @@ export function PanelEntityRow(props: {
         const d = () => DOMAINS[e().domain] ?? FALLBACK;
         const reported = () => d().level?.(e());
         createEffect(() => {
-          if (pending() !== undefined && reported() === pending()) setPending(undefined);
+          if (pending() !== undefined && reported() === pending()) hold(undefined);
         });
         const level = () => pending() ?? reported();
-        const bounds = () => d().bounds?.(e(), unit()) ?? WHOLE;
+        const bounds = createMemo(() => d().bounds?.(e(), unit()) ?? WHOLE);
         const allowed = (call: Call) => canCall?.(e().domain, call.service, [e().id]) ?? true;
         const run = (call: Call) =>
           void callService(e().domain, call.service, call.data ?? {}, { entity_id: e().id });
-        const tap = () => {
+        // Asked once per entity change, never per pointer move: in a sealed realm each ask crosses to the host.
+        const tap = createMemo(() => {
           const t = d().tap?.(e());
           return t && allowed(t) ? t : undefined;
-        };
-        const setLevel = () => {
+        });
+        const setLevel = createMemo(() => {
           const set = d().setLevel;
           const b = bounds();
           return set && allowed(set(e(), b.min)) && allowed(set(e(), b.max)) ? set : undefined;
-        };
-        const on = () => d().on(e());
+        });
+        const isOn = () => d().on(e());
+        const slide = createMemo(() => {
+          const set = setLevel();
+          const v = level();
+          if (!set || v === undefined) return undefined;
+          return {
+            value: v,
+            ...bounds(),
+            onChange: hold,
+            onCommit: (next: number) => {
+              hold(next);
+              run(set(e(), next));
+            },
+          };
+        });
         return (
           <PanelRow
             icon={(() => {
@@ -355,28 +391,11 @@ export function PanelEntityRow(props: {
               const t = d().tone;
               return typeof t === "function" ? t(e()) : t;
             })()}
-            on={on()}
-            slide={(() => {
-              const set = setLevel();
-              const v = level();
-              if (!set || v === undefined) return undefined;
-              return {
-                value: v,
-                ...bounds(),
-                onChange: (next: number) => {
-                  clearTimeout(settle);
-                  setPending(next);
-                },
-                onCommit: (next: number) => {
-                  setPending(next);
-                  settle = setTimeout(() => setPending(undefined), SETTLE_MS);
-                  run(set(e(), next));
-                },
-              };
-            })()}
+            on={isOn()}
+            slide={slide()}
             fill={(() => {
               const v = level();
-              if (setLevel() || !d().setLevel || v === undefined || !on()) return undefined;
+              if (setLevel() || !d().setLevel || v === undefined || !isOn()) return undefined;
               const b = bounds();
               return ((v - b.min) / (b.max - b.min || 1)) * 100;
             })()}
