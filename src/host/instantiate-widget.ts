@@ -196,7 +196,7 @@ function mountWidget(host: HTMLElement, opts: MountOptions): WidgetInstanceHandl
  * CSS and any host `extraSheets` adopted, the requested document classes mirrored, the widget rendered
  * under a re-provided `WidgetCtx` and a crash boundary.
  *
- * @deprecated since 1.29.0, removed in 2.0.0. Homes and previews mount widgets in the sealed engine:
+ * @deprecated since 1.30.0, removed in 2.0.0. Homes and previews mount widgets in the sealed engine:
  * Dash's WidgetSlot, or `bun widget preview`. See https://glasshome.app/docs/widgets/widget-sealed-engine
  */
 export const instantiateWidget = deprecate(mountWidget, "host.instantiateWidget");

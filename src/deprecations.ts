@@ -151,7 +151,7 @@ export const deprecations: readonly DeprecationEntry[] = [
   {
     // The page engine: every home and preview mounts in the sealed engine instead.
     id: "host.instantiateWidget",
-    since: "1.29.0",
+    since: "1.30.0",
     removeIn: "2.0.0",
     replacement: "the sealed engine: Dash's WidgetSlot, or bun widget preview",
     docsUrl: "https://glasshome.app/docs/widgets/widget-sealed-engine",
