@@ -51,9 +51,7 @@ describe("instantiateWidget", () => {
       onCrash: () => undefined,
     });
 
-    // Closed mode: the shadow root is unreachable from the host element.
     expect(host.shadowRoot).toBeNull();
-    // The component ran inside the new root and got the re-provided ctx.
     expect(seenCtx).toBe(ctx);
     const mounted = el;
     if (!mounted) throw new Error("widget did not mount");
@@ -95,13 +93,9 @@ describe("instantiateWidget", () => {
     const [rootA, rootB] = roots;
     if (!rootA || !rootB) throw new Error("expected two shadow roots");
 
-    // Sheet 0 = SDK tokens (always adopted), sheet 1 = widget css. No override
-    // sheet: that is a host-supplied extraSheet, not part of the default mount.
     expect(rootA.adoptedStyleSheets.length).toBe(2);
     expect(rootA.adoptedStyleSheets[1]).toBeInstanceOf(CSSStyleSheet);
-    // Same cssText source: one shared constructed sheet, not one per instance.
     expect(rootB.adoptedStyleSheets[1]).toBe(rootA.adoptedStyleSheets[1]);
-    // Tokens sheet is the same singleton across roots too.
     expect(rootB.adoptedStyleSheets[0]).toBe(rootA.adoptedStyleSheets[0]);
 
     h1.dispose();
@@ -146,7 +140,6 @@ describe("instantiateWidget", () => {
     });
     const root = el?.getRootNode();
     if (!(root instanceof ShadowRoot)) throw new Error("widget did not mount");
-    // tokens (0), widget css (1), override (2, last).
     expect(root.adoptedStyleSheets.length).toBe(3);
     expect(root.adoptedStyleSheets[2]).toBe(override);
     handle.dispose();
@@ -163,7 +156,6 @@ describe("instantiateWidget", () => {
         cssText: null,
         onCrash: () => undefined,
       });
-      // Default mirrors only `dark`, never a host's private classes.
       expect(hostDefault.classList.contains("dark")).toBe(true);
       expect(hostDefault.classList.contains("perf-blur")).toBe(false);
 
