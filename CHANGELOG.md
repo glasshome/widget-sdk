@@ -5,6 +5,19 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.29.0](https://github.com/glasshome/widget-sdk/compare/v1.28.0...v1.29.0) (2026-11-05)
+
+
+### Features
+
+* **panel:** rows slide in device steps, cover four more domains, and draw no control the grant refuses ([1d7659c](https://github.com/glasshome/widget-sdk/commit/1d7659ce3b31bfa376626f076f875e3af7575943))
+* **panel:** rows slide in the device's steps, cover climate, humidifier, water heater and valve, and draw no control the grant refuses ([2cae377](https://github.com/glasshome/widget-sdk/commit/2cae377561ee69f82e6ef098f6cb941acf64805c))
+
+
+### Bug Fixes
+
+* **panel:** a cancelled row slide puts its value back, and the grant is asked once per entity change ([765e85f](https://github.com/glasshome/widget-sdk/commit/765e85fd4b532956f6a15be0cc751fd6d09e4fc0))
+
 ## [1.28.0](https://github.com/glasshome/widget-sdk/compare/v1.27.1...v1.28.0) (2026-11-05)
 
 
