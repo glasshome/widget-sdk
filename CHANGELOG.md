@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0](https://github.com/glasshome/widget-sdk/compare/v1.27.1...v1.28.0) (2026-11-05)
+
+
+### Features
+
+* **state:** useWidgetState, small values a widget keeps across reloads ([#44](https://github.com/glasshome/widget-sdk/issues/44)) ([256d8bd](https://github.com/glasshome/widget-sdk/commit/256d8bd95dd659104783845130741bc1de743cc1))
+
 ## [1.27.1](https://github.com/glasshome/widget-sdk/compare/v1.27.0...v1.27.1) (2026-11-03)
 
 
