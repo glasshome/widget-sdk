@@ -91,6 +91,10 @@ describe("registry integrity", () => {
     expect(ids).toContain("raw-zod-config");
   });
 
+  test("the page engine's mount is deprecated, removed in 2.0", () => {
+    expect(deprecations.find((d) => d.id === "host.instantiateWidget")?.removeIn).toBe("2.0.0");
+  });
+
   test("iconify-icon pattern matches both the element and its solid wrapper import", () => {
     const entry = deprecations.find((d) => d.id === "iconify-icon");
     const re = new RegExp(entry?.sourcePattern ?? "$^");

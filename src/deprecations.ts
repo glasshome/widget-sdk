@@ -149,6 +149,15 @@ export const deprecations: readonly DeprecationEntry[] = [
     docsUrl: "https://glasshome.app/docs/widgets/widget-sdk#variants",
   },
   {
+    // The page engine: every home and preview mounts in the sealed engine instead.
+    id: "host.instantiateWidget",
+    since: "1.29.0",
+    removeIn: "2.0.0",
+    replacement: "the sealed engine: Dash's WidgetSlot, or bun widget preview",
+    docsUrl: "https://glasshome.app/docs/widgets/widget-sealed-engine",
+    sourcePattern: "\\binstantiateWidget\\b",
+  },
+  {
     // Type-only: no host ever constructed a WidgetContext.
     id: "WidgetContext.theme",
     since: "1.26.0",
