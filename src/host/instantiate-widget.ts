@@ -19,6 +19,7 @@ import { injectTokens, WidgetCtx } from "@glasshome/widget-sdk";
 import type { ReactiveWidgetContext, WidgetDefinition } from "@glasshome/widget-sdk";
 import { type Accessor, createComponent, ErrorBoundary } from "solid-js";
 import { clearDelegatedEvents, DelegatedEvents, delegateEvents, render } from "solid-js/web";
+import { deprecate } from "../deprecations";
 
 export interface WidgetInstanceHandle {
   dispose: () => void;
@@ -133,23 +134,7 @@ export function delegateInside(
   };
 }
 
-/**
- * Mount a widget into a closed shadow root on `host`.
- *
- * The only ShadowRoot reference lives in this closure — `mode: "closed"` keeps
- * it off `host.shadowRoot`, so neither the widget nor another bundle can reach
- * into a foreign widget's DOM through the host element.
- *
- * This is the framework half of the widget host contract, shared by dash, the
- * preview harness, and the hub render worker. It attaches the shadow, injects
- * SDK tokens (tones + widget vars only — the ui theme reaches widgets by
- * document inheritance, never pinned on `:host`), adopts the widget's CSS and
- * any host `extraSheets`, mirrors the requested document classes, and renders
- * the widget under a re-provided `WidgetCtx` and a crash boundary. Trust
- * boundary steps that are host-specific (freeze-intrinsics, capability
- * enforcement) stay in the host and are not part of this recipe.
- */
-export function instantiateWidget(host: HTMLElement, opts: MountOptions): WidgetInstanceHandle {
+function mountWidget(host: HTMLElement, opts: MountOptions): WidgetInstanceHandle {
   const shadow = host.attachShadow({ mode: "closed" });
   const stopDelegation = delegateInside(shadow);
   const stopClassSync = observeHostClasses(host, opts.mirrorClasses ?? ["dark"]);
@@ -205,3 +190,13 @@ export function instantiateWidget(host: HTMLElement, opts: MountOptions): Widget
     },
   };
 }
+
+/**
+ * Mount a widget into a closed shadow root on `host`, on the page engine: SDK tokens, the widget's
+ * CSS and any host `extraSheets` adopted, the requested document classes mirrored, the widget rendered
+ * under a re-provided `WidgetCtx` and a crash boundary.
+ *
+ * @deprecated since 1.29.0, removed in 2.0.0. Homes and previews mount widgets in the sealed engine:
+ * Dash's WidgetSlot, or `bun widget preview`. See https://glasshome.app/docs/widgets/widget-sealed-engine
+ */
+export const instantiateWidget = deprecate(mountWidget, "host.instantiateWidget");
