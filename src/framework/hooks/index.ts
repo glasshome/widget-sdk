@@ -14,7 +14,10 @@ export {
   type WidgetMaterial,
   type WidgetViewer,
   type WidgetDimensions,
+  type WidgetStateStore,
 } from "./use-widget-context";
+export { useWidgetState } from "./use-widget-state";
+export type { WidgetStateVerdict } from "@glasshome/widget-contract/state";
 // Dashboard (host-fed; empty fallback outside a host)
 export { useWidgetDashboard } from "./use-widget-dashboard";
 export { useWidgetViewer } from "./use-widget-viewer";

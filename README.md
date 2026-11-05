@@ -38,6 +38,8 @@ export default defineWidget({
 });
 ```
 
+Small values a widget keeps across reloads (recent picks, the last tab) go through `useWidgetState(key, schema, fallback)`, kept by the host for this widget and this person. `localStorage` is in memory and empty after a reload.
+
 ### `@glasshome/widget-sdk/vite` — Vite Plugin
 
 Vite plugin for widget development. Handles widget bundling, preview server, and registry generation.
