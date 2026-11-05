@@ -5,6 +5,18 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.30.0](https://github.com/glasshome/widget-sdk/compare/v1.29.0...v1.30.0) (2026-11-05)
+
+
+### Features
+
+* **host:** deprecate instantiateWidget; homes and previews mount sealed ([#48](https://github.com/glasshome/widget-sdk/issues/48)) ([28a894f](https://github.com/glasshome/widget-sdk/commit/28a894f5491ae659ddb4224cb443b37717ad12d8))
+
+
+### Bug Fixes
+
+* **host:** instantiateWidget is deprecated since 1.30.0, the release that carries it ([#50](https://github.com/glasshome/widget-sdk/issues/50)) ([b04c441](https://github.com/glasshome/widget-sdk/commit/b04c4410284642e8d4e7dd4db7a6a0f6717a15ce))
+
 ## [1.29.0](https://github.com/glasshome/widget-sdk/compare/v1.28.0...v1.29.0) (2026-11-05)
 
 
