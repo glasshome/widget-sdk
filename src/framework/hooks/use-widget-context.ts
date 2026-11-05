@@ -1,4 +1,5 @@
 import type { MaterialTerms } from "@glasshome/ui/tokens";
+import type { WidgetStateVerdict } from "@glasshome/widget-contract/state";
 import { createContext, useContext } from "solid-js";
 
 /**
@@ -45,6 +46,12 @@ export interface WidgetMaterial {
   terms: MaterialTerms;
 }
 
+/** Values a widget keeps across reloads. `read` is reactive; `write(key, undefined)` deletes; a refused write changes nothing. */
+export interface WidgetStateStore {
+  read(key: string): unknown;
+  write(key: string, value: unknown): WidgetStateVerdict;
+}
+
 export interface ReactiveWidgetContext {
   updateConfig: (config: Record<string, unknown>) => void;
   /**
@@ -75,6 +82,8 @@ export interface ReactiveWidgetContext {
   onHeld?: () => void;
   /** Host hook: the widget's shell, its tone and its lift (null for the defaults); null when the shell goes. A host that sets it draws the shell's outer glow and shadow, and the widget draws none of its own. Absent on hosts that predate this field. */
   onShell?: (shell: { tone: string | null; lift: number | null } | null) => void;
+  /** Kept by the host across reloads, for this widget and this person. Absent on hosts that predate this field. */
+  state?: WidgetStateStore;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();
