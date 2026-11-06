@@ -6,6 +6,15 @@ export * from "./data";
 // Framework (widget composition API)
 // Re-exports framework components, hooks, design tokens, theming, and types
 export * from "./framework";
+// Camera video, rendered by the host in a sealed widget
+export {
+  type CameraSource,
+  CameraSourceContext,
+  provideCameraSource,
+  useCameraSource,
+  type WebRtcSignal,
+} from "./media/camera-source";
+export { CameraStream, type CameraStreamProps } from "@glasshome/widget-sdk/media/camera-stream";
 // Shared chart helpers
 export { monotoneCubicPath } from "./shared/spline";
 // Host UI primitives (re-exported from @glasshome/ui/solid, gated by sdkVersion)

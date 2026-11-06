@@ -5,17 +5,34 @@
  * import map), and a direct import would bundle a second, disconnected
  * store. Phase 4 routes these through capability checks.
  */
+import * as syncLayer from "@glasshome/sync-layer";
+import { deprecate } from "./deprecations";
+
 export {
   getForecasts,
-  getStream,
-  getWebRtcClientConfig,
   hassMediaUrl,
-  sendWebRtcCandidate,
-  startWebRtcSession,
   state,
   trackEntityHistory,
   untrackEntityHistory,
 } from "@glasshome/sync-layer";
+
+/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="hls">`. */
+export const getStream: typeof syncLayer.getStream = deprecate(syncLayer.getStream, "getStream");
+/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
+export const getWebRtcClientConfig: typeof syncLayer.getWebRtcClientConfig = deprecate(
+  syncLayer.getWebRtcClientConfig,
+  "getWebRtcClientConfig",
+);
+/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
+export const startWebRtcSession: typeof syncLayer.startWebRtcSession = deprecate(
+  syncLayer.startWebRtcSession,
+  "startWebRtcSession",
+);
+/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
+export const sendWebRtcCandidate: typeof syncLayer.sendWebRtcCandidate = deprecate(
+  syncLayer.sendWebRtcCandidate,
+  "sendWebRtcCandidate",
+);
 export type {
   AreaView,
   CalendarEvent,

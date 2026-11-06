@@ -157,6 +157,17 @@ export const deprecations: readonly DeprecationEntry[] = [
     docsUrl: "https://glasshome.app/docs/widgets/widget-sealed-engine",
     sourcePattern: "\\binstantiateWidget\\b",
   },
+  ...["getStream", "getWebRtcClientConfig", "startWebRtcSession", "sendWebRtcCandidate"].map(
+    (id) => ({
+      // A sealed widget never reaches a stream URL or a peer connection; the host plays the camera.
+      id,
+      since: "1.31.0",
+      removeIn: "2.0.0",
+      replacement: "<CameraStream entityId kind>",
+      docsUrl: "https://glasshome.app/docs/widgets/widget-api-reference",
+      sourcePattern: `\\b${id}\\b`,
+    }),
+  ),
   {
     // Type-only: no host ever constructed a WidgetContext.
     id: "WidgetContext.theme",
