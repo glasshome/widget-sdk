@@ -62,6 +62,8 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
           current = false;
           driver?.stop();
           video.removeAttribute("src");
+          // Removing src alone keeps a native HLS stream playing.
+          video.load();
         });
       }),
     );

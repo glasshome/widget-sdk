@@ -1,6 +1,11 @@
 import { render } from "@solidjs/testing-library";
+import { createSignal } from "solid-js";
 import { describe, expect, it } from "vitest";
-import { type CameraSource, CameraSourceContext } from "../../src/media/camera-source";
+import {
+  type CameraSource,
+  CameraSourceContext,
+  type WebRtcSignal,
+} from "../../src/media/camera-source";
 import { CameraStream } from "../../src/media/camera-stream";
 
 const refusing: CameraSource = {
@@ -48,6 +53,79 @@ describe("CameraStream", () => {
     const { view, errors } = mount(kind);
     await expect.poll(() => errors).toEqual([expect.stringMatching(reason)]);
     expect(view.container.querySelector("video")).not.toBeNull();
+  });
+
+  it("a camera switched mid-request reports only the camera it now shows", async () => {
+    let answerFirst: (url: string | null) => void = () => {};
+    let asked = false;
+    const source: CameraSource = {
+      stream: (entityId) =>
+        entityId === "camera.a"
+          ? new Promise((resolve) => {
+              asked = true;
+              answerFirst = resolve;
+            })
+          : Promise.reject(new Error("not allowed")),
+      webrtc: (entityId) => refusing.webrtc(entityId),
+    };
+    const errors: string[] = [];
+    const [entityId, setEntityId] = createSignal("camera.a");
+    render(() => (
+      <CameraSourceContext.Provider value={source}>
+        <CameraStream
+          entityId={entityId()}
+          kind="hls"
+          muted
+          onError={(reason) => errors.push(reason)}
+        />
+      </CameraSourceContext.Provider>
+    ));
+    await expect.poll(() => asked).toBe(true);
+    setEntityId("camera.b");
+    await expect.poll(() => errors).toEqual(["hls stream request: not allowed"]);
+    answerFirst(null);
+    for (let tick = 0; tick < 10; tick++) await Promise.resolve();
+    expect(errors).toEqual(["hls stream request: not allowed"]);
+  });
+
+  it("a WebRTC answer that lands after unmount ends its session", async () => {
+    let answer: (session: {
+      answer: string;
+      sessionId: string;
+      stop: () => Promise<void>;
+    }) => void = () => {};
+    let started = false;
+    let ended = false;
+    const signal: WebRtcSignal = {
+      config: () => Promise.resolve({}),
+      start: () => {
+        started = true;
+        return new Promise((resolve) => {
+          answer = resolve;
+        });
+      },
+      candidate: () => Promise.resolve(),
+    };
+    const source: CameraSource = {
+      stream: (entityId, kind) => refusing.stream(entityId, kind),
+      webrtc: () => signal,
+    };
+    const view = render(() => (
+      <CameraSourceContext.Provider value={source}>
+        <CameraStream entityId="camera.front_door" kind="webrtc" muted />
+      </CameraSourceContext.Provider>
+    ));
+    await expect.poll(() => started).toBe(true);
+    view.unmount();
+    answer({
+      answer: "",
+      sessionId: "s",
+      stop: () => {
+        ended = true;
+        return Promise.resolve();
+      },
+    });
+    await expect.poll(() => ended).toBe(true);
   });
 
   it("shows the full screen control only when asked", () => {

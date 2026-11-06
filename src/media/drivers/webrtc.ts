@@ -9,7 +9,6 @@ export function startWebRtc(
   let pc: RTCPeerConnection | null = null;
   let stopSession: (() => Promise<void>) | null = null;
   let stopped = false;
-  let iceRestarted = false;
   let playing = false;
   let stage = "config";
 
@@ -29,16 +28,11 @@ export function startWebRtc(
         if (event.track.kind === "audio") cb.onAudio(true);
         if (event.streams[0] && !stopped) el.srcObject = event.streams[0];
       };
+      // Home Assistant answers one offer per session, so a failed connection cannot restart ICE.
       peer.onconnectionstatechange = () => {
         if (peer.connectionState !== "failed") return;
-        if (!playing) {
-          cb.onError("ice connection failed");
-        } else if (!iceRestarted) {
-          iceRestarted = true;
-          peer.restartIce();
-        } else {
-          cb.onStale("ice connection failed after restart");
-        }
+        if (playing) cb.onStale("ice connection failed");
+        else cb.onError("ice connection failed");
       };
       peer.addTransceiver("audio", { direction: "recvonly" });
       peer.addTransceiver("video", { direction: "recvonly" });

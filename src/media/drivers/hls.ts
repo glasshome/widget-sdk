@@ -44,6 +44,7 @@ export function startHls(el: HTMLVideoElement, url: string, cb: StreamCallbacks)
         if (!data.fatal) return;
         const code = data.response?.code;
         const detail = code ? `${data.details} (http ${code})` : data.details;
+        clearTimeout(retry);
         if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveries++ < MAX_RECOVERIES) {
           hls.recoverMediaError();
         } else if (
