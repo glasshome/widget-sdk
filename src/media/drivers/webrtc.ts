@@ -11,6 +11,14 @@ export function startWebRtc(
   let stopped = false;
   let playing = false;
   let stage = "config";
+  const report = () => {
+    if (!stopped) cb.onStage(`stage ${stage}, connection ${pc?.connectionState ?? "none"}`);
+  };
+  const enter = (next: string) => {
+    stage = next;
+    report();
+  };
+  report();
 
   const onPlaying = () => {
     playing = true;
@@ -30,6 +38,7 @@ export function startWebRtc(
       };
       // Home Assistant answers one offer per session, so a failed connection cannot restart ICE.
       peer.onconnectionstatechange = () => {
+        if (!playing) report();
         if (peer.connectionState !== "failed") return;
         if (playing) cb.onStale("ice connection failed");
         else cb.onError("ice connection failed");
@@ -37,7 +46,7 @@ export function startWebRtc(
       peer.addTransceiver("audio", { direction: "recvonly" });
       peer.addTransceiver("video", { direction: "recvonly" });
 
-      stage = "local offer";
+      enter("local offer");
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
       if (stopped) return;
@@ -53,7 +62,7 @@ export function startWebRtc(
       };
 
       if (!offer.sdp) throw new Error("offer has no sdp");
-      stage = "home assistant answer";
+      enter("home assistant answer");
       const session = await signal.start(offer.sdp, (candidate) => {
         const init = { ...candidate };
         if (!init.sdpMid && init.sdpMLineIndex == null) init.sdpMid = "0";
@@ -67,7 +76,7 @@ export function startWebRtc(
       sessionId = session.sessionId;
       for (const candidate of pending.splice(0)) send(candidate);
 
-      stage = "remote description";
+      enter("remote description");
       await peer.setRemoteDescription({ type: "answer", sdp: session.answer });
     } catch (err) {
       if (!stopped) cb.onError(`${stage}: ${reasonOf(err)}`);
@@ -84,6 +93,5 @@ export function startWebRtc(
       pc?.close();
       pc = null;
     },
-    describe: () => `stage ${stage}, connection ${pc?.connectionState ?? "none"}`,
   };
 }
