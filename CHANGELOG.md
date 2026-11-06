@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.0](https://github.com/glasshome/widget-sdk/compare/v1.31.1...v1.32.0) (2026-11-06)
+
+
+### Features
+
+* **camera-stream:** image cameras, in-place restarts, sound in full screen and the stream's stage ([#57](https://github.com/glasshome/widget-sdk/issues/57)) ([d5e28f5](https://github.com/glasshome/widget-sdk/commit/d5e28f5ff5f9133ee10b8dd36d6c4bacfba22a7c))
+
 ## [1.31.1](https://github.com/glasshome/widget-sdk/compare/v1.31.0...v1.31.1) (2026-11-06)
 
 
