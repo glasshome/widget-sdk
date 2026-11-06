@@ -66,7 +66,8 @@ function pointerGestures(opts: {
     hold.up();
     start = undefined;
   };
-  onCleanup(() => hold.cancel());
+  // Up, not cancel: the hold's own action may unmount this row, and its release stays spent.
+  onCleanup(() => hold.up());
 
   return {
     onPointerDown: (e: PointerEvent) => {

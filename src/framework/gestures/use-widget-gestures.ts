@@ -358,7 +358,8 @@ export function useWidgetGestures(
     hold,
     holds: () => !!wired().hold || !!registry?.hasSheet(),
     dispose: () => {
-      press.cancel();
+      // Up, not cancel: the hold's own action may unmount the widget, and its release stays spent.
+      press.up();
       if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
