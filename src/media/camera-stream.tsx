@@ -113,14 +113,26 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
           display: image() ? "none" : undefined,
         }}
       />
-      <Show when={image()}>
-        <img
-          src={props.src}
-          alt=""
-          onLoad={() => props.onLive?.()}
-          onError={() => props.onError?.("image error")}
-          style={{ ...FILL, "object-fit": full() ? "contain" : (props.fit ?? "cover") }}
-        />
+      <Show when={image() && { session: props.session }} keyed>
+        {(_session) => {
+          let current = true;
+          let picture!: HTMLImageElement;
+          onCleanup(() => {
+            current = false;
+            // A detached MJPEG image keeps its stream open until its src goes.
+            picture.removeAttribute("src");
+          });
+          return (
+            <img
+              ref={picture}
+              src={props.src}
+              alt=""
+              onLoad={() => current && props.onLive?.()}
+              onError={() => current && props.onError?.("image error")}
+              style={{ ...FILL, "object-fit": full() ? "contain" : (props.fit ?? "cover") }}
+            />
+          );
+        }}
       </Show>
       <Show when={props.fullscreen && canFullscreen}>
         <div
@@ -145,7 +157,6 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
               variant={props.muted ? "outline" : "default"}
               size="icon"
               aria-label={props.muted ? "Turn sound on" : "Turn sound off"}
-              aria-pressed={!props.muted}
               onClick={() => props.onMutedChange?.(!props.muted)}
             >
               <Icon icon={props.muted ? "mdi:volume-off" : "mdi:volume-high"} width={18} />

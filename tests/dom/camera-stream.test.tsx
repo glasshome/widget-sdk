@@ -202,10 +202,61 @@ describe("CameraStream", () => {
     ));
     expect(view.queryByRole("button", { name: "Turn sound on" })).toBeNull();
     await userEvent.click(view.getByRole("button", { name: "Full screen" }));
-    await expect.poll(() => document.fullscreenElement).not.toBeNull();
-    await userEvent.click(view.getByRole("button", { name: "Turn sound on" }));
+    const sound = () => view.queryByRole("button", { name: "Turn sound on" });
+    await expect.poll(sound).not.toBeNull();
+    await userEvent.click(sound() as HTMLElement);
     expect(changes).toEqual([false]);
     await document.exitFullscreen();
+  });
+
+  it("a new session reloads an image camera's picture", async () => {
+    const [session, setSession] = createSignal(1);
+    const view = render(() => (
+      <CameraStream
+        entityId="camera.front_door"
+        kind="image"
+        src={PICTURE}
+        session={session()}
+        muted
+        class={SIZED}
+      />
+    ));
+    const first = view.container.querySelector("img");
+    expect(first?.getAttribute("src")).toBe(PICTURE);
+    setSession(2);
+    const second = view.container.querySelector("img");
+    expect(second).not.toBe(first);
+    expect(second?.getAttribute("src")).toBe(PICTURE);
+    expect(first?.hasAttribute("src")).toBe(false);
+  });
+
+  it("an image camera that gives way to a video stream reports nothing more for its picture", async () => {
+    const broken = "data:image/png;base64,broken";
+    const reports: string[] = [];
+    const beside: string[] = [];
+    const [kind, setKind] = createSignal<"image" | "hls">("image");
+    render(() => (
+      <CameraSourceContext.Provider value={refusing}>
+        <CameraStream
+          entityId="camera.front_door"
+          kind={kind()}
+          src={broken}
+          muted
+          onLive={() => reports.push("live")}
+          onError={(reason) => reports.push(reason)}
+        />
+        <CameraStream
+          entityId="camera.front_door"
+          kind="image"
+          src={broken}
+          muted
+          onError={(reason) => beside.push(reason)}
+        />
+      </CameraSourceContext.Provider>
+    ));
+    setKind("hls");
+    await expect.poll(() => beside).toEqual(["image error"]);
+    await expect.poll(() => reports).toEqual(["hls stream request: not allowed"]);
   });
 
   it("reports where a WebRTC stream that has not played stands", async () => {
