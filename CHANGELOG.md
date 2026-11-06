@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.31.0](https://github.com/glasshome/widget-sdk/compare/v1.30.0...v1.31.0) (2026-11-06)
+
+
+### Features
+
+* CameraStream renders WebRTC and HLS camera video; stream helpers deprecated ([#51](https://github.com/glasshome/widget-sdk/issues/51)) ([b572182](https://github.com/glasshome/widget-sdk/commit/b5721824bbff77f8506a1ec23ecb62a318affaee))
+
 ## [1.30.0](https://github.com/glasshome/widget-sdk/compare/v1.29.0...v1.30.0) (2026-11-05)
 
 
