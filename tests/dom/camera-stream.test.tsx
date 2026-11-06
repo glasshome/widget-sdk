@@ -1,6 +1,6 @@
 import { render } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";
 import {
   type CameraSource,
@@ -279,9 +279,13 @@ describe("CameraStream", () => {
     await expect.poll(() => stages.at(-1)).toMatch(/^stage home assistant answer, connection \w+$/);
   });
 
-  it("inside a shadow root, full screen offers its exit and its sound control", async () => {
+  it("inside a shadow root, full screen offers its exit and its sound control, and unmounting leaves it", async () => {
     const host = document.createElement("div");
     document.body.append(host);
+    onTestFinished(async () => {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      host.remove();
+    });
     const shadow = host.attachShadow({ mode: "open" });
     const sheet = document.createElement("style");
     sheet.textContent = ".box { display: block; width: 240px; height: 160px }";
@@ -306,8 +310,14 @@ describe("CameraStream", () => {
       .poll(() => view.queryByRole("button", { name: "Exit full screen" }))
       .not.toBeNull();
     expect(view.queryByRole("button", { name: "Turn sound on" })).not.toBeNull();
-    await document.exitFullscreen();
-    host.remove();
+    await userEvent.click(view.getByRole("button", { name: "Exit full screen" }));
+    await expect.poll(() => view.queryByRole("button", { name: "Full screen" })).not.toBeNull();
+    expect(view.queryByRole("button", { name: "Turn sound on" })).toBeNull();
+
+    await userEvent.click(view.getByRole("button", { name: "Full screen" }));
+    await expect.poll(() => document.fullscreenElement).toBe(host);
+    view.unmount();
+    await expect.poll(() => document.fullscreenElement).toBeNull();
   });
 
   it("shows the full screen control only when asked", () => {

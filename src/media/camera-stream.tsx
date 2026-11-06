@@ -83,11 +83,12 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
       }),
     );
     // document.fullscreenElement names the shadow host when the stage sits in a shadow root.
-    const sync = () => setFull(stage.matches(":fullscreen"));
+    const isFull = () => (stage.getRootNode() as Document | ShadowRoot).fullscreenElement === stage;
+    const sync = () => setFull(isFull());
     document.addEventListener("fullscreenchange", sync);
     onCleanup(() => {
       document.removeEventListener("fullscreenchange", sync);
-      if (stage.matches(":fullscreen")) void document.exitFullscreen();
+      if (isFull()) void document.exitFullscreen();
     });
   });
 
