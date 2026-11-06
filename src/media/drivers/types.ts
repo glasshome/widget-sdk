@@ -3,11 +3,11 @@ export interface StreamCallbacks {
   onAudio: (has: boolean) => void;
   onError: (reason: string) => void;
   onStale: (reason: string) => void;
+  onStage: (stage: string) => void;
 }
 
 export interface StreamDriver {
   stop: () => void;
-  describe?: () => string;
 }
 
 // Home Assistant command errors reject with a plain { code, message } object, not an Error.
