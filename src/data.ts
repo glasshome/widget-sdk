@@ -16,21 +16,28 @@ export {
   untrackEntityHistory,
 } from "@glasshome/sync-layer";
 
+// Each reads sync-layer at call time, as the plain re-exports did, so loading the SDK touches none of them.
 /** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="hls">`. */
-export const getStream: typeof syncLayer.getStream = deprecate(syncLayer.getStream, "getStream");
+export const getStream: typeof syncLayer.getStream = deprecate(
+  (...args: Parameters<typeof syncLayer.getStream>) => syncLayer.getStream(...args),
+  "getStream",
+);
 /** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
 export const getWebRtcClientConfig: typeof syncLayer.getWebRtcClientConfig = deprecate(
-  syncLayer.getWebRtcClientConfig,
+  (...args: Parameters<typeof syncLayer.getWebRtcClientConfig>) =>
+    syncLayer.getWebRtcClientConfig(...args),
   "getWebRtcClientConfig",
 );
 /** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
 export const startWebRtcSession: typeof syncLayer.startWebRtcSession = deprecate(
-  syncLayer.startWebRtcSession,
+  (...args: Parameters<typeof syncLayer.startWebRtcSession>) =>
+    syncLayer.startWebRtcSession(...args),
   "startWebRtcSession",
 );
 /** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
 export const sendWebRtcCandidate: typeof syncLayer.sendWebRtcCandidate = deprecate(
-  syncLayer.sendWebRtcCandidate,
+  (...args: Parameters<typeof syncLayer.sendWebRtcCandidate>) =>
+    syncLayer.sendWebRtcCandidate(...args),
   "sendWebRtcCandidate",
 );
 export type {
