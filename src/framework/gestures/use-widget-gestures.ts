@@ -6,7 +6,7 @@
  * movement is dominantly on the slide axis.
  */
 
-import { HOLD_GRACE_MS, HOLD_MS, spendLongPress } from "@glasshome/ui/solid";
+import { createHold } from "@glasshome/ui/solid";
 import { createSignal, useContext } from "solid-js";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { dialogOpeners } from "../hooks/use-widget-dialog";
@@ -59,14 +59,11 @@ interface GestureState {
   isTouch: boolean;
   startX: number;
   startY: number;
-  startTime: number;
   hasMoved: boolean;
   /** True for mouse/pen once user starts dragging — drives slide path. */
   sliding: boolean;
   /** Pressed on a control: the control keeps taps and drags, the widget only holds. */
   holdOnly: boolean;
-  holdTimer: ReturnType<typeof setTimeout> | null;
-  graceTimer: ReturnType<typeof setTimeout> | null;
   element: HTMLElement | null;
   /** The slide value when the press began, restored if a second finger takes the press away. */
   startValue: number | undefined;
@@ -97,12 +94,9 @@ export function useWidgetGestures(
     isTouch: false,
     startX: 0,
     startY: 0,
-    startTime: 0,
     hasMoved: false,
     sliding: false,
     holdOnly: false,
-    holdTimer: null,
-    graceTimer: null,
     element: null,
     startValue: undefined,
   };
@@ -135,31 +129,30 @@ export function useWidgetGestures(
     setMeasuredVertical(cachedRect.height > cachedRect.width);
   }
 
-  const clearHold = () => {
-    if (state.holdTimer) {
-      clearTimeout(state.holdTimer);
-      state.holdTimer = null;
-    }
-    if (state.graceTimer) {
-      clearTimeout(state.graceTimer);
-      state.graceTimer = null;
-    }
-    setHold(null);
-  };
-
-  // The click that ends a hold belongs to the hold, never to a chip or button under the finger.
-  const swallowReleaseClick = (el: HTMLElement) => {
-    const swallow = (e: Event) => {
-      e.stopPropagation();
-      e.preventDefault();
-    };
-    const disarm = () => el.removeEventListener("click", swallow, true);
-    el.addEventListener("click", swallow, true);
-    window.addEventListener("pointerup", () => setTimeout(disarm, 0), {
-      capture: true,
-      once: true,
-    });
-  };
+  const press = createHold({
+    // Read at each press, so a config that changes its delay is honoured.
+    get delayMs() {
+      return config().hold?.delay;
+    },
+    slopPx: TAP_THRESHOLD,
+    onArm: (at) => {
+      const el = state.element;
+      if (!el) return;
+      const box = el.getBoundingClientRect();
+      const x = at.x - box.left;
+      const y = at.y - box.top;
+      const r = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
+      setHold({ x, y, r, fired: false });
+    },
+    onDisarm: () => setHold(null),
+    onHold: () => {
+      setHold((h) => (h ? { ...h, fired: true } : h));
+      haptics.bump();
+      config().hold?.action();
+      ctx?.onHeld?.();
+      state.isDown = false; // prevent tap on release
+    },
+  });
 
   const resetState = () => {
     state.isDown = false;
@@ -201,37 +194,11 @@ export function useWidgetGestures(
     observeElement(state.element);
     state.startX = e.clientX;
     state.startY = e.clientY;
-    state.startTime = Date.now();
     state.hasMoved = false;
     state.sliding = false;
     state.startValue = cfg.slide?.value;
 
-    // Hold timer — same on touch and mouse. Cancelled by movement.
-    if (cfg.hold) {
-      const holdDelay = cfg.hold.delay ?? HOLD_MS;
-      const box = state.element.getBoundingClientRect();
-      const x = e.clientX - box.left;
-      const y = e.clientY - box.top;
-      const r = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
-      state.graceTimer = setTimeout(
-        () => {
-          state.graceTimer = null;
-          setHold({ x, y, r, fired: false });
-        },
-        Math.min(HOLD_GRACE_MS, holdDelay),
-      );
-      state.holdTimer = setTimeout(() => {
-        state.holdTimer = null;
-        if (!state.isDown || state.hasMoved) return;
-        setHold((h) => (h ? { ...h, fired: true } : h));
-        haptics.bump();
-        spendLongPress();
-        if (state.element) swallowReleaseClick(state.element);
-        cfg.hold?.action();
-        ctx?.onHeld?.();
-        state.isDown = false; // prevent tap on release
-      }, holdDelay);
-    }
+    if (cfg.hold) press.down(e);
 
     // Touch pointers are implicitly captured; mouse/pen needs it explicit.
     if (!state.isTouch && cfg.slide && !holdOnly) {
@@ -252,7 +219,7 @@ export function useWidgetGestures(
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
     if (distance > TAP_THRESHOLD) {
-      clearHold();
+      press.up();
       state.hasMoved = true;
     }
 
@@ -293,14 +260,10 @@ export function useWidgetGestures(
   const onPointerUp = (e: PointerEvent) => {
     const cfg = config();
     const wasDown = state.isDown;
-    const duration = Date.now() - state.startTime;
-    const holdDelay = cfg.hold?.delay ?? HOLD_MS;
+    press.up();
 
-    clearHold();
-
-    // Tap: still down (hold didn't fire), no real movement, released before
-    // the hold threshold. Same rule on touch and mouse.
-    if (wasDown && cfg.tap && !state.hasMoved && !state.holdOnly && duration < holdDelay) {
+    // Tap: still down (hold didn't fire), no real movement. Same rule on touch and mouse.
+    if (wasDown && cfg.tap && !state.hasMoved && !state.holdOnly) {
       cfg.tap();
     }
 
@@ -314,7 +277,7 @@ export function useWidgetGestures(
 
   // The browser or the page took the press (a scroll, a second finger), so the slide never happened.
   const onPointerCancel = (e: PointerEvent) => {
-    clearHold();
+    press.up();
     const slide = config().slide;
     if (state.sliding && slide && state.startValue !== undefined) slide.onChange(state.startValue);
     try {
@@ -395,7 +358,7 @@ export function useWidgetGestures(
     hold,
     holds: () => !!wired().hold || !!registry?.hasSheet(),
     dispose: () => {
-      clearHold();
+      press.cancel();
       if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
