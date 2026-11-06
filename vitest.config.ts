@@ -20,6 +20,10 @@ export default defineConfig({
         find: /^@glasshome\/widget-sdk$/,
         replacement: resolve(import.meta.dirname, "src/index.ts"),
       },
+      {
+        find: /^@glasshome\/widget-sdk\/media\/camera-stream$/,
+        replacement: resolve(import.meta.dirname, "src/media/camera-stream.tsx"),
+      },
     ],
   },
   optimizeDeps: {

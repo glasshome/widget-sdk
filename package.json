@@ -48,6 +48,11 @@
       "types": "./dist/deprecations.d.ts",
       "import": "./dist/deprecations.js"
     },
+    "./media/camera-stream": {
+      "@glasshome/source": "./src/media/camera-stream.tsx",
+      "types": "./dist/media/camera-stream.d.ts",
+      "import": "./dist/media/camera-stream.js"
+    },
     "./host": {
       "@glasshome/source": "./src/host/index.ts",
       "types": "./dist/host/index.d.ts",
@@ -80,6 +85,7 @@
     "@tailwindcss/vite": "^4.1.13",
     "clsx": "^2.1.1",
     "happy-dom": "^20.0.0",
+    "hls.js": "^1.6.15",
     "lightningcss": "^1.33.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.1.13",

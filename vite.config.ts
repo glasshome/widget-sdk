@@ -9,6 +9,8 @@ export default defineConfig({
         index: "src/index.ts",
         schemas: "src/schemas.ts",
         deprecations: "src/deprecations.ts",
+        "media/camera-source": "src/media/camera-source.ts",
+        "media/camera-stream": "src/media/camera-stream.tsx",
         "host/index": "src/host/index.ts",
         "vite/index": "src/vite/index.ts",
         "vite/introspect": "src/vite/introspect.ts",
@@ -34,6 +36,8 @@ export default defineConfig({
         // build shape; inlining it here would defeat that and restore the
         // duplicate-context bug (finding 45).
         "@glasshome/widget-sdk",
+        // Its own module, so a sealed engine can seat the host's CameraStream in its place.
+        "@glasshome/widget-sdk/media/camera-stream",
         // Peer/workspace dependencies -- not bundled
         "@glasshome/sync-layer",
         "@glasshome/sync-layer/solid",
@@ -44,6 +48,7 @@ export default defineConfig({
         "@tailwindcss/vite",
         "@solid-primitives/resize-observer",
         "clsx",
+        "hls.js",
         "tailwind-merge",
         "zod",
       ],

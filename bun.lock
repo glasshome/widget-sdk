@@ -9,6 +9,7 @@
         "@tailwindcss/vite": "^4.1.13",
         "clsx": "^2.1.1",
         "happy-dom": "^20.0.0",
+        "hls.js": "^1.6.15",
         "lightningcss": "^1.33.0",
         "tailwind-merge": "^3.5.0",
         "tailwindcss": "^4.1.13",
@@ -473,6 +474,8 @@
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
 
     "happy-dom": ["happy-dom@20.14.6", "", { "dependencies": { "@types/node": ">=20.0.0", "@types/whatwg-mimetype": "^3.0.2", "@types/ws": "^8.18.1", "buffer-image-size": "^0.6.4", "entities": "^7.0.1", "whatwg-mimetype": "^3.0.0", "ws": "^8.21.0" } }, "sha512-5DDsf4QmEIlRL6NkCv/fxSjYHHkZceL/IaYQdJc2h3G7DRTEai++VTjbfL0LB9geW2VrA3+vrjF3Efx+OTtX0Q=="],
+
+    "hls.js": ["hls.js@1.7.4", "", {}, "sha512-3GlxGdPvT2YHvQYOt+yOzT/DEior/qJVNIylHA77kgeoBTdQQqi70GwefNEUmHQeNGyjC8U62+bruqW/Tpm+tg=="],
 
     "home-assistant-js-websocket": ["home-assistant-js-websocket@9.7.1", "", {}, "sha512-zOAiyF+gUc/IsiswYdWKns6SCBbvWb8iJtMX9+Dk0wlbdfcp+I38T2Vx36krWeWMk/GPwoSiYwCs5hk/+Hsn7w=="],
 
