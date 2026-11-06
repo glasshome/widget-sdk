@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.31.1](https://github.com/glasshome/widget-sdk/compare/v1.31.0...v1.31.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **gestures:** widget and panel holds use the ui hold door, which spends the release ([#55](https://github.com/glasshome/widget-sdk/issues/55)) ([f1e6b28](https://github.com/glasshome/widget-sdk/commit/f1e6b2874be240337fcf8d17366c14aaad05817d))
+* loading the SDK reads none of the deprecated camera stream helpers ([#53](https://github.com/glasshome/widget-sdk/issues/53)) ([087a740](https://github.com/glasshome/widget-sdk/commit/087a74010021a8bff35c2dd5b402409e2a1c35c9))
+
 ## [1.31.0](https://github.com/glasshome/widget-sdk/compare/v1.30.0...v1.31.0) (2026-11-06)
 
 
