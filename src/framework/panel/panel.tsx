@@ -1,4 +1,4 @@
-import { Button, buttonVariants, HOLD_MS, Icon, spendLongPress } from "@glasshome/ui/solid";
+import { Button, buttonVariants, createHold, Icon } from "@glasshome/ui/solid";
 import { For, type JSX, Match, onCleanup, Show, Switch, useContext } from "solid-js";
 import { INTERACTIVE } from "../gestures/use-widget-gestures";
 import { WidgetCtx } from "../hooks/use-widget-context";
@@ -41,8 +41,13 @@ function pointerGestures(opts: {
   const ctx = useContext(WidgetCtx);
   let start: { x: number; y: number; id: number } | undefined;
   let sliding = false;
-  let held = false;
-  let holdTimer: ReturnType<typeof setTimeout> | undefined;
+  const hold = createHold({
+    slopPx: SLOP_PX,
+    onHold: () => {
+      opts.onHold?.();
+      ctx?.onHeld?.();
+    },
+  });
   let last = 0;
   let from = 0;
 
@@ -58,10 +63,11 @@ function pointerGestures(opts: {
   };
 
   const end = () => {
-    clearTimeout(holdTimer);
+    hold.up();
     start = undefined;
   };
-  onCleanup(() => clearTimeout(holdTimer));
+  // Up, not cancel: the hold's own action may unmount this row, and its release stays spent.
+  onCleanup(() => hold.up());
 
   return {
     onPointerDown: (e: PointerEvent) => {
@@ -72,37 +78,27 @@ function pointerGestures(opts: {
       // Captured from the press on, so the release always comes back here and clears `start`.
       (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
       sliding = false;
-      held = false;
-      if (opts.onHold) {
-        holdTimer = setTimeout(() => {
-          held = true;
-          spendLongPress();
-          opts.onHold?.();
-          ctx?.onHeld?.();
-        }, HOLD_MS);
-      }
+      if (opts.onHold) hold.down(e);
     },
     onPointerMove: (e: PointerEvent) => {
-      if (!start || e.pointerId !== start.id || held) return;
+      if (!start || e.pointerId !== start.id || hold.fired()) return;
+      hold.move(e);
       const el = e.currentTarget as HTMLElement;
       const d = opts.axis === "x" ? Math.abs(e.clientX - start.x) : Math.abs(e.clientY - start.y);
       const s = opts.slide?.();
       if (!sliding && s && d > SLOP_PX) {
         sliding = true;
         from = s.value;
-        clearTimeout(holdTimer);
       }
       if (sliding) {
         last = valueAt(el, e);
         opts.slide?.()?.onChange(last);
-      } else if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > SLOP_PX) {
-        clearTimeout(holdTimer);
       }
     },
     onPointerUp: (e: PointerEvent) => {
       if (!start || e.pointerId !== start.id) return;
       if (sliding) opts.slide?.()?.onCommit?.(last);
-      else if (!held) opts.onTap?.();
+      else if (!hold.fired()) opts.onTap?.();
       end();
     },
     // A cancelled slide sent nothing, so the value goes back to where the drag began.
