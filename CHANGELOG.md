@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.1](https://github.com/glasshome/widget-sdk/compare/v1.32.0...v1.32.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **camera-stream:** full screen inside a shadow root shows its exit and sound controls ([#59](https://github.com/glasshome/widget-sdk/issues/59)) ([c4a9d5f](https://github.com/glasshome/widget-sdk/commit/c4a9d5f494e746bcdf9cab82b12b524ebdf67d3d))
+
 ## [1.32.0](https://github.com/glasshome/widget-sdk/compare/v1.31.1...v1.32.0) (2026-11-06)
 
 
