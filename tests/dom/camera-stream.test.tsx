@@ -279,6 +279,37 @@ describe("CameraStream", () => {
     await expect.poll(() => stages.at(-1)).toMatch(/^stage home assistant answer, connection \w+$/);
   });
 
+  it("inside a shadow root, full screen offers its exit and its sound control", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    const sheet = document.createElement("style");
+    sheet.textContent = ".box { display: block; width: 240px; height: 160px }";
+    shadow.append(sheet);
+    const view = render(
+      () => (
+        <CameraStream
+          entityId="camera.front_door"
+          kind="image"
+          src={PICTURE}
+          muted
+          fullscreen
+          sound
+          class="box"
+        />
+      ),
+      { container: shadow as unknown as HTMLElement },
+    );
+    await userEvent.click(view.getByRole("button", { name: "Full screen" }));
+    await expect.poll(() => document.fullscreenElement).toBe(host);
+    await expect
+      .poll(() => view.queryByRole("button", { name: "Exit full screen" }))
+      .not.toBeNull();
+    expect(view.queryByRole("button", { name: "Turn sound on" })).not.toBeNull();
+    await document.exitFullscreen();
+    host.remove();
+  });
+
   it("shows the full screen control only when asked", () => {
     const asked = mount("hls", refusing, true).view;
     expect(asked.queryByRole("button", { name: "Full screen" })).not.toBeNull();
