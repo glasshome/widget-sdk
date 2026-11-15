@@ -650,6 +650,28 @@
     color-mix(in oklch, var(--card) 80%, transparent) 100%
   );
 }
+.glasshome-widget-backdrop:has(> img)::after {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.16 0.01 60 / 0.62) 0%,
+    oklch(0.16 0.01 60 / 0.3) 22%,
+    transparent 44%,
+    transparent 60%,
+    oklch(0.16 0.01 60 / 0.34) 80%,
+    oklch(0.16 0.01 60 / 0.66) 100%
+  );
+}
+.dark .glasshome-widget-backdrop::after {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--card) 82%, transparent) 0%,
+    color-mix(in oklch, var(--card) 40%, transparent) 22%,
+    transparent 42%,
+    transparent 62%,
+    color-mix(in oklch, var(--card) 45%, transparent) 82%,
+    color-mix(in oklch, var(--card) 80%, transparent) 100%
+  );
+}
 
 @container widget (max-width: 239px) {
   .glasshome-widget-choice [data-optional] {
@@ -708,8 +730,34 @@
     .glasshome-widget-reading-value,
     .glasshome-widget-sub,
     .glasshome-widget-name,
-    .glasshome-widget-eyebrow
+    .glasshome-widget-eyebrow,
+    .glasshome-widget-unit
   ) {
+  text-shadow: 0 1px 8px color-mix(in oklch, var(--card) 75%, transparent);
+}
+.glasshome-widget-grid:has(> .glasshome-widget-backdrop > img)
+  :is(
+    .glasshome-widget-reading-value,
+    .glasshome-widget-sub,
+    .glasshome-widget-name,
+    .glasshome-widget-eyebrow,
+    .glasshome-widget-unit
+  ) {
+  --foreground: oklch(0.98 0.005 80);
+  --muted-foreground: oklch(0.88 0.01 80);
+  text-shadow: 0 1px 8px oklch(0.16 0.01 60 / 0.55);
+}
+.dark
+  .glasshome-widget-grid:has(> .glasshome-widget-backdrop > img)
+  :is(
+    .glasshome-widget-reading-value,
+    .glasshome-widget-sub,
+    .glasshome-widget-name,
+    .glasshome-widget-eyebrow,
+    .glasshome-widget-unit
+  ) {
+  --foreground: inherit;
+  --muted-foreground: inherit;
   text-shadow: 0 1px 8px color-mix(in oklch, var(--card) 75%, transparent);
 }
 .glasshome-widget-grid:has(> .glasshome-widget-backdrop)
