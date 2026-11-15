@@ -68,6 +68,12 @@ export interface SensorGroupResult {
   memberValues?: Array<{ entityId: string; value: string | number; friendly_name?: string }>;
 }
 
+// On/off-only lights report brightness null while on: full output.
+function onBrightness(entity: EntityView): number {
+  const b = entity.attributes?.brightness;
+  return typeof b === "number" ? b : 255;
+}
+
 /**
  * Calculate light/switch/binary-sensor group state and properties
  *
@@ -99,7 +105,7 @@ export function calculateLightGroup(
   if (!isGroup) {
     const entity = first;
     const isOn = entity.state === "on";
-    const brightness = entity.attributes?.brightness || 0;
+    const brightness = isOn ? onBrightness(entity) : 0;
     const brightnessPercent = Math.round((brightness / 255) * 100);
 
     return {
@@ -129,10 +135,8 @@ export function calculateLightGroup(
     switch (entity.state) {
       case "on":
         onCount++;
-        if (entity.attributes?.brightness !== undefined) {
-          totalBrightness += entity.attributes.brightness;
-          brightnessCount++;
-        }
+        totalBrightness += onBrightness(entity);
+        brightnessCount++;
         if (entity.attributes?.rgb_color) {
           colors.push(entity.attributes.rgb_color);
         } else if (entity.attributes?.hs_color) {

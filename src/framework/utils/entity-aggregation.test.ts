@@ -59,3 +59,33 @@ test("group averages an hs_color light in with an rgb_color light", () => {
   expect(b).toBeGreaterThan(0);
   expect(g).toBeLessThan(r);
 });
+
+// Regression: on/off-only lights report brightness null while on. They are at
+// full output, so they read 100%, never 0%.
+test("on/off light with null brightness reads 100%", () => {
+  const r = calculateLightGroup([light({ brightness: null, color_mode: "onoff" })]);
+  expect(r.isOn).toBe(true);
+  expect(r.brightnessPercent).toBe(100);
+});
+
+test("on/off light with no brightness attribute reads 100%", () => {
+  expect(calculateLightGroup([light({})]).brightnessPercent).toBe(100);
+});
+
+test("off light reads 0%", () => {
+  expect(calculateLightGroup([light({ brightness: null }, "off")]).brightnessPercent).toBe(0);
+});
+
+test("group of on/off lights reads 100% and keeps its color", () => {
+  const r = calculateLightGroup([
+    light({ brightness: null, rgb_color: [255, 200, 100] }),
+    light({ brightness: null, rgb_color: [255, 200, 100] }),
+  ]);
+  expect(r.brightnessPercent).toBe(100);
+  expect(parseRgb(r.color)).toEqual([255, 200, 100]);
+});
+
+test("group averages an on/off light (100%) with a dimmable one", () => {
+  const r = calculateLightGroup([light({ brightness: null }), light({ brightness: 51 })]);
+  expect(r.brightnessPercent).toBe(60);
+});
