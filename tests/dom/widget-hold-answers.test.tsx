@@ -10,6 +10,7 @@ import {
 import { useFakeTime } from "@glasshome/ui/testing";
 import { Cell } from "./harness/cell";
 import { mouseOn } from "./harness/press";
+import "../../src/framework/theming/tokens.css";
 
 function hostCtx() {
   const reports: boolean[] = [];
@@ -55,7 +56,7 @@ describe("every widget answers a hold", () => {
     await release(shell());
   });
 
-  it("a widget with nothing more to open says so, and the tour does not count it", async () => {
+  it("a widget with nothing more to open shakes once, says nothing, and the tour does not count it", async () => {
     useFakeTime();
     const host = hostCtx();
     render(() => (
@@ -66,14 +67,23 @@ describe("every widget answers a hold", () => {
       </WidgetCtx.Provider>
     ));
     expect(host.reports.at(-1)).toBe(false);
+    const frame = shell().closest<HTMLElement>(".glasshome-widget-frame");
+    if (!frame) throw new Error("frame did not render");
 
     await press(shell());
     await vi.advanceTimersByTimeAsync(HOLD_MS);
-    const notice = screen.getByText("No more controls for this widget");
-    expect(notice.hasAttribute("data-closed")).toBe(false);
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(notice.hasAttribute("data-closed") || !notice.isConnected).toBe(true);
     await release(shell());
+    expect(frame.hasAttribute("data-nothing-more")).toBe(true);
+    expect(document.querySelector("[data-expanded]")).toBeNull();
+
+    const [shake] = frame.getAnimations();
+    expect(shake).toBeDefined();
+    const ended = new Promise((resolve) =>
+      frame.addEventListener("animationend", resolve, { once: true }),
+    );
+    shake?.finish();
+    await ended;
+    expect(frame.hasAttribute("data-nothing-more")).toBe(false);
   });
 
   it("holds from a control row, while a short press there stays the control's", async () => {
