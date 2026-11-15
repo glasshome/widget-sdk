@@ -118,9 +118,21 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     createEffect(() => parentCtx?.onHoldable?.(!props.emptyState && !!gestures()?.holds?.()));
     onCleanup(() => parentCtx?.onHoldable?.(false));
   }
-  const settleNothingMore = (e: AnimationEvent) => {
-    if (e.animationName === "widget-nothing-more") registry?.setNothingMore(false);
-  };
+  const [frameEl, setFrameEl] = createSignal<HTMLDivElement>();
+  // Listens only while shaking: every animation in the tile bubbles here, and each one is guest work.
+  createEffect(() => {
+    const frame = frameEl();
+    if (!reportsHold || !frame || !registry?.nothingMore()) return;
+    const settle = (e: AnimationEvent) => {
+      if (e.animationName === "widget-nothing-more") registry.setNothingMore(false);
+    };
+    frame.addEventListener("animationend", settle);
+    frame.addEventListener("animationcancel", settle);
+    onCleanup(() => {
+      frame.removeEventListener("animationend", settle);
+      frame.removeEventListener("animationcancel", settle);
+    });
+  });
   createEffect(() =>
     registry?.setTone(props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined)),
   );
@@ -261,10 +273,9 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       <WidgetConfirmedCtx.Provider value={() => props.confirmed === true}>
         <WidgetSizeCtx.Provider value={measured}>
           <div
+            ref={setFrameEl}
             class="glasshome-widget-frame relative h-full w-full"
             data-nothing-more={reportsHold && registry?.nothingMore() ? "" : undefined}
-            on:animationend={settleNothingMore}
-            on:animationcancel={settleNothingMore}
           >
             <div
               ref={(el) => {
