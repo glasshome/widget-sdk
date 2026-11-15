@@ -5,6 +5,20 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.2](https://github.com/glasshome/widget-sdk/compare/v1.32.1...v1.32.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* **light:** on/off-only lights read 100% when on, not 0% ([4a6a141](https://github.com/glasshome/widget-sdk/commit/4a6a141f5f96837c4fbbc094151786f2d08a0998))
+* **light:** on/off-only lights read 100% when on, not 0% ([d978360](https://github.com/glasshome/widget-sdk/commit/d978360fb1298458e6dfae4ec8634f0e3e09f0e1))
+* **widget:** a hold with nothing more to open shakes the widget instead of opening a popover ([54aeda9](https://github.com/glasshome/widget-sdk/commit/54aeda9aced50220b701e5465a0618aaf1d906c9))
+
+
+### Performance Improvements
+
+* **widget:** the nothing-more shake listens for its end only while it plays ([81d0cd8](https://github.com/glasshome/widget-sdk/commit/81d0cd82978ed59d6dadefcb7ec28be00a3c57a1))
+
 ## [1.32.1](https://github.com/glasshome/widget-sdk/compare/v1.32.0...v1.32.1) (2026-11-06)
 
 
