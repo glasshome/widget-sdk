@@ -9,7 +9,6 @@
  * any JS measurement.
  */
 
-import { Icon, Popover, PopoverContent } from "@glasshome/ui/solid";
 import {
   type JSX,
   createEffect,
@@ -89,8 +88,6 @@ interface WidgetComponent {
   Glyph: typeof Anatomy.WidgetGlyph;
 }
 
-const NOTHING_MORE_MS = 2000;
-
 function WidgetBase(props: WidgetProps): JSX.Element {
   const parentCtx = useContext(WidgetCtx);
   // An empty tile says "Hold to configure": holding it opens the widget's settings, whatever the widget wired.
@@ -121,11 +118,9 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     createEffect(() => parentCtx?.onHoldable?.(!props.emptyState && !!gestures()?.holds?.()));
     onCleanup(() => parentCtx?.onHoldable?.(false));
   }
-  createEffect(() => {
-    if (!reportsHold || !registry?.nothingMore()) return;
-    const timer = setTimeout(() => registry.setNothingMore(false), NOTHING_MORE_MS);
-    onCleanup(() => clearTimeout(timer));
-  });
+  const settleNothingMore = (e: AnimationEvent) => {
+    if (e.animationName === "widget-nothing-more") registry?.setNothingMore(false);
+  };
   createEffect(() =>
     registry?.setTone(props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined)),
   );
@@ -265,7 +260,12 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     <WidgetCtx.Provider value={contextValue}>
       <WidgetConfirmedCtx.Provider value={() => props.confirmed === true}>
         <WidgetSizeCtx.Provider value={measured}>
-          <div class="glasshome-widget-frame relative h-full w-full">
+          <div
+            class="glasshome-widget-frame relative h-full w-full"
+            data-nothing-more={reportsHold && registry?.nothingMore() ? "" : undefined}
+            on:animationend={settleNothingMore}
+            on:animationcancel={settleNothingMore}
+          >
             <div
               ref={(el) => {
                 setShellEl(el);
@@ -330,20 +330,6 @@ function WidgetBase(props: WidgetProps): JSX.Element {
               />
             </Show>
           </div>
-          <Show when={reportsHold}>
-            <Popover
-              open={registry?.nothingMore() ?? false}
-              onOpenChange={(open) => {
-                if (!open) registry?.setNothingMore(false);
-              }}
-              anchorRef={shellEl}
-            >
-              <PopoverContent class="flex w-auto items-center gap-2 p-3 text-sm">
-                <Icon icon="mdi:information-outline" />
-                No more controls for this widget
-              </PopoverContent>
-            </Popover>
-          </Show>
         </WidgetSizeCtx.Provider>
       </WidgetConfirmedCtx.Provider>
     </WidgetCtx.Provider>
