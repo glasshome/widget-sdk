@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.3](https://github.com/glasshome/widget-sdk/compare/v1.32.2...v1.32.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* **theming:** a widget photo backdrop dims under a dark scrim with light words in light mode ([b4c9941](https://github.com/glasshome/widget-sdk/commit/b4c99411c6995c2c0fc3e6bdbcda399f8fbab6a5))
+* **theming:** a widget photo backdrop dims under a dark scrim with light words in light mode ([535feea](https://github.com/glasshome/widget-sdk/commit/535feea43703246ffa56e2c598099a9820f0ff62))
+
 ## [1.32.2](https://github.com/glasshome/widget-sdk/compare/v1.32.1...v1.32.2) (2026-11-15)
 
 
