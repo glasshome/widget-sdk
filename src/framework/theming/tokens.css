@@ -917,6 +917,21 @@
   scale: 1;
   opacity: 0;
 }
+/* A hold that found nothing more: the widget shakes its head once, halo and all. */
+.glasshome-widget-frame[data-nothing-more] {
+  animation: widget-nothing-more calc(var(--duration-morph, 300ms) * 1.2) var(--ease-expand);
+}
+@keyframes widget-nothing-more {
+  20% {
+    translate: -5px 0;
+  }
+  45% {
+    translate: 4px 0;
+  }
+  70% {
+    translate: -2px 0;
+  }
+}
 /* A row of ui buttons in a sheet (scenes, one-tap actions). */
 .glasshome-sheet-actions {
   display: flex;

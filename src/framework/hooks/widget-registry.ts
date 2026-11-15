@@ -13,7 +13,7 @@ export interface WidgetRegistry {
   /** The head's icon. */
   icon: Accessor<string | undefined>;
   setIcon: Setter<string | undefined>;
-  /** A hold found no sheet: the shell says the widget has nothing more to show. */
+  /** A hold found no sheet: the shell shakes once to say the widget has nothing more to show. */
   nothingMore: Accessor<boolean>;
   setNothingMore: Setter<boolean>;
 }
