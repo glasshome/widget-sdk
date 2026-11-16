@@ -5,6 +5,13 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.4](https://github.com/glasshome/widget-sdk/compare/v1.32.3...v1.32.4) (2026-11-16)
+
+
+### Performance Improvements
+
+* **form:** build each config schema's form schema once ([#69](https://github.com/glasshome/widget-sdk/issues/69)) ([fa46107](https://github.com/glasshome/widget-sdk/commit/fa461070545118ddaacc48adcb7dfb720dc7c7c0))
+
 ## [1.32.3](https://github.com/glasshome/widget-sdk/compare/v1.32.2...v1.32.3) (2026-11-15)
 
 
