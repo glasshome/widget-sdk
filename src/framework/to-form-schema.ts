@@ -1,5 +1,7 @@
 import { z, type ZodType } from "zod";
 
+const built = new WeakMap<ZodType, object>();
+
 /**
  * Convert a Zod config schema to JSON Schema with custom metadata injected.
  *
@@ -7,8 +9,20 @@ import { z, type ZodType } from "zod";
  * `{ formType: "area-picker" }`). The `override` callback reads these from
  * `z.globalRegistry` and merges them into the JSON Schema output so the
  * form renderer can detect custom field types.
+ *
+ * The conversion runs once per schema object; every caller of the same schema
+ * receives the same result, so read it and never change it.
  */
 export function toFormSchema(schema: ZodType): object {
+  let form = built.get(schema);
+  if (!form) {
+    form = buildFormSchema(schema);
+    built.set(schema, form);
+  }
+  return form;
+}
+
+function buildFormSchema(schema: ZodType): object {
   return z.toJSONSchema(schema, {
     override: (ctx) => {
       const meta = z.globalRegistry.get(ctx.zodSchema);
