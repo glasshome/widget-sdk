@@ -27,6 +27,8 @@ export default defineConfig({
     ],
   },
   optimizeDeps: {
+    // A dependency found mid-run re-optimizes and reloads the page, failing the in-flight test import.
+    noDiscovery: true,
     include: [
       "solid-js",
       "solid-js/web",
@@ -41,6 +43,7 @@ export default defineConfig({
       "@glasshome/ui > embla-carousel-fade",
       "@glasshome/ui > @iconify/utils",
       "@glasshome/sync-layer > home-assistant-js-websocket",
+      "@glasshome/widget-contract > semver",
     ],
   },
   test: {
