@@ -77,6 +77,7 @@
     "test:dom": "vitest run",
     "test:dom:watch": "vitest",
     "typecheck:test": "tsc --noEmit",
+    "check:history": "bun scripts/check-export-history.ts",
     "check:dead": "fallow dead-code --fail-on-issues",
     "lint": "oxlint --type-aware . && oxfmt --check ."
   },

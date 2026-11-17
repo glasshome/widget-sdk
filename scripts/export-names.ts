@@ -1,11 +1,7 @@
 #!/usr/bin/env bun
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
-import {
-  compareSdkVersions,
-  exportNames,
-  missingReleases,
-} from "@glasshome/widget-contract/sdk-floor";
+import { compareSdkVersions, exportNames } from "@glasshome/widget-contract/sdk-floor";
 
 export type ExportHistory = Record<string, string[]>;
 
@@ -49,16 +45,33 @@ export function isRelease(version: string): boolean {
   return /^\d+\.\d+\.\d+$/.test(version);
 }
 
-/** The committed history plus every release before `own` that it skips; throws when one cannot be read. */
+/** Stable releases from 1.0.0 below `own` among `versions` that `history` has no entry for. */
+export function uncoveredReleases(
+  history: ExportHistory,
+  versions: readonly string[],
+  own: string,
+): string[] {
+  return versions
+    .filter(
+      (v) =>
+        isRelease(v) &&
+        compareSdkVersions(v, "1.0.0") >= 0 &&
+        compareSdkVersions(v, own) < 0 &&
+        !(v in history),
+    )
+    .sort(compareSdkVersions);
+}
+
+/** The committed history plus every release below `own` that it skips; throws when one cannot be read. */
 export function completeHistory(input: {
   committed: ExportHistory;
-  releases: string[];
+  releases: readonly string[];
   own: string;
   scan: (version: string) => string[] | null;
 }): ExportHistory {
   const { committed, releases, own, scan } = input;
   const added: ExportHistory = {};
-  for (const version of missingReleases(committed, releases, own)) {
+  for (const version of uncoveredReleases(committed, releases, own)) {
     let names: string[] | null;
     try {
       names = scan(version);

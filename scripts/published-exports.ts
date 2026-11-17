@@ -12,6 +12,11 @@ export function run(cmd: string, args: string[], cwd: string): string {
   return res.stdout;
 }
 
+/** Every version npm lists for the package: the one list of what was released. */
+export function publishedVersions(): string[] {
+  return JSON.parse(run("npm", ["view", PACKAGE, "versions", "--json"], tmpdir()));
+}
+
 /** Export names of a published release, read from its npm tarball; null when its entry cannot be scanned. */
 export function scanPublished(version: string): string[] | null {
   const packDir = mkdtempSync(join(tmpdir(), "sdk-pack-"));
