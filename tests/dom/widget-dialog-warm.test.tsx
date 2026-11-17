@@ -113,6 +113,23 @@ describe("useWidgetDialog and the warm set", () => {
     expect([a, b, c, d].map((ctx) => warmSheets.has(ctx))).toEqual([true, false, true, true]);
   });
 
+  it("unmounting a widget that never rendered a WidgetDialog drops its context", () => {
+    const ctx = newCtx();
+    let dialog: WidgetDialogReturn | undefined;
+    const view = render(() => (
+      <WidgetCtx.Provider value={ctx}>
+        {(() => {
+          dialog = useWidgetDialog();
+          return <p>no dialog</p>;
+        })()}
+      </WidgetCtx.Provider>
+    ));
+    dialog?.openDialog();
+    expect(warmSheets.has(ctx)).toBe(true);
+    view.unmount();
+    expect(warmSheets.has(ctx)).toBe(false);
+  });
+
   it("unmounting the widget drops its context", () => {
     const ctx = newCtx();
     const { dialog, unmount } = mount(ctx);

@@ -80,6 +80,7 @@ export function useWidgetDialog(defaultTab = "controls"): WidgetDialogReturn {
   onCleanup(() => {
     ctx?.registerDialogOpener?.(null);
     if (ctx && dialogOpeners.get(ctx) === openDialog) dialogOpeners.delete(ctx);
+    if (ctx) warmSheets.drop(ctx);
   });
 
   return {
