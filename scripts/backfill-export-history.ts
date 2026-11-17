@@ -1,47 +1,13 @@
 #!/usr/bin/env bun
-// Usage: bun scripts/backfill-export-history.ts [--all]. Publish runs it before the build.
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+// Usage: bun scripts/backfill-export-history.ts [--all]. Adds every published release the committed file lacks.
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { compareSdkVersions } from "@glasshome/widget-contract/sdk-floor";
-import { type ExportHistory, isRelease, scanPackage, sortHistory } from "./export-names";
+import { type ExportHistory, isRelease, sortHistory } from "./export-names";
+import { PACKAGE, run, scanPublished } from "./published-exports";
 
-const PACKAGE = "@glasshome/widget-sdk";
 const pkgDir = join(import.meta.dir, "..");
 const historyPath = join(pkgDir, "export-history.json");
-
-function run(cmd: string, args: string[], cwd: string): string {
-  const res = spawnSync(cmd, args, { cwd, encoding: "utf-8" });
-  if (res.status !== 0) throw new Error(`${cmd} ${args.join(" ")} failed:\n${res.stderr}`);
-  return res.stdout;
-}
-
-function scanPublished(version: string): string[] | null {
-  const packDir = mkdtempSync(join(tmpdir(), "sdk-pack-"));
-  const extractDir = mkdtempSync(join(tmpdir(), "sdk-extract-"));
-  try {
-    run("npm", ["pack", `${PACKAGE}@${version}`, "--ignore-scripts", "--silent"], packDir);
-    const tarball = readdirSync(packDir).find((f) => f.endsWith(".tgz"));
-    if (!tarball) throw new Error(`npm pack ${version} produced no tarball`);
-    run(
-      "tar",
-      [
-        "-xzf",
-        join(packDir, tarball),
-        "-C",
-        extractDir,
-        "--no-same-owner",
-        "--no-same-permissions",
-      ],
-      pkgDir,
-    );
-    return scanPackage(join(extractDir, "package"));
-  } finally {
-    rmSync(packDir, { recursive: true, force: true });
-    rmSync(extractDir, { recursive: true, force: true });
-  }
-}
 
 const own: string = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8")).version;
 const history: ExportHistory = process.argv.includes("--all")
