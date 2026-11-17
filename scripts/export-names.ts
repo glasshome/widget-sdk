@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { compareSdkVersions, exportNames } from "@glasshome/widget-contract/sdk-floor";
 
@@ -45,14 +45,45 @@ export function isRelease(version: string): boolean {
   return /^\d+\.\d+\.\d+$/.test(version);
 }
 
-if (import.meta.main && process.argv.includes("--emit")) {
-  const pkgDir = join(import.meta.dir, "..");
-  const committed: ExportHistory = JSON.parse(
-    readFileSync(join(pkgDir, "export-history.json"), "utf-8"),
-  );
-  const history = historyWithBuild(pkgDir, committed);
-  writeFileSync(join(pkgDir, "dist/export-history.json"), `${JSON.stringify(history, null, 2)}\n`);
-  console.log(
-    `Export history: ${Object.keys(history).length} versions in dist/export-history.json.`,
-  );
+/** Stable releases from 1.0.0 below `own` among `versions` that `history` has no entry for. */
+export function uncoveredReleases(
+  history: ExportHistory,
+  versions: readonly string[],
+  own: string,
+): string[] {
+  return versions
+    .filter(
+      (v) =>
+        isRelease(v) &&
+        compareSdkVersions(v, "1.0.0") >= 0 &&
+        compareSdkVersions(v, own) < 0 &&
+        !(v in history),
+    )
+    .sort(compareSdkVersions);
+}
+
+/** The committed history plus every release below `own` that it skips; throws when one cannot be read. */
+export function completeHistory(input: {
+  committed: ExportHistory;
+  releases: readonly string[];
+  own: string;
+  scan: (version: string) => string[] | null;
+}): ExportHistory {
+  const { committed, releases, own, scan } = input;
+  const added: ExportHistory = {};
+  for (const version of uncoveredReleases(committed, releases, own)) {
+    let names: string[] | null;
+    try {
+      names = scan(version);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new Error(
+        `export history lacks ${version} and the registry could not supply it: ${detail}`,
+      );
+    }
+    if (!names)
+      throw new Error(`export history lacks ${version} and its exports cannot be scanned`);
+    added[version] = names;
+  }
+  return sortHistory({ ...committed, ...added });
 }
