@@ -24,6 +24,7 @@
  */
 
 import { createSignal, onCleanup, useContext } from "solid-js";
+import { warmSheets } from "../dialogs/warm-dialogs";
 import { WidgetCtx } from "./use-widget-context";
 
 /** Each widget's dialog opener, keyed by its host context, so `Widget` can open settings from an empty tile. */
@@ -59,8 +60,14 @@ export interface WidgetDialogReturn {
  * @returns Dialog state and control functions
  */
 export function useWidgetDialog(defaultTab = "controls"): WidgetDialogReturn {
-  const [showDialog, setShowDialog] = createSignal(false);
+  const ctx = useContext(WidgetCtx);
+  const [showDialog, setOpen] = createSignal(false);
   const [activeTab, setActiveTab] = createSignal(defaultTab);
+
+  const setShowDialog = (open: boolean) => {
+    if (open && ctx && !showDialog()) warmSheets.touch(ctx);
+    setOpen(open);
+  };
 
   const openDialog = (tab?: string) => {
     setActiveTab(tab ?? defaultTab);
@@ -68,7 +75,6 @@ export function useWidgetDialog(defaultTab = "controls"): WidgetDialogReturn {
   };
 
   // Host RPC: let the host (dashboard) open this dialog imperatively.
-  const ctx = useContext(WidgetCtx);
   ctx?.registerDialogOpener?.(openDialog);
   if (ctx) dialogOpeners.set(ctx, openDialog);
   onCleanup(() => {

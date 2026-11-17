@@ -43,6 +43,7 @@ import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
 import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
+import { warmSheets } from "./warm-dialogs";
 
 /** The JSON Schema dialect ui's SchemaForm accepts, sourced from ui itself. */
 type SchemaFormSchema = ComponentProps<typeof UISchemaForm>["schema"];
@@ -373,7 +374,10 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const ctx = useContext(WidgetCtx);
   const registry = widgetRegistry(ctx);
   createEffect(() => registry?.setHasSheet(local.sheet !== undefined));
-  onCleanup(() => registry?.setHasSheet(false));
+  onCleanup(() => {
+    registry?.setHasSheet(false);
+    if (ctx) warmSheets.drop(ctx);
+  });
   // The sheet wears the tile: its head icon and colour unless the widget passes its own.
   const look = () => ({
     icon: local.tile?.icon ?? registry?.icon(),
