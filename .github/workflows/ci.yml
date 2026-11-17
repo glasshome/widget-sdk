@@ -30,3 +30,5 @@ jobs:
       # after release-please has already cut the tag.
       - run: bun run typecheck:test
       - run: bun run check:dead
+      # Reads the committed export-history.json against npm's list of releases, never dist/.
+      - run: bun run check:history

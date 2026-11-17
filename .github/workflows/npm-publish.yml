@@ -19,6 +19,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      pr: ${{ steps.release.outputs.pr }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -100,7 +102,7 @@ jobs:
           done
           exit 1
         if: ${{ steps.gate.outputs.go == 'true' }}
-      # The shipped export history must cover every release; the committed file is a cache.
+      # A published SDK ships no changelog; its dist/export-history.json is complete because of this step.
       - run: bun scripts/backfill-export-history.ts
         if: ${{ steps.gate.outputs.go == 'true' }}
       - run: bun run build
@@ -116,3 +118,43 @@ jobs:
           EXPORT_HISTORY_REQUIRE_TAGS: "1"
       - run: npm publish --provenance --access public
         if: ${{ steps.gate.outputs.go == 'true' }}
+
+  # Every tag carries an export history complete through the release before it:
+  # the release PR branch gets the backfilled export-history.json. A push made
+  # with GITHUB_TOKEN starts no workflow, so this job cannot trigger itself.
+  history:
+    needs: release
+    if: ${{ needs.release.outputs.pr != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - id: pr
+        env:
+          PR: ${{ needs.release.outputs.pr }}
+        run: echo "branch=$(jq -r '.headBranchName // empty' <<<"$PR")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: ${{ steps.pr.outputs.branch != '' }}
+        with:
+          ref: ${{ steps.pr.outputs.branch }}
+      - uses: oven-sh/setup-bun@v2
+        if: ${{ steps.pr.outputs.branch != '' }}
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+        if: ${{ steps.pr.outputs.branch != '' }}
+      - run: bun scripts/backfill-export-history.ts
+        if: ${{ steps.pr.outputs.branch != '' }}
+      - name: Commit the history to the release PR branch
+        if: ${{ steps.pr.outputs.branch != '' }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- export-history.json; then
+            echo "export-history.json already complete"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add export-history.json
+          git commit -m "chore: complete the export history through the previous release" -- export-history.json
+          git push
