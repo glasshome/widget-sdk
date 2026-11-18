@@ -87,6 +87,7 @@ export {
   WidgetDebugView,
   WidgetDialog,
   type SheetTile,
+  useSheetDormant,
   type WidgetDialogProps,
   type WidgetDialogTab,
 } from "./dialogs";

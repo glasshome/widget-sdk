@@ -47,7 +47,7 @@ Parts inside `Widget.Content`; they lay out and resize themselves. Never measure
 
 ## Sheet
 
-Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`ResponsiveDialog*`, `Button`, `SchemaForm`, `Tabs*`, see the scaffold) and `useWidgetDialog().dialogProps`. Hold opens the sheet on its own once `sheet` is passed; no gesture wiring. Only what the tile lacks (group members, colours, modes, forecast). Pass `sheet` only when there is something: `{...(extras() ? { sheet: () => <MySheet /> } : {})}`. Build from `PanelSection`, `PanelRows`, `PanelRow`, `PanelEntityRow`, `PanelFacts`, `ToggleGroup`, `SwatchPicker`, `TemperatureBar`, `ColorDisc`. Never repeat the tile's value, name or art. Widget CSS does not reach it.
+Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`ResponsiveDialog*`, `Button`, `SchemaForm`, `Tabs*`, see the scaffold) and `useWidgetDialog().dialogProps`. Hold opens the sheet on its own once `sheet` is passed; no gesture wiring. Only what the tile lacks (group members, colours, modes, forecast). Pass `sheet` only when there is something: `{...(extras() ? { sheet: () => <MySheet /> } : {})}`. Build from `PanelSection`, `PanelRows`, `PanelRow`, `PanelEntityRow`, `PanelFacts`, `ToggleGroup`, `SwatchPicker`, `TemperatureBar`, `ColorDisc`. Never repeat the tile's value, name or art. Widget CSS does not reach it. A recently held sheet stays mounted between opens, keeping its state and scroll: a ticker inside it pauses while `useSheetDormant()` is true.
 
 ## Primitives
 
