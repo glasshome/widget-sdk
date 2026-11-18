@@ -11,6 +11,7 @@ export {
 } from "./debug-view";
 export {
   type SheetTile,
+  useSheetDormant,
   WidgetDialog,
   type WidgetDialogProps,
   type WidgetDialogTab,

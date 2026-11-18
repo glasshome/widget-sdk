@@ -24,7 +24,10 @@ import {
   useCopyText,
 } from "@glasshome/ui/solid";
 import {
+  type Accessor,
+  type Component,
   type ComponentProps,
+  createContext,
   createEffect,
   createMemo,
   createSignal,
@@ -124,7 +127,8 @@ export interface WidgetDialogProps {
 
   // Injected UI primitives. Typed as the real @glasshome/ui components so a
   // prop-signature change in ui breaks tsc here instead of only at runtime.
-  ResponsiveDialog: typeof UIResponsiveDialog;
+  // `keep` named here: the ui this package pins predates it, and an older host's dialog ignores it.
+  ResponsiveDialog: Component<ComponentProps<typeof UIResponsiveDialog> & { keep?: boolean }>;
   ResponsiveDialogContent: typeof UIResponsiveDialogContent;
   ResponsiveDialogHeader: typeof UIResponsiveDialogHeader;
   ResponsiveDialogTitle: typeof UIResponsiveDialogTitle;
@@ -139,6 +143,13 @@ export interface WidgetDialogProps {
   TabsList?: typeof TabsList;
   TabsTrigger?: typeof TabsTrigger;
   TabsContent?: typeof TabsContent;
+}
+
+const SheetDormant = createContext<Accessor<boolean>>(() => false);
+
+/** True from a sheet's close to its next open: a warm sheet stays mounted, so a ticker inside it pauses on this. */
+export function useSheetDormant(): Accessor<boolean> {
+  return useContext(SheetDormant);
 }
 
 const COPY_LABEL: Record<CopyState, string> = {
@@ -446,7 +457,11 @@ export function WidgetDialog(props: WidgetDialogProps) {
     (tabValue() === "debug" && local.debugData !== undefined);
 
   return (
-    <RD open={local.open} onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}>
+    <RD
+      open={local.open}
+      onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}
+      keep={sheetMode() && ctx !== undefined && warmSheets.has(ctx)}
+    >
       <Show
         when={!sheetMode()}
         fallback={
@@ -486,7 +501,11 @@ export function WidgetDialog(props: WidgetDialogProps) {
               <RDTitle class="truncate">{local.title}</RDTitle>
             </RDHeader>
             <RDBody>
-              <div class="glasshome-sheet">{local.sheet?.()}</div>
+              <div class="glasshome-sheet">
+                <SheetDormant.Provider value={() => !local.open}>
+                  {local.sheet?.()}
+                </SheetDormant.Provider>
+              </div>
             </RDBody>
           </RDContent>
         }
