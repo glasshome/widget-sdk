@@ -125,8 +125,20 @@ export function useWidgetGestures(
     });
     observedElement = el;
     resizeObserver.observe(el);
-    cachedRect = { width: el.clientWidth, height: el.clientHeight };
-    setMeasuredVertical(cachedRect.height > cachedRect.width);
+  }
+
+  // Where the pressed element sits, from an IntersectionObserver entry: the hold arms a grace period later.
+  let pressBox: DOMRectReadOnly | null = null;
+  let locator: IntersectionObserver | null = null;
+  function locate(el: HTMLElement): void {
+    pressBox = null;
+    locator ??= new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === state.element) pressBox = entry.boundingClientRect;
+        locator?.unobserve(entry.target);
+      }
+    });
+    locator.observe(el);
   }
 
   const press = createHold({
@@ -136,12 +148,12 @@ export function useWidgetGestures(
     },
     slopPx: TAP_THRESHOLD,
     onArm: (at) => {
-      const el = state.element;
-      if (!el) return;
-      const box = el.getBoundingClientRect();
-      const x = at.x - box.left;
-      const y = at.y - box.top;
-      const r = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y));
+      const box = pressBox;
+      const size = box ?? cachedRect;
+      if (!size) return;
+      const x = box ? at.x - box.left : size.width / 2;
+      const y = box ? at.y - box.top : size.height / 2;
+      const r = Math.hypot(Math.max(x, size.width - x), Math.max(y, size.height - y));
       setHold({ x, y, r, fired: false });
     },
     onDisarm: () => setHold(null),
@@ -192,6 +204,7 @@ export function useWidgetGestures(
     state.isTouch = e.pointerType === "touch";
     state.element = e.currentTarget as HTMLElement;
     observeElement(state.element);
+    if (cfg.hold) locate(state.element);
     state.startX = e.clientX;
     state.startY = e.clientY;
     state.hasMoved = false;
@@ -240,7 +253,8 @@ export function useWidgetGestures(
       const range = max - min;
 
       const delta = slideOrientation === "vertical" ? -deltaY : deltaX;
-      const rect = cachedRect ?? { width: el.clientWidth, height: el.clientHeight };
+      const rect = cachedRect;
+      if (!rect) return;
       const containerSize = slideOrientation === "vertical" ? rect.height : rect.width;
 
       const percentChange = delta / containerSize;
@@ -366,6 +380,8 @@ export function useWidgetGestures(
       }
       observedElement = null;
       cachedRect = null;
+      locator?.disconnect();
+      locator = null;
     },
   };
 }
