@@ -231,7 +231,7 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
             <div
               role="slider"
               tabIndex={0}
-              class={`${glass} glasshome-panel-row`}
+              class={`${glass} glasshome-panel-row glasshome-panel-row-slides`}
               style={tone()}
               aria-label={
                 props["aria-label"] ?? (s().label ? `${props.name}, ${s().label}` : props.name)
@@ -250,7 +250,9 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
           <Button
             variant="outline"
             size="none"
-            class="glasshome-panel-row"
+            class={
+              props.slide ? "glasshome-panel-row glasshome-panel-row-slides" : "glasshome-panel-row"
+            }
             style={tone()}
             aria-label={props["aria-label"]}
             aria-pressed={props.on}
