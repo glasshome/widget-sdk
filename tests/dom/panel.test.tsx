@@ -1,6 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
+import "../../src/framework/theming/tokens.css";
 import { PanelRow } from "../../src/framework/panel/panel";
 import { mouseOn } from "./harness/press";
 
@@ -95,5 +96,28 @@ describe("PanelRow", () => {
 
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByText("Door lock")).toBeTruthy();
+  });
+
+  it("keeps a sideways finger only on a row that slides", () => {
+    render(() => (
+      <>
+        <PanelRow icon="mdi:lightbulb" name="Tap" on onTap={() => {}} />
+        <PanelRow icon="mdi:battery" name="Read" on fill={40} />
+        <PanelRow icon="mdi:lightbulb" name="Dim" on slide={{ value: 10, onChange: () => {} }} />
+        <PanelRow
+          icon="mdi:lightbulb"
+          name="Both"
+          on
+          onTap={() => {}}
+          slide={{ value: 10, onChange: () => {} }}
+        />
+      </>
+    ));
+    const action = (name: string) => {
+      const row = screen.getByText(name).closest(".glasshome-panel-row");
+      return row ? getComputedStyle(row).touchAction : undefined;
+    };
+
+    expect(["Tap", "Read", "Dim", "Both"].map(action)).toEqual(["auto", "auto", "pan-y", "pan-y"]);
   });
 });

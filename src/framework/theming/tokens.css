@@ -848,6 +848,8 @@
   padding: 0 12px 0 10px;
   overflow: hidden;
   text-align: left;
+}
+.glasshome-panel-row-slides {
   touch-action: pan-y;
 }
 .glasshome-panel-row-static {
