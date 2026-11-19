@@ -5,6 +5,34 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.33.0](https://github.com/glasshome/widget-sdk/compare/v1.32.4...v1.33.0) (2026-11-19)
+
+
+### Features
+
+* **dialogs:** a held tile's sheet stays warm for its next open ([df587f4](https://github.com/glasshome/widget-sdk/commit/df587f4270e383f7f1f2b71ae7b3872d82f8a4be))
+* **dialogs:** a held tile's sheet stays warm for its next open ([df81559](https://github.com/glasshome/widget-sdk/commit/df81559c12316bb94b646fea42b5e1d50113195a))
+* **dialogs:** a warm set remembers the last three sheets a widget opened ([2f2454c](https://github.com/glasshome/widget-sdk/commit/2f2454c3979061a6571c27d1156008947649297e))
+* **dialogs:** a warm set remembers the last three sheets a widget opened ([9c6c200](https://github.com/glasshome/widget-sdk/commit/9c6c200cca0ea637f87d5267e9d4a3f86077a767))
+
+
+### Bug Fixes
+
+* **deps:** widget-contract 0.8.0, whose deriveFloor requires the releases it covers ([75bf435](https://github.com/glasshome/widget-sdk/commit/75bf43530b76f4a0086fdc7d10f11a5217258bcf))
+* **dialogs:** useWidgetDialog drops its context from the warm set when it unmounts ([e6cdf41](https://github.com/glasshome/widget-sdk/commit/e6cdf41d020db1304004bbbfc9941846003cc6b9))
+* **export-history:** the build completes the history from every released version ([68f4c30](https://github.com/glasshome/widget-sdk/commit/68f4c30df04e32c686be23606a31a6b569ea6759))
+* **export-history:** the build writes dist only; a release PR step and a registry check keep the committed file complete ([6485a7c](https://github.com/glasshome/widget-sdk/commit/6485a7cf25116ef455a903f7f4fa9394ec129da4))
+* **export-history:** the committed history is complete, and the release PR keeps it so ([d58c82a](https://github.com/glasshome/widget-sdk/commit/d58c82a41ae2d083cfc4ab8ca8e67d8f44fa0b78))
+* **gestures:** a hold's origin and a slide's size read no layout ([48021b6](https://github.com/glasshome/widget-sdk/commit/48021b60961cb1fe6d9f0862bf37e5be2ae3a943))
+* **gestures:** a hold's origin and a slide's size read no layout ([8c490ac](https://github.com/glasshome/widget-sdk/commit/8c490acd6b0e23e7ba4a7220695fb4f80a3b8acd))
+* **panel:** only a row that slides keeps a sideways finger ([81573e9](https://github.com/glasshome/widget-sdk/commit/81573e91657ad90ffa027e5d0709531e71e9d754))
+
+
+### Performance Improvements
+
+* **vite:** widgets whose hosts all style ui build without ui's CSS ([c0674ae](https://github.com/glasshome/widget-sdk/commit/c0674aec3f423c0527ea2580b86376837bdbcefa))
+* **vite:** widgets whose hosts all style ui build without ui's CSS ([4a396b4](https://github.com/glasshome/widget-sdk/commit/4a396b47844ef33d8884f1917bcb0cab34a439df))
+
 ## [1.32.4](https://github.com/glasshome/widget-sdk/compare/v1.32.3...v1.32.4) (2026-11-16)
 
 
