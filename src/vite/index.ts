@@ -21,6 +21,7 @@ import {
 import { sdkImportsOf } from "@glasshome/widget-contract/sdk-floor";
 import tailwindcss from "@tailwindcss/vite";
 import type { Features as LightningFeatures } from "lightningcss";
+import { intersects, validRange } from "semver";
 import type { InlineConfig, Plugin, ViteDevServer } from "vite";
 import { deprecations, formatDeprecation } from "../deprecations";
 import type { ExampleConfigIssue, WidgetIntrospection } from "./introspect-core";
@@ -541,21 +542,6 @@ function assertNoHostThemeVars(outDir: string, name: string): void {
   }
 }
 
-/**
- * Widgets render inside a closed shadow root in the host, which cuts them off
- * from the host document stylesheet. Every widget bundle must therefore carry
- * its own complete CSS: the ui theme + component styles, the SDK shell
- * classes, and the Tailwind utilities its own JSX uses. This writes a
- * generated css entry (a Tailwind pass over exactly those sources) plus a
- * wrapper module that imports it ahead of the real widget entry, so Vite lib
- * mode emits it as the widget's `<name>.css`.
- *
- * `source(none)` disables Tailwind's automatic project-root scan — without it
- * every widget in a multi-widget repo gets the superset of all widgets'
- * classes. The dark variant is redefined shadow-aware: `.dark *` cannot match
- * across a shadow boundary, so the host mirrors the document's `dark` class
- * onto the shadow host element and `:host(.dark)` picks it up.
- */
 /** The widget's own folder plus the project's shared folders: Tailwind only
  *  emits utilities for files it is pointed at, and a widget's shared component
  *  is as much its source as its entry. A sibling widget's folder stays out. */
@@ -570,17 +556,56 @@ export function widgetProjectScanDirs(srcDir: string, widgetEntry: string): stri
   return [own, ...shared];
 }
 
+const HOST_UI_SHEET_SDK = "1.24.0";
+
+/** True when every host the range admits adopts ui's compiled CSS into each widget root, so the widget's sheet need not carry ui. */
+export function hostStylesUi(sdkRange: string | undefined): boolean {
+  if (!sdkRange || validRange(sdkRange) === null) return false;
+  return !intersects(sdkRange, `<${HOST_UI_SHEET_SDK}`, { includePrerelease: true });
+}
+
+function readSdkRange(manifestPath: string): string | undefined {
+  if (!existsSync(manifestPath)) return undefined;
+  const manifest: unknown = JSON.parse(readFileSync(manifestPath, "utf-8"));
+  if (typeof manifest !== "object" || manifest === null || !("sdkVersion" in manifest))
+    return undefined;
+  return typeof manifest.sdkVersion === "string" ? manifest.sdkVersion : undefined;
+}
+
+/** The Tailwind entry a widget's CSS compiles from: its own and the SDK's classes, plus all of ui while an older host it admits does not style ui itself. */
+export function widgetTailwindEntry(scanDirs: string[], uiDir: string | null): string {
+  const tailwind = uiDir
+    ? [`@import "tailwindcss" source(none);`]
+    : [
+        `@layer theme, base, components, utilities;`,
+        `@import "tailwindcss/theme.css" layer(theme);`,
+        `@import "tailwindcss/utilities.css" layer(utilities) source(none);`,
+      ];
+  const sources = uiDir ? [join(uiDir, "src"), join(uiDir, "dist"), ...scanDirs] : scanDirs;
+  return [
+    ...tailwind,
+    `@import "tw-animate-css";`,
+    uiDir ? `@import "@glasshome/ui/styles/theme";` : `@reference "@glasshome/ui/styles/theme";`,
+    ...sources.filter((dir) => existsSync(dir)).map((dir) => `@source "${normalizePath(dir)}";`),
+    `@custom-variant dark {`,
+    `  &:is(.dark *) { @slot }`,
+    `  :host(.dark) & { @slot }`,
+    `}`,
+    "",
+  ].join("\n");
+}
+
+// A Vite lib build emits the CSS its entry imports as `<name>.css`, so the entry is a wrapper importing the generated Tailwind file first.
 function createWidgetBuildEntry(
   root: string,
   name: string,
   widgetEntry: string,
   srcDir: string,
+  manifestPath: string,
 ): string {
   const cacheDir = resolve(root, BUILD_CACHE_DIR);
   mkdirSync(cacheDir, { recursive: true });
 
-  // "@glasshome/ui/styles" resolves to src/styles/globals.css, so the package
-  // root is two levels up; "tailwind-sources" sits at the SDK package root.
   const uiStyles = resolveExported("@glasshome/ui/styles");
   if (!uiStyles) {
     throw new Error(
@@ -588,32 +613,18 @@ function createWidgetBuildEntry(
         "every GlassHome widget ships with). Add it to your widget's dependencies.",
     );
   }
-  const uiDir = resolve(dirname(uiStyles), "../..");
   const sdkSources = resolveExported("@glasshome/widget-sdk/tailwind-sources");
   const sdkDir = sdkSources ? dirname(sdkSources) : null;
-
   const scanDirs = [
-    join(uiDir, "src"),
-    join(uiDir, "dist"),
     ...(sdkDir ? [join(sdkDir, "src"), join(sdkDir, "dist")] : []),
     ...widgetProjectScanDirs(srcDir, widgetEntry),
-  ].filter((dir) => existsSync(dir));
+  ];
+  const uiDir = hostStylesUi(readSdkRange(manifestPath))
+    ? null
+    : resolve(dirname(uiStyles), "../..");
 
   const cssPath = resolve(cacheDir, `${name}.tailwind.css`);
-  writeFileSync(
-    cssPath,
-    [
-      `@import "tailwindcss" source(none);`,
-      `@import "tw-animate-css";`,
-      `@import "@glasshome/ui/styles/theme";`,
-      ...scanDirs.map((dir) => `@source "${normalizePath(dir)}";`),
-      `@custom-variant dark {`,
-      `  &:is(.dark *) { @slot }`,
-      `  :host(.dark) & { @slot }`,
-      `}`,
-      "",
-    ].join("\n"),
-  );
+  writeFileSync(cssPath, widgetTailwindEntry(scanDirs, uiDir));
 
   const entryPath = resolve(cacheDir, `${name}.entry.ts`);
   writeFileSync(
@@ -781,7 +792,13 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       css: { ...options?.viteConfig?.css, ...widgetCssConfig() },
       build: {
         lib: {
-          entry: createWidgetBuildEntry(root, widget.name, widget.entry, srcDir),
+          entry: createWidgetBuildEntry(
+            root,
+            widget.name,
+            widget.entry,
+            srcDir,
+            join(dirname(widget.entry), "manifest.json"),
+          ),
           formats: ["es"],
           fileName: widget.name,
           // Widget CSS ships as a separate asset (adopted by the host's
@@ -841,6 +858,7 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
               "index",
               resolve(root, entry),
               dirname(resolve(root, entry)),
+              resolve(root, "manifest.json"),
             ),
             formats: ["es"] as const,
             fileName: "index",
