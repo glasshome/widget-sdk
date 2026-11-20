@@ -12,7 +12,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  For,
+  Index,
   type JSX,
   on,
   onCleanup,
@@ -185,18 +185,18 @@ export function WidgetChoice(props: {
       onChange={(v: string | null) => v && props.onChange(v)}
       class="glasshome-widget-choice"
     >
-      <For each={props.options}>
+      <Index each={props.options}>
         {(o) => (
           <ToggleGroupItem
-            value={o.value}
-            aria-label={o.label}
+            value={o().value}
+            aria-label={o().label}
             class="glasshome-widget-control"
-            data-optional={o.value === props.value ? undefined : ""}
+            data-optional={o().value === props.value ? undefined : ""}
           >
-            <Icon icon={o.icon} />
+            <Icon icon={o().icon} />
           </ToggleGroupItem>
         )}
-      </For>
+      </Index>
     </ToggleGroup>
   );
 }
