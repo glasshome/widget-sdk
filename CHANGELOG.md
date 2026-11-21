@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.33.1](https://github.com/glasshome/widget-sdk/compare/v1.33.0...v1.33.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **anatomy:** keep WidgetChoice buttons across option changes ([3db71b4](https://github.com/glasshome/widget-sdk/commit/3db71b44fa67ac796d159dd3509750629b816abf))
+* **anatomy:** keep WidgetChoice buttons across option changes ([5517098](https://github.com/glasshome/widget-sdk/commit/5517098a718af8dd3aedd9f1aed1e3f9d09a7400))
+
 ## [1.33.0](https://github.com/glasshome/widget-sdk/compare/v1.32.4...v1.33.0) (2026-11-19)
 
 
