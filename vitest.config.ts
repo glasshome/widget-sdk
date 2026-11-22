@@ -8,6 +8,9 @@ import { mouse, touch } from "./tests/dom/harness/commands";
 // Forked workers inherit it, so a direct run matches the gate; bun test is UTC already.
 process.env.TZ = "UTC";
 
+// A gate run names a results directory; the runner keeps junit and failure shots there.
+const resultsDir = process.env.GATE_RESULTS_DIR;
+
 export default defineConfig({
   plugins: [solid({ dev: false, hot: false }), tailwindcss()],
   resolve: {
@@ -47,6 +50,9 @@ export default defineConfig({
     ],
   },
   test: {
+    reporters: resultsDir
+      ? ["default", ["junit", { outputFile: `${resultsDir}/vitest.xml` }]]
+      : ["default"],
     // Unset, vite-plugin-solid asks for jsdom, which a standalone clone does not install.
     environment: "node",
     // @solidjs/testing-library registers its cleanup on a global afterEach.
@@ -57,7 +63,8 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      screenshotFailures: false,
+      screenshotFailures: Boolean(resultsDir),
+      screenshotDirectory: resultsDir ? `${resultsDir}/screenshots` : undefined,
       viewport: { width: 1024, height: 768 },
       provider: playwright({
         // test-change-ok a press that cannot land fails in 5 s instead of waiting out the test
