@@ -57,6 +57,7 @@ export default defineConfig({
   },
   test: {
     sequence: shuffleSeed ? { shuffle: true, seed: Number(shuffleSeed) } : undefined,
+    attachmentsDir: resultsDir ? `${resultsDir}/attachments` : undefined,
     reporters: resultsDir
       ? ["default", ["junit", { outputFile: `${resultsDir}/vitest.xml` }]]
       : ["default"],
