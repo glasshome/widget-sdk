@@ -55,6 +55,8 @@ export default defineConfig({
     reporters: resultsDir
       ? ["default", ["junit", { outputFile: `${resultsDir}/vitest.xml` }]]
       : ["default"],
+    // test-change-ok hang guard for expect.poll and expect.element, below the 5 s testTimeout; provisional until the nightly stress ledger measures it
+    expect: { poll: { timeout: 4_000 } },
     // Unset, vite-plugin-solid asks for jsdom, which a standalone clone does not install.
     environment: "node",
     // @solidjs/testing-library registers its cleanup on a global afterEach.
