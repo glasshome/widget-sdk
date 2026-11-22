@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";
 import solid from "vite-plugin-solid";
+import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 import { mouse, touch } from "./tests/dom/harness/commands";
 
@@ -13,6 +14,10 @@ const resultsDir = process.env.GATE_RESULTS_DIR;
 const shuffleSeed = process.env.GATE_SHUFFLE_SEED;
 
 export default defineConfig({
+  // A failure screenshot is written through the dev server, which serves only allowed roots.
+  server: {
+    fs: { allow: [searchForWorkspaceRoot(process.cwd()), ...(resultsDir ? [resultsDir] : [])] },
+  },
   plugins: [solid({ dev: false, hot: false }), tailwindcss()],
   resolve: {
     // No "@glasshome/source": ui publishes dist, and this suite runs in the standalone clone too.
