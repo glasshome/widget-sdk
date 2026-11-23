@@ -51,6 +51,12 @@ describe("formatTemperature", () => {
   test("keeps the unit it was given and never converts", () => {
     expect(inWidget("en-US", () => formatTemperature(70.7, { unit: "°F" }))).toBe("70.7 °F");
   });
+
+  test("a small negative that rounds to zero shows 0, never -0", () => {
+    expect(inWidget("en-US", () => formatTemperature(-0.3, { digits: 0 }))).toBe("0 °C");
+    expect(inWidget("fr-FR", () => formatTemperature(-0.04, { digits: 1 }))).toBe("0,0 °C");
+    expect(inWidget("en-US", () => formatTemperature(-2.4, { digits: 0 }))).toBe("-2 °C");
+  });
 });
 
 describe("formatDate", () => {

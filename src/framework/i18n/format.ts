@@ -49,11 +49,14 @@ function temperatureIn(
   value: number,
   options: TemperatureOptions = {},
 ): FormattedText {
-  const digits =
-    options.digits === undefined
-      ? undefined
-      : { minimumFractionDigits: options.digits, maximumFractionDigits: options.digits };
-  const number = cachedIntl("number", locale, digits, () => new Intl.NumberFormat(locale, digits));
+  const format: Intl.NumberFormatOptions = {
+    signDisplay: "negative",
+    ...(options.digits !== undefined && {
+      minimumFractionDigits: options.digits,
+      maximumFractionDigits: options.digits,
+    }),
+  };
+  const number = cachedIntl("number", locale, format, () => new Intl.NumberFormat(locale, format));
   return display(`${number.format(value)} ${options.unit ?? "°C"}`);
 }
 
