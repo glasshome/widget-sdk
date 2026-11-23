@@ -60,6 +60,46 @@ describe("historyWithBuild", () => {
       "1.3.0": ["Widget", "useEntity"],
     });
   });
+
+  test("files exports no release had under the next minor when the version is already released", () => {
+    const dir = fakePackage(
+      { version: "1.3.1", main: "./dist/index.js" },
+      {
+        "dist/index.js": `export { Widget, useEntity, t };`,
+        "CHANGELOG.md": "# Changelog\n\n## [1.3.1](x) (2026-11-21)\n\n## [1.3.0](x)\n",
+      },
+    );
+    expect(historyWithBuild(dir, { "1.3.0": ["Widget", "useEntity"] })).toEqual({
+      "1.3.0": ["Widget", "useEntity"],
+      "1.3.1": ["Widget", "useEntity"],
+      "1.4.0": ["Widget", "t", "useEntity"],
+    });
+  });
+
+  test("keeps the build under its own version when it adds nothing to a released version", () => {
+    const dir = fakePackage(
+      { version: "1.3.1", main: "./dist/index.js" },
+      {
+        "dist/index.js": `export { Widget, useEntity };`,
+        "CHANGELOG.md": "## [1.3.1](x)\n\n## [1.3.0](x)\n",
+      },
+    );
+    expect(historyWithBuild(dir, { "1.3.0": ["Widget", "useEntity"] })).toEqual({
+      "1.3.0": ["Widget", "useEntity"],
+      "1.3.1": ["Widget", "useEntity"],
+    });
+  });
+
+  test("keeps every export under a version the changelog has not released", () => {
+    const dir = fakePackage(
+      { version: "1.4.0", main: "./dist/index.js" },
+      { "dist/index.js": `export { Widget, t };`, "CHANGELOG.md": "## [1.3.0](x)\n" },
+    );
+    expect(historyWithBuild(dir, { "1.3.0": ["Widget"] })).toEqual({
+      "1.3.0": ["Widget"],
+      "1.4.0": ["Widget", "t"],
+    });
+  });
 });
 
 describe("sortHistory", () => {

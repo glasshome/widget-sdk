@@ -1,7 +1,11 @@
 #!/usr/bin/env bun
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
-import { compareSdkVersions, exportNames } from "@glasshome/widget-contract/sdk-floor";
+import {
+  compareSdkVersions,
+  exportNames,
+  releasesInChangelog,
+} from "@glasshome/widget-contract/sdk-floor";
 
 export type ExportHistory = Record<string, string[]>;
 
@@ -29,11 +33,32 @@ export function scanPackage(pkgDir: string): string[] | null {
   return exportNames(entryCode, (spec) => read(resolve(dirname(entryPath), spec)));
 }
 
+function releasedVersions(pkgDir: string): string[] {
+  const changelog = join(pkgDir, "CHANGELOG.md");
+  return existsSync(changelog) ? releasesInChangelog(readFileSync(changelog, "utf-8")) : [];
+}
+
+function nextMinor(version: string): string {
+  const [major = 0, minor = 0] = version.split(".").map(Number);
+  return `${major}.${minor + 1}.0`;
+}
+
+/** The committed history plus this build. An export no release had goes under the next minor when the build's version is already out, so a floor never lands on a release that lacks it. */
 export function historyWithBuild(pkgDir: string, committed: ExportHistory): ExportHistory {
   const { version } = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8"));
   const names = scanPackage(pkgDir);
   if (!names) throw new Error(`cannot scan the exports of ${pkgDir} ${version}`);
-  return sortHistory({ ...committed, [version]: names });
+  if (!releasedVersions(pkgDir).includes(version)) {
+    return sortHistory({ ...committed, [version]: names });
+  }
+  const shipped = new Set(Object.values(committed).flat());
+  const unreleased = names.filter((name) => !shipped.has(name));
+  if (unreleased.length === 0) return sortHistory({ ...committed, [version]: names });
+  return sortHistory({
+    ...committed,
+    [version]: names.filter((name) => shipped.has(name)),
+    [nextMinor(version)]: names,
+  });
 }
 
 export function sortHistory(history: ExportHistory): ExportHistory {
