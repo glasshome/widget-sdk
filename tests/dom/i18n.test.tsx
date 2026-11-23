@@ -127,7 +127,7 @@ describe("ui inside a widget", () => {
 describe("translateState", () => {
   it("shows the raw state until the state texts arrive, then the member's words", () => {
     const states: StateTexts = {
-      component: { climate: { _: { heat_cool: "Chauffage/climatisation" } } },
+      component: { climate: { _: { state: { heat_cool: "Chauffage/climatisation" } } } },
       entity: {},
     };
     const [i18n, setI18n] = createSignal<WidgetI18n>(i18nFor("fr", {}));

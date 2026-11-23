@@ -7,11 +7,23 @@ import { translateState } from "./state";
 
 const states: StateTexts = {
   component: {
-    climate: { _: { heat_cool: "Chauffage/climatisation" } },
-    binary_sensor: { _: { on: "Activé" }, door: { on: "Ouverte" } },
+    climate: {
+      _: {
+        state: { heat_cool: "Chauffage/climatisation" },
+        attributes: {
+          hvac_action: { heating: "Chauffe" },
+          preset_mode: { eco: "Éco" },
+        },
+      },
+    },
+    binary_sensor: { _: { state: { on: "Activé" } }, door: { state: { on: "Ouverte" } } },
   },
   entity: {
-    acme: { boiler: { state: { heat_cool: "Mode mixte" } } },
+    acme: { climate: { boiler: { state: { heat_cool: "Mode mixte" } } } },
+    unifi_access: {
+      select: { door_lock_rule: { state: { keep_lock: "Verrouillage permanent" } } },
+      sensor: { door_lock_rule: { state: { keep_lock: "Verrouillé" } } },
+    },
   },
 };
 
@@ -71,5 +83,30 @@ describe("translateState", () => {
   test("prefers the entity's own translation key under its platform", () => {
     const boiler = { ...climate("heat_cool"), platform: "acme", translationKey: "boiler" };
     expect(inWidget(() => translateState(boiler))).toBe("Mode mixte");
+  });
+
+  test("translates a climate attribute for an entity with no translation key", () => {
+    const thermostat = {
+      ...climate("heat"),
+      attributes: { hvac_action: "heating", preset_mode: "eco" },
+    };
+    expect(inWidget(() => translateState(thermostat, { attribute: "hvac_action" }))).toBe(
+      "Chauffe",
+    );
+    expect(inWidget(() => translateState(thermostat, { attribute: "preset_mode" }))).toBe("Éco");
+    expect(inWidget(() => translateState(thermostat, { attribute: "swing_mode" }))).toBe("");
+  });
+
+  test("reads an entity key under the entity's own domain", () => {
+    const rule = { state: "keep_lock", platform: "unifi_access", translationKey: "door_lock_rule" };
+    expect(inWidget(() => translateState({ ...rule, domain: "select", attributes: {} }))).toBe(
+      "Verrouillage permanent",
+    );
+    expect(inWidget(() => translateState({ ...rule, domain: "sensor", attributes: {} }))).toBe(
+      "Verrouillé",
+    );
+    expect(inWidget(() => translateState({ ...rule, domain: "lock", attributes: {} }))).toBe(
+      "keep_lock",
+    );
   });
 });
