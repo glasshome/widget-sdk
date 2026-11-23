@@ -77,6 +77,9 @@ export interface WidgetDefinition<C = Record<string, unknown>> {
   migrate?: (config: Record<string, unknown>, fromConfigVersion: number) => Record<string, unknown>; // Per D-13: optional migration function
   // oxlint-disable-next-line typescript/no-explicit-any -- public signature; tighten in 2.0
   component: (props: { config: C }) => any;
-  /** The widget's English, compiled by the build from `locales/en.json`. */
-  messages?: BundledCatalog;
+  /**
+   * The widget's English: `import en from "./locales/en.json"`. TypeScript sees the file's own
+   * shape (a flat key to message object); the build compiles it to a `BundledCatalog`.
+   */
+  messages?: BundledCatalog | Readonly<Record<string, string>>;
 }
