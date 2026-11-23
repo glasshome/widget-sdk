@@ -6,6 +6,7 @@
  * store. Phase 4 routes these through capability checks.
  */
 import * as syncLayer from "@glasshome/sync-layer";
+import { useLocale as useServerLocale } from "@glasshome/sync-layer/solid";
 import { deprecate } from "./deprecations";
 
 export {
@@ -40,6 +41,8 @@ export const sendWebRtcCandidate: typeof syncLayer.sendWebRtcCandidate = depreca
     syncLayer.sendWebRtcCandidate(...args),
   "sendWebRtcCandidate",
 );
+/** @deprecated since 1.34.0, removed in 2.0.0. Use `useTranslation().locale`. */
+export const useLocale: typeof useServerLocale = deprecate(() => useServerLocale(), "useLocale");
 export type {
   AreaView,
   CalendarEvent,
@@ -61,10 +64,15 @@ export {
   useEntityStatistics,
   useForecast,
   useHassConfig,
-  useLocale,
   useStore,
   useTemperatureUnit,
   useUnitSystem,
 } from "@glasshome/sync-layer/solid";
 // Capability-routed inside a host-mounted widget; direct fallback elsewhere.
-export { useService, useToggle, useTurnOff, useTurnOn } from "./framework/hooks/use-service";
+export {
+  type ServiceShortcut,
+  useService,
+  useToggle,
+  useTurnOff,
+  useTurnOn,
+} from "./framework/hooks/use-service";

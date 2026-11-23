@@ -169,6 +169,15 @@ export const deprecations: readonly DeprecationEntry[] = [
     }),
   ),
   {
+    // Home Assistant's server language, which is the wrong one for text once a member picks their own.
+    id: "useLocale",
+    since: "1.34.0",
+    removeIn: "2.0.0",
+    replacement: "useTranslation().locale",
+    docsUrl: "https://glasshome.app/docs/widgets/widget-api-reference",
+    sourcePattern: "\\buseLocale\\(",
+  },
+  {
     // Type-only: no host ever constructed a WidgetContext.
     id: "WidgetContext.theme",
     since: "1.26.0",

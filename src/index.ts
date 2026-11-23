@@ -23,6 +23,7 @@ export * from "./ui";
 export { formatSchemaError, WidgetManifestSchema } from "./schemas";
 // Theme utilities (framework-agnostic)
 export { isDark } from "./theme";
+export type { BundledCatalog } from "@glasshome/widget-contract/i18n-format";
 // v1.0 Types (original SDK API)
 export type {
   GridSize,

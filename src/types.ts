@@ -1,4 +1,5 @@
 import type { CapabilityGrant } from "@glasshome/widget-contract";
+import type { BundledCatalog } from "@glasshome/widget-contract/i18n-format";
 import type { ZodType } from "zod";
 
 /**
@@ -76,4 +77,6 @@ export interface WidgetDefinition<C = Record<string, unknown>> {
   migrate?: (config: Record<string, unknown>, fromConfigVersion: number) => Record<string, unknown>; // Per D-13: optional migration function
   // oxlint-disable-next-line typescript/no-explicit-any -- public signature; tighten in 2.0
   component: (props: { config: C }) => any;
+  /** The widget's English, compiled by the build from `locales/en.json`. */
+  messages?: BundledCatalog;
 }

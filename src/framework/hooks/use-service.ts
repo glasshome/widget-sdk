@@ -5,6 +5,7 @@ import {
   useTurnOn as useDirectTurnOn,
 } from "@glasshome/sync-layer/solid";
 import { useContext } from "solid-js";
+import type { NoFormattedFields } from "../i18n/format";
 import { type ServiceCallFn, WidgetCtx } from "./use-widget-context";
 
 /**
@@ -22,21 +23,28 @@ function entityDomain(entityId: string | string[]): string {
   return domain;
 }
 
-function shortcut(call: ServiceCallFn, service: "turn_on" | "turn_off" | "toggle") {
-  // Commands have no response; keep the shortcut signatures Promise<void>.
-  return async (
-    entityId: string | string[],
-    serviceData: Record<string, unknown> = {},
-  ): Promise<void> => {
-    await call(entityDomain(entityId), service, serviceData, { entity_id: entityId });
+/** Data refuses formatted text, as `ServiceCallFn` does. */
+export type ServiceShortcut = <D extends object & NoFormattedFields<D> = Record<string, unknown>>(
+  entityId: string | string[],
+  serviceData?: D,
+) => Promise<void>;
+
+function shortcut(
+  call: ServiceCallFn,
+  service: "turn_on" | "turn_off" | "toggle",
+): ServiceShortcut {
+  return async (entityId: string | string[], serviceData: object = {}) => {
+    await call(entityDomain(entityId), service, serviceData as Record<string, unknown>, {
+      entity_id: entityId,
+    });
   };
 }
 
 export function useService(): {
   callService: ServiceCallFn;
-  turnOn: ReturnType<typeof useDirectTurnOn>;
-  turnOff: ReturnType<typeof useDirectTurnOff>;
-  toggle: ReturnType<typeof useDirectToggle>;
+  turnOn: ServiceShortcut;
+  turnOff: ServiceShortcut;
+  toggle: ServiceShortcut;
 } {
   const routed = useContext(WidgetCtx)?.callService;
   if (!routed) return useDirectService() as ReturnType<typeof useService>;
@@ -48,17 +56,17 @@ export function useService(): {
   };
 }
 
-export function useTurnOn(): ReturnType<typeof useDirectTurnOn> {
+export function useTurnOn(): ServiceShortcut {
   const routed = useContext(WidgetCtx)?.callService;
   return routed ? shortcut(routed, "turn_on") : useDirectTurnOn();
 }
 
-export function useTurnOff(): ReturnType<typeof useDirectTurnOff> {
+export function useTurnOff(): ServiceShortcut {
   const routed = useContext(WidgetCtx)?.callService;
   return routed ? shortcut(routed, "turn_off") : useDirectTurnOff();
 }
 
-export function useToggle(): ReturnType<typeof useDirectToggle> {
+export function useToggle(): ServiceShortcut {
   const routed = useContext(WidgetCtx)?.callService;
   return routed ? shortcut(routed, "toggle") : useDirectToggle();
 }
