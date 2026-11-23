@@ -1,7 +1,8 @@
 import { formatMessage } from "@glasshome/widget-contract/i18n-format";
 import { stateText } from "@glasshome/widget-contract/state-texts";
+import english from "../../locales/compiled/en";
 import type { EntityView } from "../types";
-import { formattingOf, type I18nScope, i18nScope, messageEnv, messageOf } from "./context";
+import { ENGLISH, formattingOf, type I18nScope, i18nScope, messageEnv, messageOf } from "./context";
 
 export type StateEntity = Pick<
   EntityView,
@@ -29,12 +30,13 @@ export function stateTranslator(scope: I18nScope): TranslateState {
     const raw = rawValue(entity, options);
     if (NUMERIC.test(raw)) return raw;
     const current = scope.i18n();
-    if (!current) return raw;
     if (options.attribute === undefined && SDK_STATES.has(raw)) {
-      const own = messageOf(current.sdk, `sdk.state.${raw}`);
-      return own ? formatMessage(own, {}, messageEnv(current.language, formattingOf(scope))) : raw;
+      const key = raw === "unknown" ? "sdk.state.unknown" : "sdk.state.unavailable";
+      const own = current ? messageOf(current.sdk, key) : undefined;
+      const language = own && current ? current.language : ENGLISH;
+      return formatMessage(own ?? english[key], {}, messageEnv(language, formattingOf(scope)));
     }
-    if (!current.states) return raw;
+    if (!current?.states) return raw;
     return (
       stateText(current.states, {
         domain: entity.domain,

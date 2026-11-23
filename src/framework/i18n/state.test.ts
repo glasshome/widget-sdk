@@ -27,19 +27,20 @@ const states: StateTexts = {
   },
 };
 
-function inWidget<T>(read: () => T): T {
-  const i18n: WidgetI18n = {
-    language: "fr",
-    formatting: "fr-FR",
-    catalog: null,
-    sdk: { "sdk.state.unavailable": ["Indisponible"] },
-    ui: null,
-    states,
-  };
+const french: WidgetI18n = {
+  language: "fr",
+  formatting: "fr-FR",
+  catalog: null,
+  sdk: { "sdk.state.unavailable": ["Indisponible"] },
+  ui: null,
+  states,
+};
+
+function inWidget<T>(read: () => T, i18n: WidgetI18n | null = french): T {
   const ctx: ReactiveWidgetContext = {
     updateConfig: () => {},
     dimensions: () => ({ width: 0, height: 0 }),
-    i18n: () => i18n,
+    ...(i18n && { i18n: () => i18n }),
   };
   let out: T | undefined;
   createRoot((dispose) => {
@@ -108,5 +109,22 @@ describe("translateState", () => {
     expect(inWidget(() => translateState({ ...rule, domain: "lock", attributes: {} }))).toBe(
       "keep_lock",
     );
+  });
+});
+
+describe("translateState with no SDK words from the host", () => {
+  const englishMember: WidgetI18n = { ...french, language: "en", formatting: "en-US", sdk: null };
+
+  test("an English member reads Unavailable and Unknown", () => {
+    expect(inWidget(() => translateState(climate("unavailable")), englishMember)).toBe(
+      "Unavailable",
+    );
+    expect(inWidget(() => translateState(climate("unknown")), englishMember)).toBe("Unknown");
+  });
+
+  test("a host with no language reads the SDK's English and leaves other states raw", () => {
+    expect(inWidget(() => translateState(climate("unavailable")), null)).toBe("Unavailable");
+    expect(inWidget(() => translateState(climate("unknown")), null)).toBe("Unknown");
+    expect(inWidget(() => translateState(climate("heat_cool")), null)).toBe("heat_cool");
   });
 });
