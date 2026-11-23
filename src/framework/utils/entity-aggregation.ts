@@ -6,6 +6,7 @@
  * a single representative state for the group.
  */
 
+import { sdkI18n } from "../i18n/sdk-text";
 import type { EntityView } from "../types";
 
 /**
@@ -248,6 +249,9 @@ export function calculateSensorGroup(
   groupType: SensorGroupType = "mean",
   ignoreNonNumeric = true,
 ): SensorGroupResult {
+  const { text, formatNumber } = sdkI18n();
+  const oneDecimal = (n: number) =>
+    formatNumber(n, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
   const first = entities[0];
   if (!first) {
     return {
@@ -270,7 +274,7 @@ export function calculateSensorGroup(
     if (!Number.isNaN(numericValue)) {
       formattedState = Number.isInteger(numericValue)
         ? numericValue.toString()
-        : numericValue.toFixed(1);
+        : oneDecimal(numericValue);
     }
 
     return {
@@ -334,7 +338,9 @@ export function calculateSensorGroup(
       numericValue: null,
       isUnavailable: allUnavailable,
       unit,
-      description: allUnavailable ? "Unavailable" : "No numeric values",
+      description: allUnavailable
+        ? text("sdk.state.unavailable")
+        : text("sdk.aggregate.no-numbers"),
       memberValues,
     };
   }
@@ -396,7 +402,7 @@ export function calculateSensorGroup(
   // Format the value for display - limit to 1 decimal place to prevent overflow
   const formattedValue = Number.isInteger(calculatedValue)
     ? calculatedValue.toString()
-    : calculatedValue.toFixed(1);
+    : oneDecimal(calculatedValue);
 
   return {
     isGroup,

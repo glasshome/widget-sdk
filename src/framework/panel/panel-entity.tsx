@@ -11,6 +11,7 @@ import {
 } from "solid-js";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
+import { sdkI18n } from "../i18n/sdk-text";
 import { PanelRow } from "./panel";
 
 type Entity = NonNullable<ReturnType<ReturnType<typeof useEntity>>>;
@@ -270,9 +271,10 @@ const BINARY_WORDS: Record<string, [string, string]> = {
 
 /** A button's state is when it was last pressed. */
 function pressedAt(state: string): string {
+  const { formatDate } = sdkI18n();
   const t = Date.parse(state);
   if (Number.isNaN(t)) return "Never pressed";
-  return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return formatDate(t, { hour: "2-digit", minute: "2-digit" });
 }
 
 const FALLBACK: DomainRow = {

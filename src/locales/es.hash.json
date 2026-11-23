@@ -1,0 +1,58 @@
+{
+  "sdk.aggregate.no-numbers": {
+    "source": "ef9dbc4afb02cbd7",
+    "value": "0f80d46f8e4650f0"
+  },
+  "sdk.debug.configuration": {
+    "source": "d84641944cdc8ee9",
+    "value": "bb507137e3631379"
+  },
+  "sdk.debug.data": {
+    "source": "e3e2eec653dfc2d4",
+    "value": "497907e56c4fe734"
+  },
+  "sdk.debug.empty-description": {
+    "source": "3b80613e1ea85059",
+    "value": "a561d2c816898483"
+  },
+  "sdk.debug.empty-title": {
+    "source": "0809f6e7c9afbe3a",
+    "value": "0d3015764ea8cf56"
+  },
+  "sdk.debug.nothing-set": {
+    "source": "1639ea42ab0b19b6",
+    "value": "cbe31e802861ea15"
+  },
+  "sdk.dialog.debug": {
+    "source": "b4319a6ce990005f",
+    "value": "aa65b01053c1dc3d"
+  },
+  "sdk.dialog.no-controls": {
+    "source": "d01981c78d6d81cf",
+    "value": "88d92d54adc0f662"
+  },
+  "sdk.dialog.no-edit-options": {
+    "source": "112c2dbafa2fa4b1",
+    "value": "d03b8ab04d71cb1d"
+  },
+  "sdk.dialog.shown-as-is": {
+    "source": "a847fafb9959464b",
+    "value": "66ad82cfe151a182"
+  },
+  "sdk.slider.lower": {
+    "source": "cff45841cfcc9b2b",
+    "value": "2974868d8c6d2937"
+  },
+  "sdk.slider.raise": {
+    "source": "4e42924934a581fd",
+    "value": "b3aad4488f3aae00"
+  },
+  "sdk.state.unavailable": {
+    "source": "13c32c656e14af44",
+    "value": "b781f6bd9b98e43d"
+  },
+  "sdk.state.unknown": {
+    "source": "825df438f19e5650",
+    "value": "2669e033a1213e64"
+  }
+}

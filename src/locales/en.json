@@ -1,0 +1,16 @@
+{
+  "sdk.aggregate.no-numbers": "No numeric values",
+  "sdk.debug.configuration": "Configuration",
+  "sdk.debug.data": "Debug data",
+  "sdk.debug.empty-description": "This widget publishes no debug information.",
+  "sdk.debug.empty-title": "Nothing to inspect",
+  "sdk.debug.nothing-set": "Nothing set",
+  "sdk.dialog.debug": "Debug",
+  "sdk.dialog.no-controls": "No controls",
+  "sdk.dialog.no-edit-options": "No edit options available",
+  "sdk.dialog.shown-as-is": "This widget is shown as is.",
+  "sdk.slider.lower": "Lower",
+  "sdk.slider.raise": "Raise",
+  "sdk.state.unavailable": "Unavailable",
+  "sdk.state.unknown": "Unknown"
+}

@@ -58,6 +58,11 @@
       "types": "./dist/host/index.d.ts",
       "import": "./dist/host/index.js"
     },
+    "./host/sdk-catalog": {
+      "@glasshome/source": "./src/host/sdk-catalog.ts",
+      "types": "./dist/host/sdk-catalog.d.ts",
+      "import": "./dist/host/sdk-catalog.js"
+    },
     "./vite": {
       "@glasshome/source": "./src/vite/index.ts",
       "types": "./dist/vite/index.d.ts",
@@ -72,6 +77,7 @@
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && bun scripts/check-host-singleton.ts && bun scripts/emit-export-history.ts",
+    "catalogs": "bun scripts/compile-catalogs.ts",
     "dev": "vite build --watch",
     "test": "bun test src scripts && vitest run",
     "test:dom": "vitest run",

@@ -44,6 +44,7 @@ import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
+import { sdkI18n } from "../i18n/sdk-text";
 import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
 import { warmSheets } from "./warm-dialogs";
@@ -159,6 +160,7 @@ const COPY_LABEL: Record<CopyState, string> = {
 };
 
 export function WidgetDialog(props: WidgetDialogProps) {
+  const { text } = sdkI18n();
   const [local] = splitProps(props, [
     "open",
     "onOpenChange",
@@ -299,7 +301,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           if (!schema || !SchemaFormEdit) {
             return (
               <div class="bg-muted/30 rounded-lg p-2 text-center md:p-6">
-                <p class="text-muted-foreground text-sm">No edit options available</p>
+                <p class="text-muted-foreground text-sm">{text("sdk.dialog.no-edit-options")}</p>
               </div>
             );
           }
@@ -344,8 +346,8 @@ export function WidgetDialog(props: WidgetDialogProps) {
         local.controlsContent ?? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>No controls</EmptyTitle>
-              <EmptyDescription>This widget is shown as is.</EmptyDescription>
+              <EmptyTitle>{text("sdk.dialog.no-controls")}</EmptyTitle>
+              <EmptyDescription>{text("sdk.dialog.shown-as-is")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ),
@@ -353,7 +355,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
     tabs.push({
       id: "debug",
-      label: "Debug",
+      label: text("sdk.dialog.debug"),
       icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"

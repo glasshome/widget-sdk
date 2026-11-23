@@ -12,6 +12,8 @@
  * ```
  */
 
+import { sdkI18n } from "../i18n/sdk-text";
+
 /**
  * Format a numeric value with optional unit and smart scaling
  */
@@ -72,19 +74,26 @@ export function formatValue(
   }
 
   // Format decimals
+  const { formatNumber } = sdkI18n();
+  const fixed = (digits: number) =>
+    formatNumber(formattedValue, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+      useGrouping: false,
+    });
   let formatted: string;
   if (decimals !== undefined) {
-    formatted = formattedValue.toFixed(decimals);
+    formatted = fixed(decimals);
   } else {
     // Auto decimals: show 1 decimal if scaled, 0 if integer, 1-2 if float
     if (formattedValue !== value) {
       // Was scaled
-      formatted = formattedValue.toFixed(1);
+      formatted = fixed(1);
     } else if (Number.isInteger(value)) {
       formatted = value.toString();
     } else {
       // Float - show up to 2 decimals, remove trailing zeros
-      formatted = Number.parseFloat(value.toFixed(2)).toString();
+      formatted = formatNumber(value, { maximumFractionDigits: 2, useGrouping: false });
     }
   }
 

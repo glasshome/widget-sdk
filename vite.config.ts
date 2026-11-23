@@ -12,6 +12,7 @@ export default defineConfig({
         "media/camera-source": "src/media/camera-source.ts",
         "media/camera-stream": "src/media/camera-stream.tsx",
         "host/index": "src/host/index.ts",
+        "host/sdk-catalog": "src/host/sdk-catalog.ts",
         "vite/index": "src/vite/index.ts",
         "vite/introspect": "src/vite/introspect.ts",
         "vite/introspect-worker": "src/vite/introspect-worker.ts",
