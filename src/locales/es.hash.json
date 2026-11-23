@@ -1,7 +1,31 @@
 {
+  "sdk.aggregate.all-off": {
+    "source": "7b463024c5d1afb2",
+    "value": "f15d5a3c12869c9f"
+  },
+  "sdk.aggregate.all-on": {
+    "source": "b8f19df9a3879939",
+    "value": "75f7a75f8452e1c9"
+  },
   "sdk.aggregate.average": {
     "source": "ac46e4631ccb1bb5",
     "value": "8810900c79569439"
+  },
+  "sdk.aggregate.latest": {
+    "source": "dba330f7b58a43c4",
+    "value": "7eb2a208be4c38e6"
+  },
+  "sdk.aggregate.maximum": {
+    "source": "2d001b9570320359",
+    "value": "994d51043f7d6951"
+  },
+  "sdk.aggregate.median": {
+    "source": "28a9519437d7fc29",
+    "value": "2b30d652958a5480"
+  },
+  "sdk.aggregate.minimum": {
+    "source": "aefe9be4446c80b3",
+    "value": "5d61b4a122c009e1"
   },
   "sdk.aggregate.no-entities": {
     "source": "ae79fea5b88091a2",
@@ -14,6 +38,26 @@
   "sdk.aggregate.of-count": {
     "source": "ce314f66bc9fd4f4",
     "value": "3f0d1f487d4bf5b4"
+  },
+  "sdk.aggregate.product": {
+    "source": "ec49e77276564053",
+    "value": "77b9238931ed566d"
+  },
+  "sdk.aggregate.range": {
+    "source": "0f1bbc7c7a070dbc",
+    "value": "b3255287db980add"
+  },
+  "sdk.aggregate.some-on": {
+    "source": "335049f5371ca942",
+    "value": "440292bd067b416b"
+  },
+  "sdk.aggregate.std-dev": {
+    "source": "97bda2486ab15f7e",
+    "value": "c9d5b9fa3aa15b7b"
+  },
+  "sdk.aggregate.sum": {
+    "source": "40aeb1ccee499bb7",
+    "value": "41ee6f59ca3f414a"
   },
   "sdk.binary.away": {
     "source": "af0babfb98666a85",
@@ -83,6 +127,22 @@
     "source": "5b8ee481dc2b2b26",
     "value": "a244c200d9385d41"
   },
+  "sdk.camera.exit-full-screen": {
+    "source": "4bdd94b1b3481f86",
+    "value": "2de6e8b7c90fd5cd"
+  },
+  "sdk.camera.full-screen": {
+    "source": "134ba43128d9d89d",
+    "value": "93f2f9113746c72a"
+  },
+  "sdk.camera.sound-off": {
+    "source": "55111881b0fbee63",
+    "value": "b59231e4c4ff11be"
+  },
+  "sdk.camera.sound-on": {
+    "source": "bcd62ac40ab82a20",
+    "value": "be6ba969a39d7f61"
+  },
   "sdk.debug.area": {
     "source": "3e042926de5877ab",
     "value": "7c6cbc5826d44674"
@@ -135,6 +195,10 @@
     "source": "69afaf497880bd4c",
     "value": "8b0062fa48c50d13"
   },
+  "sdk.dialog.controls": {
+    "source": "b2eabdaf246bd91f",
+    "value": "80b26f920e37575b"
+  },
   "sdk.dialog.copied": {
     "source": "b9ac58251a0105cf",
     "value": "d8dd878fb14359e9"
@@ -151,6 +215,10 @@
     "source": "b4319a6ce990005f",
     "value": "aa65b01053c1dc3d"
   },
+  "sdk.dialog.edit": {
+    "source": "aadce3374a597204",
+    "value": "2eba946b2e1ee4b6"
+  },
   "sdk.dialog.no-controls": {
     "source": "d01981c78d6d81cf",
     "value": "88d92d54adc0f662"
@@ -163,9 +231,141 @@
     "source": "a847fafb9959464b",
     "value": "66ad82cfe151a182"
   },
+  "sdk.interpret.acceptable": {
+    "source": "799f4ed1111f1147",
+    "value": "159e52eb672288e6"
+  },
+  "sdk.interpret.bright": {
+    "source": "46a906962bac3aa7",
+    "value": "2fe128498fd44396"
+  },
+  "sdk.interpret.cold": {
+    "source": "ed20d4d6798c441f",
+    "value": "cde938374b07984c"
+  },
+  "sdk.interpret.comfortable": {
+    "source": "1dd7408f89995da1",
+    "value": "35e74b4f7ddc9440"
+  },
+  "sdk.interpret.cool": {
+    "source": "46ab24b63262086b",
+    "value": "afe3c50b38945c97"
+  },
+  "sdk.interpret.dark": {
+    "source": "ef565f9a5aa7f479",
+    "value": "1b1c27c397aee60c"
+  },
+  "sdk.interpret.dim": {
+    "source": "7c2921aece2758ed",
+    "value": "f31abace545ca2c3"
+  },
+  "sdk.interpret.excellent": {
+    "source": "93647c5a671ffcde",
+    "value": "3f16c644774c196c"
+  },
+  "sdk.interpret.good": {
+    "source": "5d89b664d6c0eaa1",
+    "value": "ebc1a24373390447"
+  },
+  "sdk.interpret.hazardous": {
+    "source": "84d51c8c16a9ef47",
+    "value": "4dc1cdad1c6b96c6"
+  },
+  "sdk.interpret.high": {
+    "source": "acb8d2906c60a5d0",
+    "value": "85e2adef7edee9e0"
+  },
+  "sdk.interpret.hot": {
+    "source": "bf4967705fc656b1",
+    "value": "d2e51b6a97a18d3a"
+  },
+  "sdk.interpret.loud": {
+    "source": "4956abaa03460d89",
+    "value": "20cf94e5cedc9c05"
+  },
+  "sdk.interpret.low": {
+    "source": "5a2489e9bb72c212",
+    "value": "ece6db80e37700b7"
+  },
+  "sdk.interpret.mediocre": {
+    "source": "a1a001f9d6f79dad",
+    "value": "005253b72dc86299"
+  },
+  "sdk.interpret.medium": {
+    "source": "c4800ffdb8f45f25",
+    "value": "da26d4f11244518e"
+  },
+  "sdk.interpret.moderate": {
+    "source": "54666daeb7ff5ac4",
+    "value": "1370c13187a12b44"
+  },
+  "sdk.interpret.poor": {
+    "source": "ac0af6120a84d5c0",
+    "value": "9f36560670deb29a"
+  },
+  "sdk.interpret.quiet": {
+    "source": "d72efa61ee2923b0",
+    "value": "f1dd829441674ed7"
+  },
+  "sdk.interpret.unhealthy": {
+    "source": "d58ad04f6af933ad",
+    "value": "c600492aeaf74c1c"
+  },
+  "sdk.interpret.unhealthy-sensitive": {
+    "source": "c114adc4b4d77634",
+    "value": "b50e195544a297cc"
+  },
+  "sdk.interpret.very-bright": {
+    "source": "0cc09471d1dc8f16",
+    "value": "c225ae836add3c2a"
+  },
+  "sdk.interpret.very-high": {
+    "source": "7094534fa46eda96",
+    "value": "2d24ed4768df5c89"
+  },
+  "sdk.interpret.very-loud": {
+    "source": "5e3b081126a6d2e3",
+    "value": "e88632dd105ed476"
+  },
+  "sdk.interpret.very-low": {
+    "source": "cabd0dc29e16ab5a",
+    "value": "fe52964d529d43fe"
+  },
+  "sdk.interpret.very-quiet": {
+    "source": "53964d547531d762",
+    "value": "3e6106233796add6"
+  },
+  "sdk.interpret.very-unhealthy": {
+    "source": "0e5e58f2c16f3d05",
+    "value": "76d7086b68d76463"
+  },
+  "sdk.interpret.warm": {
+    "source": "9d8da6e32602d8bd",
+    "value": "c4b518ff22959afe"
+  },
   "sdk.panel.never-pressed": {
     "source": "2c82d078c11c878b",
     "value": "e712b3645f58aa18"
+  },
+  "sdk.panel.percent": {
+    "source": "9867fb970c8c55b7",
+    "value": "f5cd92b45b315a5c"
+  },
+  "sdk.panel.running": {
+    "source": "c4e2c9e28eaef62b",
+    "value": "88680f13946ef123"
+  },
+  "sdk.panel.state-level": {
+    "source": "66f021463e150530",
+    "value": "749bf69a5a8cd744"
+  },
+  "sdk.panel.state-temperature": {
+    "source": "f7e72ebf25f165e4",
+    "value": "14e64ab4715b3949"
+  },
+  "sdk.panel.tap-to-run": {
+    "source": "b9ad6156afeb2fc0",
+    "value": "021df95bc73acb07"
   },
   "sdk.slider.lower": {
     "source": "cff45841cfcc9b2b",

@@ -280,7 +280,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
     tabs.push({
       id: "edit",
-      label: "Edit",
+      label: text("sdk.dialog.edit"),
       icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -322,7 +322,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
     tabs.push({
       id: "controls",
-      label: "Controls",
+      label: text("sdk.dialog.controls"),
       icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"

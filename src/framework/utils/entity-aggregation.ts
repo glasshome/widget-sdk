@@ -85,6 +85,7 @@ export function calculateLightGroup(
   entities: EntityView[],
   allEntitiesMode = false,
 ): LightGroupResult {
+  const { text } = sdkI18n();
   const first = entities[0];
   if (!first) {
     return {
@@ -97,7 +98,7 @@ export function calculateLightGroup(
       color: "rgb(100, 100, 100)",
       onCount: 0,
       totalCount: 0,
-      description: sdkI18n().text("sdk.aggregate.no-entities"),
+      description: text("sdk.aggregate.no-entities"),
     };
   }
 
@@ -119,7 +120,7 @@ export function calculateLightGroup(
       color: getLightColor(entity),
       onCount: isOn ? 1 : 0,
       totalCount: 1,
-      description: isOn ? "On" : "Off",
+      description: isOn ? text("sdk.binary.on") : text("sdk.binary.off"),
     };
   }
 
@@ -216,13 +217,13 @@ export function calculateLightGroup(
   // Generate description
   let description: string;
   if (allOn) {
-    description = "All on";
+    description = text("sdk.aggregate.all-on");
   } else if (allOff) {
-    description = "All off";
+    description = text("sdk.aggregate.all-off");
   } else if (onCount > 0) {
-    description = `${onCount} of ${totalCount} on`;
+    description = text("sdk.aggregate.some-on", { on: onCount, total: totalCount });
   } else {
-    description = "Off";
+    description = text("sdk.binary.off");
   }
 
   return {
@@ -357,11 +358,11 @@ export function calculateSensorGroup(
   switch (groupType) {
     case "min":
       calculatedValue = Math.min(...numericValues);
-      description = "Minimum";
+      description = text("sdk.aggregate.minimum");
       break;
     case "max":
       calculatedValue = Math.max(...numericValues);
-      description = "Maximum";
+      description = text("sdk.aggregate.maximum");
       break;
     case "mean":
       calculatedValue = numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length;
@@ -372,31 +373,31 @@ export function calculateSensorGroup(
       const mid = Math.floor(sorted.length / 2);
       const upper = sorted[mid] ?? lastValue;
       calculatedValue = sorted.length % 2 === 0 ? ((sorted[mid - 1] ?? upper) + upper) / 2 : upper;
-      description = "Median";
+      description = text("sdk.aggregate.median");
       break;
     }
     case "sum":
       calculatedValue = numericValues.reduce((sum, v) => sum + v, 0);
-      description = "Sum";
+      description = text("sdk.aggregate.sum");
       break;
     case "last":
       calculatedValue = lastValue;
-      description = "Latest";
+      description = text("sdk.aggregate.latest");
       break;
     case "range":
       calculatedValue = Math.max(...numericValues) - Math.min(...numericValues);
-      description = "Range";
+      description = text("sdk.aggregate.range");
       break;
     case "product":
       calculatedValue = numericValues.reduce((prod, v) => prod * v, 1);
-      description = "Product";
+      description = text("sdk.aggregate.product");
       break;
     case "std_dev": {
       const mean = numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length;
       const variance =
         numericValues.reduce((sum, v) => sum + (v - mean) ** 2, 0) / numericValues.length;
       calculatedValue = Math.sqrt(variance);
-      description = "Std Dev";
+      description = text("sdk.aggregate.std-dev");
       break;
     }
     default:

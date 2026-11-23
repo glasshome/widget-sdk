@@ -4,9 +4,11 @@ import { WidgetCtx } from "../hooks/use-widget-context";
 import english, { type SdkKey } from "../../locales/compiled/en";
 import { type I18nScope, messageEnv, messageOf } from "./context";
 import { type Formatters, formattersOf } from "./format";
+import { stateTranslator, type TranslateState } from "./state";
 import type { TranslateArgs } from "./translate";
 
 export interface SdkI18n extends Formatters {
+  translateState: TranslateState;
   text: (key: SdkKey, args?: TranslateArgs) => string;
 }
 
@@ -16,6 +18,7 @@ export function sdkI18n(): SdkI18n {
   const scope: I18nScope = { i18n: () => ctx?.i18n?.(), messages: null };
   return {
     ...formattersOf(scope),
+    translateState: stateTranslator(scope),
     text: (key, args = {}) => {
       const current = scope.i18n();
       const formatting = current?.formatting ?? "en";
