@@ -4,6 +4,8 @@ import { I18nProvider } from "./framework/i18n/provider";
 import { extractDefaults, toFormSchema } from "./framework/to-form-schema";
 import type { WidgetDefinition } from "./types";
 
+const localized = new WeakSet<object>();
+
 /**
  * Define a widget and return its definition for registration with the dashboard.
  *
@@ -24,7 +26,7 @@ export function defineWidget<C = Record<string, unknown>>(
       definition.manifest.defaultConfig = extractDefaults(definition.configSchema);
     }
   }
-  if (definition.messages !== undefined) {
+  if (definition.messages !== undefined && !localized.has(definition.component)) {
     const messages = readBundled(definition.messages);
     const component = definition.component;
     definition.component = (props) =>
@@ -34,6 +36,7 @@ export function defineWidget<C = Record<string, unknown>>(
           return createComponent(component, props);
         },
       });
+    localized.add(definition.component);
   }
   return definition;
 }

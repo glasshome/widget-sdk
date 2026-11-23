@@ -134,6 +134,7 @@ export {
 export {
   formatDate,
   type FormattedText,
+  type Formatters,
   formatNumber,
   formatRelative,
   formatTemperature,
@@ -141,6 +142,7 @@ export {
   type NoFormattedFields,
   type StateEntity,
   t,
+  type TemperatureOptions,
   type Translate,
   type TranslateArgs,
   translateState,

@@ -7,6 +7,7 @@ import {
   messageOf,
   resolvedLanguage,
 } from "./context";
+import { type Formatters, formattersOf } from "./format";
 import { stateTranslator, type TranslateState } from "./state";
 
 export type TranslateArgs = Readonly<Record<string, string | number>>;
@@ -32,7 +33,8 @@ export function t(key: string, args?: TranslateArgs): string {
   return translator(i18nScope("t"))(key, args);
 }
 
-export function useTranslation(): {
+/** Everything here keeps the widget it was taken in, so it also works in handlers, timers and after `await`. */
+export function useTranslation(): Formatters & {
   t: Translate;
   /** The language this widget's words resolved to: the member's when the widget has that catalog, else `en`. */
   language: () => string;
@@ -46,5 +48,6 @@ export function useTranslation(): {
     language: () => resolvedLanguage(scope),
     locale: () => formattingOf(scope),
     translateState: stateTranslator(scope),
+    ...formattersOf(scope),
   };
 }

@@ -5,6 +5,7 @@ import type { BundledCatalog, CompiledCatalog } from "@glasshome/widget-contract
 import type { StateTexts } from "@glasshome/widget-contract/state-texts";
 import { type Accessor, createSignal, type JSX } from "solid-js";
 import { describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 import { defineWidget } from "../../src/define-widget";
 import { type ReactiveWidgetContext, WidgetCtx } from "../../src/framework/hooks";
 import { t, translateState, useTranslation, type WidgetI18n } from "../../src/framework/i18n";
@@ -141,5 +142,32 @@ describe("translateState", () => {
     expect(screen.getByTestId("state").textContent).toBe("heat_cool");
     setI18n(i18nFor("fr", {}, { states }));
     expect(screen.getByTestId("state").textContent).toBe("Chauffage/climatisation");
+  });
+});
+
+describe("useTranslation's formatters", () => {
+  it("format inside a click handler, where no owner runs", async () => {
+    const widget = probe(() => {
+      const { formatNumber } = useTranslation();
+      const [shown, setShown] = createSignal("");
+      return (
+        <button type="button" onClick={() => setShown(formatNumber(21.5))}>
+          {shown() || "press"}
+        </button>
+      );
+    });
+    render(() => mount(widget.component, () => i18nFor("fr", {})));
+    await userEvent.click(screen.getByRole("button", { name: "press" }));
+    expect(screen.getByRole("button").textContent).toBe("21,5");
+  });
+});
+
+describe("defineWidget", () => {
+  it("wraps the component once when called twice on one definition", () => {
+    const definition = probe(() => <p>{t("greeting", { name: "Ana" })}</p>);
+    const once = definition.component;
+    expect(defineWidget(definition).component).toBe(once);
+    render(() => mount(definition.component));
+    expect(screen.getByText("Hello Ana")).toBeTruthy();
   });
 });
