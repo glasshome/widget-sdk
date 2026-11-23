@@ -557,7 +557,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
               <RDFooter>
                 <Show when={tabValue() === "edit" && local.onDelete}>
                   <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                    Delete
+                    {text("sdk.dialog.delete")}
                   </Btn>
                 </Show>
                 <Show when={tabValue() === "edit" && effectiveOnSave()}>
@@ -566,7 +566,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                     disabled={!effectiveHasChanges()}
                     onClick={() => effectiveOnSave()?.()}
                   >
-                    Save
+                    {text("sdk.dialog.save")}
                   </Btn>
                 </Show>
                 <Show when={tabValue() === "debug" && local.debugData !== undefined}>

@@ -78,9 +78,11 @@ const catalog: CompiledCatalog = {
   "sdk.dialog.copy-all": ["Tout copier"],
   "sdk.dialog.copy-failed": ["Échec de la copie"],
   "sdk.dialog.debug": ["Débogage"],
+  "sdk.dialog.delete": ["Supprimer"],
   "sdk.dialog.edit": ["Modifier"],
   "sdk.dialog.no-controls": ["Aucune commande"],
   "sdk.dialog.no-edit-options": ["Aucune option de modification disponible"],
+  "sdk.dialog.save": ["Enregistrer"],
   "sdk.dialog.shown-as-is": ["Ce widget est affiché tel quel."],
   "sdk.interpret.acceptable": ["Acceptable"],
   "sdk.interpret.bright": ["Lumineux"],
@@ -115,7 +117,7 @@ const catalog: CompiledCatalog = {
     {
       arg: "level",
     },
-    " %",
+    " %",
   ],
   "sdk.panel.running": ["En cours"],
   "sdk.panel.state-level": [
@@ -126,7 +128,7 @@ const catalog: CompiledCatalog = {
     {
       arg: "level",
     },
-    " %",
+    " %",
   ],
   "sdk.panel.state-temperature": [
     {

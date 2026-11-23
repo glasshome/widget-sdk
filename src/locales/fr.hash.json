@@ -215,6 +215,10 @@
     "source": "b4319a6ce990005f",
     "value": "e3fd8242c492ced5"
   },
+  "sdk.dialog.delete": {
+    "source": "9b3d949c5147d3c3",
+    "value": "5e5d0216ce0b5b9e"
+  },
   "sdk.dialog.edit": {
     "source": "aadce3374a597204",
     "value": "42e37604b638b627"
@@ -226,6 +230,10 @@
   "sdk.dialog.no-edit-options": {
     "source": "112c2dbafa2fa4b1",
     "value": "e0d4218cb657fde1"
+  },
+  "sdk.dialog.save": {
+    "source": "8d7687b779a29a17",
+    "value": "71dc74873e23107d"
   },
   "sdk.dialog.shown-as-is": {
     "source": "a847fafb9959464b",
@@ -349,7 +357,8 @@
   },
   "sdk.panel.percent": {
     "source": "9867fb970c8c55b7",
-    "value": "ea554ef103fdb633"
+    "value": "d20a43cecad99218",
+    "pinned": true
   },
   "sdk.panel.running": {
     "source": "c4e2c9e28eaef62b",
@@ -357,7 +366,8 @@
   },
   "sdk.panel.state-level": {
     "source": "66f021463e150530",
-    "value": "78f4cab8939409b3"
+    "value": "a29ef85ba71297ad",
+    "pinned": true
   },
   "sdk.panel.state-temperature": {
     "source": "f7e72ebf25f165e4",

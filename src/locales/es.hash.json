@@ -215,6 +215,10 @@
     "source": "b4319a6ce990005f",
     "value": "aa65b01053c1dc3d"
   },
+  "sdk.dialog.delete": {
+    "source": "9b3d949c5147d3c3",
+    "value": "c9894cf002f90bd0"
+  },
   "sdk.dialog.edit": {
     "source": "aadce3374a597204",
     "value": "2eba946b2e1ee4b6"
@@ -226,6 +230,10 @@
   "sdk.dialog.no-edit-options": {
     "source": "112c2dbafa2fa4b1",
     "value": "d03b8ab04d71cb1d"
+  },
+  "sdk.dialog.save": {
+    "source": "8d7687b779a29a17",
+    "value": "13e51a210f45ed1b"
   },
   "sdk.dialog.shown-as-is": {
     "source": "a847fafb9959464b",
@@ -337,7 +345,8 @@
   },
   "sdk.interpret.very-unhealthy": {
     "source": "0e5e58f2c16f3d05",
-    "value": "76d7086b68d76463"
+    "value": "beeb11513a6be102",
+    "pinned": true
   },
   "sdk.interpret.warm": {
     "source": "9d8da6e32602d8bd",
