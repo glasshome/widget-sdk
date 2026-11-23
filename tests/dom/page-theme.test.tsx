@@ -1,6 +1,6 @@
 import { render, screen } from "@solidjs/testing-library";
 import { createMemo } from "solid-js";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { useReducedMotion } from "../../src/framework/hooks/use-reduced-motion";
 import { isDark } from "../../src/theme";
 
@@ -19,9 +19,9 @@ describe("the home's theme from <html>", () => {
     expect(screen.getByTestId("mode").textContent).toBe("light");
     html.classList.add("dark");
     expect(isDark()).toBe(true);
-    await vi.waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("dark"));
+    await expect.poll(() => screen.getByTestId("mode").textContent).toBe("dark");
     html.classList.remove("dark");
-    await vi.waitFor(() => expect(screen.getByTestId("mode").textContent).toBe("light"));
+    await expect.poll(() => screen.getByTestId("mode").textContent).toBe("light");
   });
 
   it("useReducedMotion() follows the home's Reduce motion setting", async () => {
@@ -31,8 +31,8 @@ describe("the home's theme from <html>", () => {
     });
     expect(screen.getByTestId("reduced").textContent).toBe("false");
     html.classList.add("reduce-motion");
-    await vi.waitFor(() => expect(screen.getByTestId("reduced").textContent).toBe("true"));
+    await expect.poll(() => screen.getByTestId("reduced").textContent).toBe("true");
     html.classList.remove("reduce-motion");
-    await vi.waitFor(() => expect(screen.getByTestId("reduced").textContent).toBe("false"));
+    await expect.poll(() => screen.getByTestId("reduced").textContent).toBe("false");
   });
 });
