@@ -5,10 +5,11 @@ import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-conte
 import type { EntityView } from "../types";
 import { calculateSensorGroup } from "../utils/entity-aggregation";
 import { interpretValue } from "../utils/interpret-value";
-import type { WidgetI18n } from "./context";
+import { HostI18nContext, type WidgetI18n } from "./context";
+import { sdkI18n } from "./sdk-text";
 
-async function inFrench<T>(read: () => T): Promise<T> {
-  const i18n: WidgetI18n = {
+async function french(): Promise<WidgetI18n> {
+  return {
     language: "fr",
     formatting: "fr-FR",
     catalog: null,
@@ -16,6 +17,25 @@ async function inFrench<T>(read: () => T): Promise<T> {
     ui: null,
     states: null,
   };
+}
+
+function underHost<T>(i18n: WidgetI18n, read: () => T): T {
+  let out: T | undefined;
+  createRoot((dispose) => {
+    createComponent(HostI18nContext.Provider, {
+      value: () => i18n,
+      get children() {
+        out = read();
+        return null;
+      },
+    });
+    dispose();
+  });
+  return out as T;
+}
+
+async function inFrench<T>(read: () => T): Promise<T> {
+  const i18n = await french();
   const ctx: ReactiveWidgetContext = {
     updateConfig: () => {},
     dimensions: () => ({ width: 0, height: 0 }),
@@ -55,5 +75,10 @@ describe("the SDK's words", () => {
     expect(calculateSensorGroup([sensor("a", "1"), sensor("b", "2")], "max").description).toBe(
       "Maximum of 2",
     );
+  });
+
+  test("a component the host renders outside any widget speaks the language the host lends it", async () => {
+    const label = underHost(await french(), () => sdkI18n().text("sdk.camera.full-screen"));
+    expect(label).toBe("Plein écran");
   });
 });

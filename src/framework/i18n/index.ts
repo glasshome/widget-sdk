@@ -1,4 +1,4 @@
-export type { WidgetI18n } from "./context";
+export { HostI18nContext, type WidgetI18n } from "./context";
 export {
   formatDate,
   formatNumber,

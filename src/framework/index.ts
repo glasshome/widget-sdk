@@ -138,6 +138,7 @@ export {
   formatNumber,
   formatRelative,
   formatTemperature,
+  HostI18nContext,
   type NoFormatted,
   type NoFormattedFields,
   type StateEntity,

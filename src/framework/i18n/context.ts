@@ -25,6 +25,9 @@ export const ENGLISH = "en";
 
 export const BundledMessages = createContext<CompiledCatalog | null>(null);
 
+/** The language a host lends the SDK components it renders outside any widget, such as a sealed widget's camera. */
+export const HostI18nContext = createContext<() => WidgetI18n | undefined>(() => undefined);
+
 export interface I18nScope {
   i18n: () => WidgetI18n | undefined;
   messages: CompiledCatalog | null;

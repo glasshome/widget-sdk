@@ -2,7 +2,7 @@ import { formatMessage } from "@glasshome/widget-contract/i18n-format";
 import { useContext } from "solid-js";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import english, { type SdkKey } from "../../locales/compiled/en";
-import { type I18nScope, messageEnv, messageOf } from "./context";
+import { HostI18nContext, type I18nScope, messageEnv, messageOf } from "./context";
 import { type Formatters, formattersOf } from "./format";
 import { stateTranslator, type TranslateState } from "./state";
 import type { TranslateArgs } from "./translate";
@@ -12,10 +12,11 @@ export interface SdkI18n extends Formatters {
   text: (key: SdkKey, args?: TranslateArgs) => string;
 }
 
-/** The SDK's own words and numbers for the widget this runs in; English with no widget around it. */
+/** The SDK's own words and numbers for the widget this runs in, else the host's; English with neither. */
 export function sdkI18n(): SdkI18n {
   const ctx = useContext(WidgetCtx);
-  const scope: I18nScope = { i18n: () => ctx?.i18n?.(), messages: null };
+  const host = useContext(HostI18nContext);
+  const scope: I18nScope = { i18n: () => ctx?.i18n?.() ?? host(), messages: null };
   return {
     ...formattersOf(scope),
     translateState: stateTranslator(scope),
