@@ -11,6 +11,7 @@ import {
 } from "solid-js";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
+import { type SdkKey } from "../../locales/compiled/en";
 import { sdkI18n } from "../i18n/sdk-text";
 import { PanelRow } from "./panel";
 
@@ -211,8 +212,8 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
     state: (e) => {
-      const words = BINARY_WORDS[e.deviceClass ?? ""] ?? ["On", "Off"];
-      return e.state === "on" ? words[0] : words[1];
+      const words = BINARY_WORDS[e.deviceClass ?? ""] ?? ["sdk.binary.on", "sdk.binary.off"];
+      return sdkI18n().text(e.state === "on" ? words[0] : words[1]);
     },
   },
   button: {
@@ -254,26 +255,26 @@ const COVER_ICON: Record<string, string> = {
   awning: "mdi:awning",
 };
 
-const BINARY_WORDS: Record<string, [string, string]> = {
-  door: ["Open", "Closed"],
-  window: ["Open", "Closed"],
-  garage_door: ["Open", "Closed"],
-  opening: ["Open", "Closed"],
-  motion: ["Detected", "Clear"],
-  occupancy: ["Detected", "Clear"],
-  presence: ["Home", "Away"],
-  moisture: ["Wet", "Dry"],
-  smoke: ["Smoke", "Clear"],
-  lock: ["Unlocked", "Locked"],
-  battery: ["Low", "Normal"],
-  connectivity: ["Connected", "Disconnected"],
+const BINARY_WORDS: Record<string, [SdkKey, SdkKey]> = {
+  door: ["sdk.binary.open", "sdk.binary.closed"],
+  window: ["sdk.binary.open", "sdk.binary.closed"],
+  garage_door: ["sdk.binary.open", "sdk.binary.closed"],
+  opening: ["sdk.binary.open", "sdk.binary.closed"],
+  motion: ["sdk.binary.detected", "sdk.binary.clear"],
+  occupancy: ["sdk.binary.detected", "sdk.binary.clear"],
+  presence: ["sdk.binary.home", "sdk.binary.away"],
+  moisture: ["sdk.binary.wet", "sdk.binary.dry"],
+  smoke: ["sdk.binary.smoke", "sdk.binary.clear"],
+  lock: ["sdk.binary.unlocked", "sdk.binary.locked"],
+  battery: ["sdk.binary.low", "sdk.binary.normal"],
+  connectivity: ["sdk.binary.connected", "sdk.binary.disconnected"],
 };
 
 /** A button's state is when it was last pressed. */
 function pressedAt(state: string): string {
-  const { formatDate } = sdkI18n();
+  const { formatDate, text } = sdkI18n();
   const t = Date.parse(state);
-  if (Number.isNaN(t)) return "Never pressed";
+  if (Number.isNaN(t)) return text("sdk.panel.never-pressed");
   return formatDate(t, { hour: "2-digit", minute: "2-digit" });
 }
 

@@ -1,15 +1,119 @@
 {
+  "sdk.aggregate.average": {
+    "source": "ac46e4631ccb1bb5",
+    "value": "2aefe19b768a574b"
+  },
+  "sdk.aggregate.no-entities": {
+    "source": "ae79fea5b88091a2",
+    "value": "53fb69244591a738"
+  },
   "sdk.aggregate.no-numbers": {
     "source": "ef9dbc4afb02cbd7",
     "value": "2871f892bbb1aa29"
+  },
+  "sdk.aggregate.of-count": {
+    "source": "ce314f66bc9fd4f4",
+    "value": "fcc55fa2dbbb5c38"
+  },
+  "sdk.binary.away": {
+    "source": "af0babfb98666a85",
+    "value": "84fd36f7cbff12b9"
+  },
+  "sdk.binary.clear": {
+    "source": "7c69b244844c963a",
+    "value": "cf255bf5d70cba2b"
+  },
+  "sdk.binary.closed": {
+    "source": "30a4a31995b63813",
+    "value": "91f0cbda0129d396"
+  },
+  "sdk.binary.connected": {
+    "source": "9a125970ee16f168",
+    "value": "e92b0f99086360d0"
+  },
+  "sdk.binary.detected": {
+    "source": "f364302b8f76f26e",
+    "value": "336bc6296e6b23b1"
+  },
+  "sdk.binary.disconnected": {
+    "source": "df067099b9f17875",
+    "value": "137ba3fb20ae0c2e"
+  },
+  "sdk.binary.dry": {
+    "source": "0de8646ff5c07e6a",
+    "value": "7daacc78d1fe796c"
+  },
+  "sdk.binary.home": {
+    "source": "c5b027326a518e86",
+    "value": "027bcf715fc262bd"
+  },
+  "sdk.binary.locked": {
+    "source": "b968dfb20a77d964",
+    "value": "ecb0b9e7d56dd572"
+  },
+  "sdk.binary.low": {
+    "source": "5a2489e9bb72c212",
+    "value": "f72d5287e3272f4c"
+  },
+  "sdk.binary.normal": {
+    "source": "3a4e1051e2eaa315",
+    "value": "a7248eeb45eb1ce2"
+  },
+  "sdk.binary.off": {
+    "source": "597ea32f8215307d",
+    "value": "d516838492687904"
+  },
+  "sdk.binary.on": {
+    "source": "875016a04e20fb98",
+    "value": "50d168402958ca0e"
+  },
+  "sdk.binary.open": {
+    "source": "9e78fc0bde6eafb2",
+    "value": "b2770fef713a79a4"
+  },
+  "sdk.binary.smoke": {
+    "source": "71f283b1b72e2501",
+    "value": "1198e90c20092494"
+  },
+  "sdk.binary.unlocked": {
+    "source": "4102d7caa2e04672",
+    "value": "61cc72b5b8b04fd0"
+  },
+  "sdk.binary.wet": {
+    "source": "5b8ee481dc2b2b26",
+    "value": "c50622af16e2f74c"
+  },
+  "sdk.debug.area": {
+    "source": "3e042926de5877ab",
+    "value": "a8a06e4a5695553c"
+  },
+  "sdk.debug.attributes": {
+    "source": "8cc75d480f233235",
+    "value": "23f114e973d6d416"
+  },
+  "sdk.debug.changed": {
+    "source": "069b8f25ef0477dd",
+    "value": "98bc28b4bbdbd5b7"
   },
   "sdk.debug.configuration": {
     "source": "d84641944cdc8ee9",
     "value": "b332c3492d5eb10a"
   },
+  "sdk.debug.copy-title": {
+    "source": "e4eb5c29b60484a5",
+    "value": "61cdc95ba69d2cad"
+  },
   "sdk.debug.data": {
     "source": "e3e2eec653dfc2d4",
     "value": "6bb560dd02926af7"
+  },
+  "sdk.debug.device-class": {
+    "source": "84379e439b12bd9f",
+    "value": "6d3f21b4cb04eb66"
+  },
+  "sdk.debug.domain": {
+    "source": "84383e5828e2a310",
+    "value": "9b0107ee09d45b66"
   },
   "sdk.debug.empty-description": {
     "source": "3b80613e1ea85059",
@@ -19,9 +123,29 @@
     "source": "0809f6e7c9afbe3a",
     "value": "4e682fa58be27603"
   },
+  "sdk.debug.none": {
+    "source": "38582616fbb0a810",
+    "value": "4679b3b12de0b53a"
+  },
   "sdk.debug.nothing-set": {
     "source": "1639ea42ab0b19b6",
     "value": "933b19600add5c15"
+  },
+  "sdk.debug.updated": {
+    "source": "69afaf497880bd4c",
+    "value": "6087ab8ea52e0f82"
+  },
+  "sdk.dialog.copied": {
+    "source": "b9ac58251a0105cf",
+    "value": "00181a49f63e44b6"
+  },
+  "sdk.dialog.copy-all": {
+    "source": "a471bbc2428d6fa0",
+    "value": "7e99166bb44d7416"
+  },
+  "sdk.dialog.copy-failed": {
+    "source": "42fbd9ac388379be",
+    "value": "b98e66a32c77dd6d"
   },
   "sdk.dialog.debug": {
     "source": "b4319a6ce990005f",
@@ -38,6 +162,10 @@
   "sdk.dialog.shown-as-is": {
     "source": "a847fafb9959464b",
     "value": "45b497cfc57e7e08"
+  },
+  "sdk.panel.never-pressed": {
+    "source": "2c82d078c11c878b",
+    "value": "2bcaa38c4516754e"
   },
   "sdk.slider.lower": {
     "source": "cff45841cfcc9b2b",

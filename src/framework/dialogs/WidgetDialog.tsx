@@ -44,6 +44,7 @@ import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
+import { type SdkKey } from "../../locales/compiled/en";
 import { sdkI18n } from "../i18n/sdk-text";
 import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
@@ -153,10 +154,10 @@ export function useSheetDormant(): Accessor<boolean> {
   return useContext(SheetDormant);
 }
 
-const COPY_LABEL: Record<CopyState, string> = {
-  idle: "Copy all",
-  copied: "Copied",
-  failed: "Copy failed",
+const COPY_LABEL: Record<CopyState, SdkKey> = {
+  idle: "sdk.dialog.copy-all",
+  copied: "sdk.dialog.copied",
+  failed: "sdk.dialog.copy-failed",
 };
 
 export function WidgetDialog(props: WidgetDialogProps) {
@@ -570,7 +571,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                 </Show>
                 <Show when={tabValue() === "debug" && local.debugData !== undefined}>
                   <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                    {COPY_LABEL[debugCopy.state()]}
+                    {text(COPY_LABEL[debugCopy.state()])}
                   </Btn>
                 </Show>
               </RDFooter>

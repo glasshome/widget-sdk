@@ -18,7 +18,10 @@ import {
   matchesRead,
   widgetManifestSchema,
 } from "@glasshome/widget-contract";
-import { compileCatalogSource } from "@glasshome/widget-contract/catalog-build";
+import {
+  bundledCatalogModule,
+  compileCatalogSource,
+} from "@glasshome/widget-contract/catalog-build";
 import { sdkImportsOf } from "@glasshome/widget-contract/sdk-floor";
 import tailwindcss from "@tailwindcss/vite";
 import type { Features as LightningFeatures } from "lightningcss";
@@ -440,7 +443,7 @@ export function catalogImportPlugin(): Plugin {
       const file = id.slice(0, -CATALOG_QUERY.length);
       this.addWatchFile(file);
       const messages = compileCatalogSource(readFileSync(file, "utf-8"), file);
-      return `export default ${JSON.stringify({ v: 1, messages })};\n`;
+      return bundledCatalogModule(messages);
     },
   };
 }

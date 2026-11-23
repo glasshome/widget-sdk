@@ -103,8 +103,8 @@ type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 const isPrimitive = (value: unknown): value is Primitive =>
   value === null || (typeof value !== "object" && typeof value !== "function");
 
-function factText(value: Primitive): string {
-  if (value === null || value === undefined) return "None";
+function factText(value: Primitive, none: string): string {
+  if (value === null || value === undefined) return none;
   return String(value);
 }
 
@@ -167,6 +167,7 @@ function DebugSection(props: {
   source: unknown;
   children: JSX.Element;
 }) {
+  const { text } = sdkI18n();
   return (
     <section class="flex min-w-0 flex-col gap-2">
       <header class="flex items-center gap-3">
@@ -178,7 +179,10 @@ function DebugSection(props: {
           </Show>
         </div>
         {props.badge}
-        <CopyIconButton label={`Copy ${props.title}`} text={() => toJson(props.source)} />
+        <CopyIconButton
+          label={text("sdk.debug.copy-title", { title: props.title })}
+          text={() => toJson(props.source)}
+        />
       </header>
       <div class="flex flex-col gap-2">{props.children}</div>
     </section>
@@ -200,7 +204,9 @@ function Facts(props: { record: Record<string, unknown> }) {
       <Show when={flat().length > 0}>
         <div class="flex flex-col">
           <For each={flat()}>
-            {([key, value]) => <FactRow label={humanize(key)}>{factText(value)}</FactRow>}
+            {([key, value]) => (
+              <FactRow label={humanize(key)}>{factText(value, text("sdk.debug.none"))}</FactRow>
+            )}
           </For>
         </div>
       </Show>
@@ -212,7 +218,7 @@ function Facts(props: { record: Record<string, unknown> }) {
 }
 
 function EntitySection(props: { entity: WidgetDebugEntity }) {
-  const { formatDate } = sdkI18n();
+  const { formatDate, text } = sdkI18n();
   const attributes = () => props.entity.attributes ?? {};
   return (
     <DebugSection
@@ -223,18 +229,28 @@ function EntitySection(props: { entity: WidgetDebugEntity }) {
       source={props.entity}
     >
       <div class="flex flex-col">
-        <FactRow label="Domain">{props.entity.domain}</FactRow>
+        <FactRow label={text("sdk.debug.domain")}>{props.entity.domain}</FactRow>
         <Show when={props.entity.device_class}>
-          {(deviceClass) => <FactRow label="Device class">{deviceClass()}</FactRow>}
+          {(deviceClass) => (
+            <FactRow label={text("sdk.debug.device-class")}>{deviceClass()}</FactRow>
+          )}
         </Show>
         <Show when={props.entity.area_id}>
-          {(area) => <FactRow label="Area">{area()}</FactRow>}
+          {(area) => <FactRow label={text("sdk.debug.area")}>{area()}</FactRow>}
         </Show>
-        <FactRow label="Changed">{localTime(props.entity.last_changed, formatDate)}</FactRow>
-        <FactRow label="Updated">{localTime(props.entity.last_updated, formatDate)}</FactRow>
+        <FactRow label={text("sdk.debug.changed")}>
+          {localTime(props.entity.last_changed, formatDate)}
+        </FactRow>
+        <FactRow label={text("sdk.debug.updated")}>
+          {localTime(props.entity.last_updated, formatDate)}
+        </FactRow>
       </div>
       <Show when={size(attributes()) > 0}>
-        <Disclosure label="Attributes" count={size(attributes())} value={attributes()} />
+        <Disclosure
+          label={text("sdk.debug.attributes")}
+          count={size(attributes())}
+          value={attributes()}
+        />
       </Show>
     </DebugSection>
   );

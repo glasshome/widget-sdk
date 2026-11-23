@@ -25,7 +25,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 // Rounded to the step's own decimals, so 0.5 steps never report 21.499999.
 function snap(v: number, lo: number, step: number): number {
   const decimals = (String(step).split(".")[1] ?? "").length;
-  // intl-door-ok rounds a value to the step's decimals, never shown
+  // ui-text-ok: rounds to the step's decimals, never shown
   return Number((lo + Math.round((v - lo) / step) * step).toFixed(decimals));
 }
 

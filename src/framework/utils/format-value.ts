@@ -80,6 +80,7 @@ export function formatValue(
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
       useGrouping: false,
+      signDisplay: "negative",
     });
   let formatted: string;
   if (decimals !== undefined) {
@@ -93,7 +94,11 @@ export function formatValue(
       formatted = value.toString();
     } else {
       // Float - show up to 2 decimals, remove trailing zeros
-      formatted = formatNumber(value, { maximumFractionDigits: 2, useGrouping: false });
+      formatted = formatNumber(value, {
+        maximumFractionDigits: 2,
+        useGrouping: false,
+        signDisplay: "negative",
+      });
     }
   }
 

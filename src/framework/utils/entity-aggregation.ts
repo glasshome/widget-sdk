@@ -97,7 +97,7 @@ export function calculateLightGroup(
       color: "rgb(100, 100, 100)",
       onCount: 0,
       totalCount: 0,
-      description: "No entities",
+      description: sdkI18n().text("sdk.aggregate.no-entities"),
     };
   }
 
@@ -251,7 +251,12 @@ export function calculateSensorGroup(
 ): SensorGroupResult {
   const { text, formatNumber } = sdkI18n();
   const oneDecimal = (n: number) =>
-    formatNumber(n, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
+    formatNumber(n, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+      useGrouping: false,
+      signDisplay: "negative",
+    });
   const first = entities[0];
   if (!first) {
     return {
@@ -259,7 +264,7 @@ export function calculateSensorGroup(
       state: "unknown",
       numericValue: null,
       isUnavailable: true,
-      description: "No entities",
+      description: text("sdk.aggregate.no-entities"),
     };
   }
 
@@ -360,7 +365,7 @@ export function calculateSensorGroup(
       break;
     case "mean":
       calculatedValue = numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length;
-      description = "Average";
+      description = text("sdk.aggregate.average");
       break;
     case "median": {
       const sorted = [...numericValues].sort((a, b) => a - b);
@@ -396,7 +401,7 @@ export function calculateSensorGroup(
     }
     default:
       calculatedValue = numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length;
-      description = "Average";
+      description = text("sdk.aggregate.average");
   }
 
   // Format the value for display - limit to 1 decimal place to prevent overflow
@@ -410,7 +415,7 @@ export function calculateSensorGroup(
     numericValue: calculatedValue,
     isUnavailable: false,
     unit,
-    description: `${description} of ${numericValues.length}`,
+    description: text("sdk.aggregate.of-count", { description, count: numericValues.length }),
     memberValues,
   };
 }
