@@ -8,6 +8,6 @@ const CHUNKS: Readonly<Record<string, () => Promise<{ default: CompiledCatalog }
 };
 
 export async function loadSdkCatalog(language: string): Promise<CompiledCatalog | null> {
-  const chunk = CHUNKS[language];
+  const chunk = Object.hasOwn(CHUNKS, language) ? CHUNKS[language] : undefined;
   return chunk ? (await chunk()).default : null;
 }

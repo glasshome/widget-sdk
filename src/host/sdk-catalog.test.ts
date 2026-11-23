@@ -11,3 +11,8 @@ test("English and an unknown language give null", async () => {
   expect(await loadSdkCatalog("en")).toBeNull();
   expect(await loadSdkCatalog("zz")).toBeNull();
 });
+
+test("a key from the object prototype gives null", async () => {
+  expect(await loadSdkCatalog("constructor")).toBeNull();
+  expect(await loadSdkCatalog("__proto__")).toBeNull();
+});
