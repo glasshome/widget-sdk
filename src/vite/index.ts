@@ -423,6 +423,12 @@ function syncLayerImportGuard(): Plugin {
 const LOCALE_FILE = /[\\/]locales[\\/][a-z]{2}(?:-[A-Za-z]+)?\.json$/u;
 const CATALOG_QUERY = "?glasshome-catalog";
 
+/** A widget's own catalog: `locales/<tag>.json` beside its manifest, outside node_modules. */
+export function isWidgetCatalogFile(file: string): boolean {
+  if (!LOCALE_FILE.test(file) || normalizePath(file).includes("/node_modules/")) return false;
+  return existsSync(join(dirname(dirname(file)), "manifest.json"));
+}
+
 /**
  * Turns `import en from "./locales/en.json"` into the `{ v: 1, messages }` module
  * `defineWidget({ messages })` reads. The ICU parser runs here, never in the bundle.
@@ -435,7 +441,7 @@ export function catalogImportPlugin(): Plugin {
     async resolveId(source, importer, options) {
       if (!source.endsWith(".json") || source.includes("?")) return null;
       const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
-      if (!resolved || resolved.external || !LOCALE_FILE.test(resolved.id)) return null;
+      if (!resolved || resolved.external || !isWidgetCatalogFile(resolved.id)) return null;
       return `${resolved.id}${CATALOG_QUERY}`;
     },
     load(id) {

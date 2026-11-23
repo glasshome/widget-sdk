@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { build } from "vite";
 import { catalogImportPlugin } from "./index";
@@ -11,7 +11,7 @@ afterAll(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-async function bundle(fixture: string): Promise<string> {
+async function bundle(fixture: string, root = FIXTURES): Promise<string> {
   const result = await build({
     configFile: false,
     logLevel: "silent",
@@ -19,7 +19,7 @@ async function bundle(fixture: string): Promise<string> {
     build: {
       write: false,
       minify: false,
-      lib: { entry: join(FIXTURES, fixture, "entry.ts"), formats: ["es"], fileName: "out" },
+      lib: { entry: join(root, fixture, "entry.ts"), formats: ["es"], fileName: "out" },
     },
   });
   const outputs = Array.isArray(result)
@@ -46,5 +46,42 @@ describe("locale imports", () => {
 
   test("a message that does not parse fails the build and names the key", async () => {
     await expect(bundle("locales-bad")).rejects.toThrow(/en\.json: bad: /);
+  });
+});
+
+/** Writes `files` under a fresh directory in tmpDir and returns it. */
+function project(name: string, files: Record<string, string>): string {
+  const dir = join(tmpDir, name);
+  for (const [path, text] of Object.entries(files)) {
+    mkdirSync(join(dir, path, ".."), { recursive: true });
+    writeFileSync(join(dir, path), text);
+  }
+  return tmpDir;
+}
+
+const NESTED = JSON.stringify({ greeting: { morning: "Hello" } });
+
+describe("locale files that are not the widget's catalog", () => {
+  test("a dependency's locales json passes through as plain JSON", async () => {
+    const root = project("dependency", {
+      "manifest.json": '{ "name": "dependency" }',
+      "entry.ts": 'import en from "./node_modules/dep/locales/en.json";\nexport default en;\n',
+      "node_modules/dep/manifest.json": '{ "name": "dep" }',
+      "node_modules/dep/locales/en.json": NESTED,
+    });
+    const code = await bundle("dependency", root);
+    expect(code).toContain("morning");
+    expect(code).not.toContain("messages");
+  });
+
+  test("a widget's own locales json away from its manifest passes through", async () => {
+    const root = project("homegrown", {
+      "manifest.json": '{ "name": "homegrown" }',
+      "entry.ts": 'import en from "./lib/locales/en.json";\nexport default en;\n',
+      "lib/locales/en.json": NESTED,
+    });
+    const code = await bundle("homegrown", root);
+    expect(code).toContain("morning");
+    expect(code).not.toContain("messages");
   });
 });
