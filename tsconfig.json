@@ -21,7 +21,7 @@
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "types": ["node", "bun", "vite/client"],
-    "lib": ["ESNext", "DOM"]
+    "lib": ["ES2024", "ES2025.Collection", "DOM"]
   },
   "include": ["**/*"],
   "exclude": ["node_modules", "dist"]
