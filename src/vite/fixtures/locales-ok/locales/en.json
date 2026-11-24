@@ -1,0 +1,3 @@
+{
+  "rooms": "{n, plural, one {# room} other {# rooms}}"
+}

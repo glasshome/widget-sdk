@@ -21,6 +21,7 @@ import {
   useCopyText,
 } from "@glasshome/ui/solid";
 import { createMemo, For, type JSX, Show } from "solid-js";
+import { type SdkI18n, sdkI18n } from "../i18n/sdk-text";
 import type { EntityView } from "../types";
 
 export interface WidgetDebugEntity {
@@ -102,8 +103,8 @@ type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 const isPrimitive = (value: unknown): value is Primitive =>
   value === null || (typeof value !== "object" && typeof value !== "function");
 
-function factText(value: Primitive): string {
-  if (value === null || value === undefined) return "None";
+function factText(value: Primitive, none: string): string {
+  if (value === null || value === undefined) return none;
   return String(value);
 }
 
@@ -113,9 +114,18 @@ function size(value: unknown): number {
   return 0;
 }
 
-function localTime(iso: string): string {
+const TIMESTAMP: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+};
+
+function localTime(iso: string, formatDate: SdkI18n["formatDate"]): string {
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? iso : formatDate(date, TIMESTAMP);
 }
 
 function JsonBlock(props: { value: unknown }) {
@@ -157,6 +167,7 @@ function DebugSection(props: {
   source: unknown;
   children: JSX.Element;
 }) {
+  const { text } = sdkI18n();
   return (
     <section class="flex min-w-0 flex-col gap-2">
       <header class="flex items-center gap-3">
@@ -168,7 +179,10 @@ function DebugSection(props: {
           </Show>
         </div>
         {props.badge}
-        <CopyIconButton label={`Copy ${props.title}`} text={() => toJson(props.source)} />
+        <CopyIconButton
+          label={text("sdk.debug.copy-title", { title: props.title })}
+          text={() => toJson(props.source)}
+        />
       </header>
       <div class="flex flex-col gap-2">{props.children}</div>
     </section>
@@ -176,17 +190,23 @@ function DebugSection(props: {
 }
 
 function Facts(props: { record: Record<string, unknown> }) {
+  const { text } = sdkI18n();
   const entries = createMemo(() => Object.entries(props.record));
   const flat = createMemo(() =>
     entries().flatMap(([key, value]) => (isPrimitive(value) ? [[key, value] as const] : [])),
   );
   const nested = createMemo(() => entries().filter(([, value]) => !isPrimitive(value)));
   return (
-    <Show when={entries().length > 0} fallback={<SectionMeta>Nothing set</SectionMeta>}>
+    <Show
+      when={entries().length > 0}
+      fallback={<SectionMeta>{text("sdk.debug.nothing-set")}</SectionMeta>}
+    >
       <Show when={flat().length > 0}>
         <div class="flex flex-col">
           <For each={flat()}>
-            {([key, value]) => <FactRow label={humanize(key)}>{factText(value)}</FactRow>}
+            {([key, value]) => (
+              <FactRow label={humanize(key)}>{factText(value, text("sdk.debug.none"))}</FactRow>
+            )}
           </For>
         </div>
       </Show>
@@ -198,6 +218,7 @@ function Facts(props: { record: Record<string, unknown> }) {
 }
 
 function EntitySection(props: { entity: WidgetDebugEntity }) {
+  const { formatDate, text } = sdkI18n();
   const attributes = () => props.entity.attributes ?? {};
   return (
     <DebugSection
@@ -208,24 +229,35 @@ function EntitySection(props: { entity: WidgetDebugEntity }) {
       source={props.entity}
     >
       <div class="flex flex-col">
-        <FactRow label="Domain">{props.entity.domain}</FactRow>
+        <FactRow label={text("sdk.debug.domain")}>{props.entity.domain}</FactRow>
         <Show when={props.entity.device_class}>
-          {(deviceClass) => <FactRow label="Device class">{deviceClass()}</FactRow>}
+          {(deviceClass) => (
+            <FactRow label={text("sdk.debug.device-class")}>{deviceClass()}</FactRow>
+          )}
         </Show>
         <Show when={props.entity.area_id}>
-          {(area) => <FactRow label="Area">{area()}</FactRow>}
+          {(area) => <FactRow label={text("sdk.debug.area")}>{area()}</FactRow>}
         </Show>
-        <FactRow label="Changed">{localTime(props.entity.last_changed)}</FactRow>
-        <FactRow label="Updated">{localTime(props.entity.last_updated)}</FactRow>
+        <FactRow label={text("sdk.debug.changed")}>
+          {localTime(props.entity.last_changed, formatDate)}
+        </FactRow>
+        <FactRow label={text("sdk.debug.updated")}>
+          {localTime(props.entity.last_updated, formatDate)}
+        </FactRow>
       </div>
       <Show when={size(attributes()) > 0}>
-        <Disclosure label="Attributes" count={size(attributes())} value={attributes()} />
+        <Disclosure
+          label={text("sdk.debug.attributes")}
+          count={size(attributes())}
+          value={attributes()}
+        />
       </Show>
     </DebugSection>
   );
 }
 
 export function WidgetDebugView(props: { data: WidgetDebugData }) {
+  const { text } = sdkI18n();
   const extraKeys = createMemo(() =>
     Object.keys(props.data).filter((key) => key !== "widgetConfig" && key !== "entities"),
   );
@@ -233,7 +265,7 @@ export function WidgetDebugView(props: { data: WidgetDebugData }) {
     <FieldGroup>
       <DebugSection
         icon="lucide:sliders-horizontal"
-        title="Configuration"
+        title={text("sdk.debug.configuration")}
         source={props.data.widgetConfig}
       >
         <Facts record={props.data.widgetConfig} />
@@ -261,6 +293,7 @@ function asDebugData(value: unknown): WidgetDebugData | undefined {
 /** The debug tab a widget gets for free: the shaped view when its data came
  *  from buildDebugData, the raw payload otherwise. */
 export function WidgetDebugTab(props: { data?: string | Record<string, unknown> }) {
+  const { text } = sdkI18n();
   const shaped = createMemo(() => asDebugData(props.data));
   return (
     <Show
@@ -268,8 +301,8 @@ export function WidgetDebugTab(props: { data?: string | Record<string, unknown> 
       fallback={
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>Nothing to inspect</EmptyTitle>
-            <EmptyDescription>This widget publishes no debug information.</EmptyDescription>
+            <EmptyTitle>{text("sdk.debug.empty-title")}</EmptyTitle>
+            <EmptyDescription>{text("sdk.debug.empty-description")}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       }
@@ -277,7 +310,7 @@ export function WidgetDebugTab(props: { data?: string | Record<string, unknown> 
       <Show
         when={shaped()}
         fallback={
-          <DebugSection icon="lucide:braces" title="Debug data" source={props.data}>
+          <DebugSection icon="lucide:braces" title={text("sdk.debug.data")} source={props.data}>
             <Show when={typeof props.data === "string"} fallback={<JsonBlock value={props.data} />}>
               <SectionRow class="overflow-hidden p-0">
                 <pre class="text-muted-foreground max-h-96 overflow-auto p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">

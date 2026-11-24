@@ -22,6 +22,7 @@ import {
 import { type Confirm, useConfirm } from "../hooks/use-confirm";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { widgetRegistry } from "../hooks/widget-registry";
+import { sdkI18n } from "../i18n/sdk-text";
 import { cn } from "../utils/cn";
 import { WidgetIcon } from "./WidgetIcon";
 
@@ -146,12 +147,13 @@ export function WidgetStepper(props: {
   label: string;
   onStep: (direction: -1 | 1) => void;
 }): JSX.Element {
+  const { text } = sdkI18n();
   return (
     <ButtonGroup aria-label={props.label} class="glasshome-widget-stepper">
       <Button
         variant="outline"
         size="icon"
-        aria-label="Lower"
+        aria-label={text("sdk.slider.lower")}
         class="glasshome-widget-control"
         onClick={() => props.onStep(-1)}
       >
@@ -160,7 +162,7 @@ export function WidgetStepper(props: {
       <Button
         variant="outline"
         size="icon"
-        aria-label="Raise"
+        aria-label={text("sdk.slider.raise")}
         class="glasshome-widget-control"
         onClick={() => props.onStep(1)}
       >

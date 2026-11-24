@@ -128,6 +128,31 @@ export {
 } from "./hooks";
 
 // ============================================================================
+// Language
+// ============================================================================
+
+export {
+  formatDate,
+  type FormattedText,
+  type Formatters,
+  formatNumber,
+  formatRelative,
+  formatTemperature,
+  HostI18nContext,
+  type NoFormatted,
+  type NoFormattedFields,
+  type StateEntity,
+  t,
+  type TemperatureOptions,
+  type Translate,
+  type TranslateArgs,
+  translateState,
+  type TranslateState,
+  useTranslation,
+  type WidgetI18n,
+} from "./i18n";
+
+// ============================================================================
 // Gestures
 // ============================================================================
 

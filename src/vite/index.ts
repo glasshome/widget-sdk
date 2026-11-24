@@ -18,6 +18,10 @@ import {
   matchesRead,
   widgetManifestSchema,
 } from "@glasshome/widget-contract";
+import {
+  bundledCatalogModule,
+  compileCatalogSource,
+} from "@glasshome/widget-contract/catalog-build";
 import { sdkImportsOf } from "@glasshome/widget-contract/sdk-floor";
 import tailwindcss from "@tailwindcss/vite";
 import type { Features as LightningFeatures } from "lightningcss";
@@ -416,6 +420,40 @@ function syncLayerImportGuard(): Plugin {
   };
 }
 
+const LOCALE_FILE = /[\\/]locales[\\/][a-z]{2}(?:-[A-Za-z]+)?\.json$/u;
+const CATALOG_QUERY = "?glasshome-catalog";
+
+/** A widget's own catalog: `locales/<tag>.json` beside its manifest, outside node_modules. */
+export function isWidgetCatalogFile(file: string): boolean {
+  if (!LOCALE_FILE.test(file) || normalizePath(file).includes("/node_modules/")) return false;
+  return existsSync(join(dirname(dirname(file)), "manifest.json"));
+}
+
+/**
+ * Turns `import en from "./locales/en.json"` into the `{ v: 1, messages }` module
+ * `defineWidget({ messages })` reads. The ICU parser runs here, never in the bundle.
+ * The module id carries a query so Vite's own json plugin leaves it alone.
+ */
+export function catalogImportPlugin(): Plugin {
+  return {
+    name: "glasshome-widget:locale-catalogs",
+    enforce: "pre",
+    async resolveId(source, importer, options) {
+      if (!source.endsWith(".json") || source.includes("?")) return null;
+      const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
+      if (!resolved || resolved.external || !isWidgetCatalogFile(resolved.id)) return null;
+      return `${resolved.id}${CATALOG_QUERY}`;
+    },
+    load(id) {
+      if (!id.endsWith(CATALOG_QUERY)) return null;
+      const file = id.slice(0, -CATALOG_QUERY.length);
+      this.addWatchFile(file);
+      const messages = compileCatalogSource(readFileSync(file, "utf-8"), file);
+      return bundledCatalogModule(messages);
+    },
+  };
+}
+
 /**
  * True when a widget source file imports `@glasshome/ui` directly. The regex is
  * the registry's `sourcePattern` for `direct-ui-import`, so the build warning and
@@ -785,6 +823,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
       plugins: [
         ...buildOnlyTailwind(),
         ...(options?.plugins ?? []),
+        catalogImportPlugin(),
         syncLayerImportGuard(),
         uiImportGuard(uiImportWarned),
       ],
@@ -948,6 +987,7 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
   return [
     ...buildOnlyTailwind(),
     buildPlugin,
+    catalogImportPlugin(),
     syncLayerImportGuard(),
     uiImportGuard(),
     schemaPlugin,

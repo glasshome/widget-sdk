@@ -44,6 +44,8 @@ import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
+import { type SdkKey } from "../../locales/compiled/en";
+import { sdkI18n } from "../i18n/sdk-text";
 import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
 import { warmSheets } from "./warm-dialogs";
@@ -152,13 +154,14 @@ export function useSheetDormant(): Accessor<boolean> {
   return useContext(SheetDormant);
 }
 
-const COPY_LABEL: Record<CopyState, string> = {
-  idle: "Copy all",
-  copied: "Copied",
-  failed: "Copy failed",
+const COPY_LABEL: Record<CopyState, SdkKey> = {
+  idle: "sdk.dialog.copy-all",
+  copied: "sdk.dialog.copied",
+  failed: "sdk.dialog.copy-failed",
 };
 
 export function WidgetDialog(props: WidgetDialogProps) {
+  const { text } = sdkI18n();
   const [local] = splitProps(props, [
     "open",
     "onOpenChange",
@@ -277,7 +280,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
     tabs.push({
       id: "edit",
-      label: "Edit",
+      label: text("sdk.dialog.edit"),
       icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -299,7 +302,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           if (!schema || !SchemaFormEdit) {
             return (
               <div class="bg-muted/30 rounded-lg p-2 text-center md:p-6">
-                <p class="text-muted-foreground text-sm">No edit options available</p>
+                <p class="text-muted-foreground text-sm">{text("sdk.dialog.no-edit-options")}</p>
               </div>
             );
           }
@@ -319,7 +322,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
     tabs.push({
       id: "controls",
-      label: "Controls",
+      label: text("sdk.dialog.controls"),
       icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -344,8 +347,8 @@ export function WidgetDialog(props: WidgetDialogProps) {
         local.controlsContent ?? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>No controls</EmptyTitle>
-              <EmptyDescription>This widget is shown as is.</EmptyDescription>
+              <EmptyTitle>{text("sdk.dialog.no-controls")}</EmptyTitle>
+              <EmptyDescription>{text("sdk.dialog.shown-as-is")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ),
@@ -353,7 +356,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
     tabs.push({
       id: "debug",
-      label: "Debug",
+      label: text("sdk.dialog.debug"),
       icon: () => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -554,7 +557,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
               <RDFooter>
                 <Show when={tabValue() === "edit" && local.onDelete}>
                   <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
-                    Delete
+                    {text("sdk.dialog.delete")}
                   </Btn>
                 </Show>
                 <Show when={tabValue() === "edit" && effectiveOnSave()}>
@@ -563,12 +566,12 @@ export function WidgetDialog(props: WidgetDialogProps) {
                     disabled={!effectiveHasChanges()}
                     onClick={() => effectiveOnSave()?.()}
                   >
-                    Save
+                    {text("sdk.dialog.save")}
                   </Btn>
                 </Show>
                 <Show when={tabValue() === "debug" && local.debugData !== undefined}>
                   <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
-                    {COPY_LABEL[debugCopy.state()]}
+                    {text(COPY_LABEL[debugCopy.state()])}
                   </Btn>
                 </Show>
               </RDFooter>

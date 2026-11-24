@@ -1,5 +1,6 @@
 import { Button, Icon } from "@glasshome/ui/solid";
 import { createEffect, createSignal, type JSX, on, onCleanup, onMount, Show } from "solid-js";
+import { sdkI18n } from "../framework/i18n/sdk-text";
 import { useCameraSource } from "./camera-source";
 import { startHls } from "./drivers/hls";
 import { reasonOf, type StreamCallbacks, type StreamDriver } from "./drivers/types";
@@ -35,6 +36,7 @@ const FILL: JSX.CSSProperties = { position: "absolute", inset: "0", width: "100%
 
 /** A camera's live picture, over WebRTC, HLS or an image, from the camera source the host provides. */
 export function CameraStream(props: CameraStreamProps): JSX.Element {
+  const { text } = sdkI18n();
   const source = useCameraSource();
   let stage!: HTMLDivElement;
   let video!: HTMLVideoElement;
@@ -149,7 +151,7 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
           <Button
             variant="outline"
             size="icon"
-            aria-label={full() ? "Exit full screen" : "Full screen"}
+            aria-label={text(full() ? "sdk.camera.exit-full-screen" : "sdk.camera.full-screen")}
             onClick={toggle}
           >
             <Icon icon={full() ? "mdi:fullscreen-exit" : "mdi:fullscreen"} width={18} />
@@ -158,7 +160,7 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
             <Button
               variant={props.muted ? "outline" : "default"}
               size="icon"
-              aria-label={props.muted ? "Turn sound on" : "Turn sound off"}
+              aria-label={text(props.muted ? "sdk.camera.sound-on" : "sdk.camera.sound-off")}
               onClick={() => props.onMutedChange?.(!props.muted)}
             >
               <Icon icon={props.muted ? "mdi:volume-off" : "mdi:volume-high"} width={18} />

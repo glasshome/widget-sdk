@@ -83,6 +83,21 @@ Dash 1.5 previews the engine every widget will run in: QuickJS, no page access. 
 
 Full page: https://glasshome.app/md/widgets/widget-sealed-engine.
 
+## Translations
+
+Words in a widget go through the SDK so each member reads their own language.
+
+- `locales/en.json` is a flat object of key to message. Keys: lowercase words, `-` or `_` inside a word, `.` between groups; never `manifest.*`. Plurals: `{count, plural, one {# light} other {# lights}}`, `other` always present.
+- `import en from "./locales/en.json"`, then `defineWidget({ manifest, component, messages: en })`. The build compiles it; no parser ships.
+- `const { t, formatNumber, formatDate, formatRelative, formatTemperature, translateState, language, locale } = useTranslation()`. `t` also exists bare for rendering; use the hook's `t` in handlers and after `await`. `t("key", { count: 3 })` falls back to the English, then to the key.
+- `formatTemperature(value, { unit?, digits? })` writes the unit given, never converts. `translateState(entity, { attribute?, value? })` is Home Assistant's word for a state in the member's language.
+- Formatted text is for display only: never `parseFloat` it, never send it to `callService` (the types refuse it). Send the raw number.
+- No bare `toLocaleString()`, `new Intl.NumberFormat()` or `localeCompare()` without a locale; the build warns. Use the helpers, or pass `locale()`.
+- `manifest.name`, `manifest.description`, `manifest.examples.N.label` and `manifest.config.*` are added to the English catalog by the build; never write them in `en.json`. A `fr.json` may carry a translated `manifest.name`.
+- Other languages: `fr.json`, `es.json`, `de.json` beside `en.json`. `bun widget validate` checks parsing, every literal `t("key")` against `en.json`, and stray keys. `bun widget connect` pushes the catalogs to the local dash.
+
+Full page: https://glasshome.app/md/widgets/widget-translations.
+
 ## More
 
 Docs as markdown: https://glasshome.app/llms.txt, `https://glasshome.app/md/widgets/<page>` (`widget-sheets`, `widget-styling`, `widget-sdk`, `widget-sdk/materials`, `widget-api-reference`, `widget-capabilities`, `widget-previews`). Official widgets as worked examples: https://github.com/glasshome/widgets (`src/button`, `src/sensor`); where they differ from this guide, the guide wins.

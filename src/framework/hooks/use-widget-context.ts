@@ -1,6 +1,8 @@
 import type { MaterialTerms } from "@glasshome/ui/tokens";
 import type { WidgetStateVerdict } from "@glasshome/widget-contract/state";
 import { createContext, useContext } from "solid-js";
+import type { WidgetI18n } from "../i18n/context";
+import type { NoFormattedFields } from "../i18n/format";
 
 /**
  * Reactive widget context.
@@ -26,11 +28,13 @@ export interface WidgetDashboard {
     validated there against the widget's granted capabilities. Pass
     `{ returnResponse: true }` for services that return data (e.g.
     `todo.get_items`); the resolved value is the HA service response, else
-    `undefined`. */
-export type ServiceCallFn = (
+    `undefined`. Data refuses formatted text: send the number. */
+export type ServiceCallFn = <
+  D extends Record<string, unknown> & NoFormattedFields<D> = Record<string, unknown>,
+>(
   domain: string,
   service: string,
-  serviceData?: Record<string, unknown>,
+  serviceData?: D,
   target?: Record<string, unknown>,
   options?: { returnResponse?: boolean },
 ) => Promise<unknown>;
@@ -87,6 +91,10 @@ export interface ReactiveWidgetContext {
   onShell?: (shell: { tone: string | null; lift: number | null } | null) => void;
   /** Kept by the host across reloads, for this widget and this person. Absent on hosts that predate this field. */
   state?: WidgetStateStore;
+  /** The member's language and the catalogs for this instance. Absent on hosts that predate this field: the widget speaks its bundled English. */
+  i18n?: () => WidgetI18n | undefined;
+  /** Where this widget's own files are served from; null when it has none. Absent on hosts that predate this field. */
+  assetBase?: () => string | null;
 }
 
 export const WidgetCtx = createContext<ReactiveWidgetContext>();

@@ -58,6 +58,11 @@
       "types": "./dist/host/index.d.ts",
       "import": "./dist/host/index.js"
     },
+    "./host/sdk-catalog": {
+      "@glasshome/source": "./src/host/sdk-catalog.ts",
+      "types": "./dist/host/sdk-catalog.d.ts",
+      "import": "./dist/host/sdk-catalog.js"
+    },
     "./vite": {
       "@glasshome/source": "./src/vite/index.ts",
       "types": "./dist/vite/index.d.ts",
@@ -72,6 +77,7 @@
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && bun scripts/check-host-singleton.ts && bun scripts/emit-export-history.ts",
+    "catalogs": "bun scripts/compile-catalogs.ts",
     "dev": "vite build --watch",
     "test": "bun test --isolate --timeout 30000 src scripts; s=$?; vitest run && exit $s",
     "test:dom": "vitest run",
@@ -82,7 +88,7 @@
     "lint": "oxlint --type-aware . && oxfmt --check ."
   },
   "dependencies": {
-    "@glasshome/widget-contract": "0.8.0",
+    "@glasshome/widget-contract": "0.10.0",
     "@tailwindcss/vite": "^4.1.13",
     "clsx": "^2.1.1",
     "happy-dom": "^20.0.0",

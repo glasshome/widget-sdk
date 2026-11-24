@@ -11,6 +11,8 @@ import {
 } from "solid-js";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
+import { type SdkKey } from "../../locales/compiled/en";
+import { sdkI18n } from "../i18n/sdk-text";
 import { PanelRow } from "./panel";
 
 type Entity = NonNullable<ReturnType<ReturnType<typeof useEntity>>>;
@@ -48,6 +50,12 @@ const VALVE_SET_POSITION = 4;
 const num = (n: unknown) => (typeof n === "number" ? n : undefined);
 const pct = (n: unknown) => (typeof n === "number" ? Math.round(n) : undefined);
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replaceAll("_", " ");
+
+/** Home Assistant's word for the entity's state in the member's language, else the state title-cased. */
+function stateWord(e: Entity): string {
+  const word = sdkI18n().translateState(e);
+  return word === e.state ? titleCase(e.state) : word;
+}
 const supports = (e: Entity, bit: number) =>
   ((num(e.attributes.supported_features) ?? 0) & bit) > 0;
 const fahrenheit = (e: Entity, unit: string) =>
@@ -73,9 +81,12 @@ const DOMAINS: Record<string, DomainRow> = {
     },
     on: (e) => e.state === "on",
     state: (e) => {
-      if (e.state !== "on") return "Off";
+      const { text } = sdkI18n();
+      if (e.state !== "on") return text("sdk.binary.off");
       const b = e.attributes.brightness;
-      return typeof b === "number" ? `${Math.round((b / 255) * 100)}%` : "On";
+      return typeof b === "number"
+        ? text("sdk.panel.percent", { level: Math.round((b / 255) * 100) })
+        : text("sdk.binary.on");
     },
     level: (e) => {
       const b = e.attributes.brightness;
@@ -89,14 +100,14 @@ const DOMAINS: Record<string, DomainRow> = {
     icon: "mdi:toggle-switch-variant",
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
-    state: (e) => (e.state === "on" ? "On" : "Off"),
+    state: (e) => sdkI18n().text(e.state === "on" ? "sdk.binary.on" : "sdk.binary.off"),
     tap: () => ({ service: "toggle" }),
   },
   input_boolean: {
     icon: "mdi:toggle-switch-variant",
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
-    state: (e) => (e.state === "on" ? "On" : "Off"),
+    state: (e) => sdkI18n().text(e.state === "on" ? "sdk.binary.on" : "sdk.binary.off"),
     tap: () => ({ service: "toggle" }),
   },
   fan: {
@@ -104,9 +115,10 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-success)",
     on: (e) => e.state === "on",
     state: (e) => {
-      if (e.state !== "on") return "Off";
+      const { text } = sdkI18n();
+      if (e.state !== "on") return text("sdk.binary.off");
       const p = pct(e.attributes.percentage);
-      return p === undefined ? "On" : `${p}%`;
+      return p === undefined ? text("sdk.binary.on") : text("sdk.panel.percent", { level: p });
     },
     level: (e) => (e.state === "on" ? (pct(e.attributes.percentage) ?? 100) : 0),
     setLevel: (_e, v) => ({ service: "set_percentage", data: { percentage: v } }),
@@ -118,8 +130,10 @@ const DOMAINS: Record<string, DomainRow> = {
     on: (e) => e.state !== "closed",
     state: (e) => {
       const p = pct(e.attributes.current_position);
-      const word = titleCase(e.state);
-      return p !== undefined && e.state === "open" ? `${word} · ${p}%` : word;
+      const word = stateWord(e);
+      return p !== undefined && e.state === "open"
+        ? sdkI18n().text("sdk.panel.state-level", { state: word, level: p })
+        : word;
     },
     level: (e) => pct(e.attributes.current_position),
     setLevel: (_e, v) => ({ service: "set_cover_position", data: { position: v } }),
@@ -131,8 +145,10 @@ const DOMAINS: Record<string, DomainRow> = {
     on: (e) => e.state !== "closed",
     state: (e) => {
       const p = pct(e.attributes.current_position);
-      const word = titleCase(e.state);
-      return p !== undefined && e.state === "open" ? `${word} · ${p}%` : word;
+      const word = stateWord(e);
+      return p !== undefined && e.state === "open"
+        ? sdkI18n().text("sdk.panel.state-level", { state: word, level: p })
+        : word;
     },
     level: (e) =>
       supports(e, VALVE_SET_POSITION) ? pct(e.attributes.current_position) : undefined,
@@ -143,7 +159,7 @@ const DOMAINS: Record<string, DomainRow> = {
     icon: (e) => (e.state === "locked" ? "mdi:lock" : "mdi:lock-open-variant"),
     tone: "var(--tone-success)",
     on: (e) => e.state === "locked",
-    state: (e) => titleCase(e.state),
+    state: (e) => stateWord(e),
     tap: (e) => ({ service: e.state === "locked" ? "unlock" : "lock" }),
   },
   // No tap: a tap that turns the heating off is a trap. Power lives in the thermostat's modes.
@@ -152,9 +168,12 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-danger)",
     on: (e) => e.state !== "off",
     state: (e) => {
-      if (e.state === "off") return "Off";
+      const { text } = sdkI18n();
+      if (e.state === "off") return text("sdk.binary.off");
       const t = e.attributes.temperature;
-      return typeof t === "number" ? `${titleCase(e.state)} · ${t}°` : titleCase(e.state);
+      return typeof t === "number"
+        ? text("sdk.panel.state-temperature", { state: stateWord(e), temperature: t })
+        : stateWord(e);
     },
     level: setpoint,
     bounds: setpointBounds((e, unit) => (fahrenheit(e, unit) ? 1 : 0.5)),
@@ -165,9 +184,12 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-danger)",
     on: (e) => e.state !== "off",
     state: (e) => {
-      if (e.state === "off") return "Off";
+      const { text } = sdkI18n();
+      if (e.state === "off") return text("sdk.binary.off");
       const t = e.attributes.temperature;
-      return typeof t === "number" ? `${titleCase(e.state)} · ${t}°` : titleCase(e.state);
+      return typeof t === "number"
+        ? text("sdk.panel.state-temperature", { state: stateWord(e), temperature: t })
+        : stateWord(e);
     },
     level: setpoint,
     bounds: setpointBounds(() => 1),
@@ -178,9 +200,10 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
     state: (e) => {
-      if (e.state !== "on") return "Off";
+      const { text } = sdkI18n();
+      if (e.state !== "on") return text("sdk.binary.off");
       const h = pct(e.attributes.humidity);
-      return h === undefined ? "On" : `${h}%`;
+      return h === undefined ? text("sdk.binary.on") : text("sdk.panel.percent", { level: h });
     },
     level: (e) => pct(e.attributes.humidity),
     bounds: (e) => ({
@@ -197,7 +220,7 @@ const DOMAINS: Record<string, DomainRow> = {
     state: (e) =>
       typeof e.attributes.media_title === "string" && e.state !== "off"
         ? e.attributes.media_title
-        : titleCase(e.state),
+        : stateWord(e),
     level: (e) =>
       typeof e.attributes.volume_level === "number"
         ? Math.round(e.attributes.volume_level * 100)
@@ -210,8 +233,8 @@ const DOMAINS: Record<string, DomainRow> = {
     tone: "var(--tone-info)",
     on: (e) => e.state === "on",
     state: (e) => {
-      const words = BINARY_WORDS[e.deviceClass ?? ""] ?? ["On", "Off"];
-      return e.state === "on" ? words[0] : words[1];
+      const words = BINARY_WORDS[e.deviceClass ?? ""] ?? ["sdk.binary.on", "sdk.binary.off"];
+      return sdkI18n().text(e.state === "on" ? words[0] : words[1]);
     },
   },
   button: {
@@ -232,14 +255,14 @@ const DOMAINS: Record<string, DomainRow> = {
     icon: "mdi:palette",
     tone: "var(--tone-accent)",
     on: () => false,
-    state: () => "Tap to run",
+    state: () => sdkI18n().text("sdk.panel.tap-to-run"),
     tap: () => ({ service: "turn_on" }),
   },
   script: {
     icon: "mdi:script-text",
     tone: "var(--tone-accent)",
     on: (e) => e.state === "on",
-    state: (e) => (e.state === "on" ? "Running" : "Tap to run"),
+    state: (e) => sdkI18n().text(e.state === "on" ? "sdk.panel.running" : "sdk.panel.tap-to-run"),
     tap: () => ({ service: "turn_on" }),
   },
 };
@@ -253,33 +276,34 @@ const COVER_ICON: Record<string, string> = {
   awning: "mdi:awning",
 };
 
-const BINARY_WORDS: Record<string, [string, string]> = {
-  door: ["Open", "Closed"],
-  window: ["Open", "Closed"],
-  garage_door: ["Open", "Closed"],
-  opening: ["Open", "Closed"],
-  motion: ["Detected", "Clear"],
-  occupancy: ["Detected", "Clear"],
-  presence: ["Home", "Away"],
-  moisture: ["Wet", "Dry"],
-  smoke: ["Smoke", "Clear"],
-  lock: ["Unlocked", "Locked"],
-  battery: ["Low", "Normal"],
-  connectivity: ["Connected", "Disconnected"],
+const BINARY_WORDS: Record<string, [SdkKey, SdkKey]> = {
+  door: ["sdk.binary.open", "sdk.binary.closed"],
+  window: ["sdk.binary.open", "sdk.binary.closed"],
+  garage_door: ["sdk.binary.open", "sdk.binary.closed"],
+  opening: ["sdk.binary.open", "sdk.binary.closed"],
+  motion: ["sdk.binary.detected", "sdk.binary.clear"],
+  occupancy: ["sdk.binary.detected", "sdk.binary.clear"],
+  presence: ["sdk.binary.home", "sdk.binary.away"],
+  moisture: ["sdk.binary.wet", "sdk.binary.dry"],
+  smoke: ["sdk.binary.smoke", "sdk.binary.clear"],
+  lock: ["sdk.binary.unlocked", "sdk.binary.locked"],
+  battery: ["sdk.binary.low", "sdk.binary.normal"],
+  connectivity: ["sdk.binary.connected", "sdk.binary.disconnected"],
 };
 
 /** A button's state is when it was last pressed. */
 function pressedAt(state: string): string {
+  const { formatDate, text } = sdkI18n();
   const t = Date.parse(state);
-  if (Number.isNaN(t)) return "Never pressed";
-  return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (Number.isNaN(t)) return text("sdk.panel.never-pressed");
+  return formatDate(t, { hour: "2-digit", minute: "2-digit" });
 }
 
 const FALLBACK: DomainRow = {
   icon: "mdi:circle-medium",
   tone: "var(--tone-neutral)",
   on: (e) => e.state === "on",
-  state: (e) => titleCase(e.state),
+  state: (e) => stateWord(e),
 };
 
 const WHOLE: Bounds = { min: 0, max: 100 };
