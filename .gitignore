@@ -5,3 +5,4 @@ dist/
 .env
 .env*.local
 src/vite/.schema-guard-test-*/
+.vitest/
