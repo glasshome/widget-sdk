@@ -1,5 +1,5 @@
 import { Button, buttonVariants, createHold, Icon } from "@glasshome/ui/solid";
-import { For, type JSX, Match, onCleanup, Show, Switch, useContext } from "solid-js";
+import { createSignal, For, type JSX, Match, onCleanup, Show, Switch, useContext } from "solid-js";
 import { INTERACTIVE } from "../gestures/use-widget-gestures";
 import { WidgetCtx } from "../hooks/use-widget-context";
 
@@ -19,6 +19,10 @@ export interface PanelSlide {
 
 const SLOP_PX = 8;
 const KEY_STEP = 5;
+// The keys and defaults a sealed widget's host takes at the event, ahead of a Worker engine's answer.
+const SLIDE_CLAIM = "key:ArrowLeft key:ArrowRight key:ArrowUp key:ArrowDown";
+const HOLD_CLAIM = "press:contextmenu";
+const SPENT_CLAIM = "prevent:touchend prevent:click stop:click";
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -41,9 +45,11 @@ function pointerGestures(opts: {
   const ctx = useContext(WidgetCtx);
   let start: { x: number; y: number; id: number } | undefined;
   let sliding = false;
+  const [spent, setSpent] = createSignal(false);
   const hold = createHold({
     slopPx: SLOP_PX,
     onHold: () => {
+      setSpent(true);
       opts.onHold?.();
       ctx?.onHeld?.();
     },
@@ -65,11 +71,13 @@ function pointerGestures(opts: {
   const end = () => {
     hold.up();
     start = undefined;
+    setSpent(false);
   };
   // Up, not cancel: the hold's own action may unmount this row, and its release stays spent.
   onCleanup(() => hold.up());
 
   return {
+    spent,
     onPointerDown: (e: PointerEvent) => {
       if (e.button !== 0 || start) return;
       const own = e.target instanceof Element ? e.target.closest(INTERACTIVE) : null;
@@ -187,6 +195,11 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
     onPointerUp: gestures.onPointerUp,
     onPointerCancel: gestures.onPointerCancel,
     onKeyDown: onKey,
+    get "data-claim"() {
+      return [HOLD_CLAIM, props.slide && SLIDE_CLAIM, gestures.spent() && SPENT_CLAIM]
+        .filter(Boolean)
+        .join(" ");
+    },
   };
   const body = () => (
     <>

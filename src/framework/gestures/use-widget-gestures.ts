@@ -44,7 +44,14 @@ export interface GestureHandlers {
   holds?: () => boolean;
   /** Keyboard door: Enter or Space taps, the context-menu key or Shift+F10 holds. */
   onKeyDown?: (e: KeyboardEvent) => void;
+  /** The `data-claim` for the gesture root: what its keys and hold take, read by a sealed widget's host at the event. */
+  claim?: () => string | undefined;
 }
+
+const TAP_CLAIM = "self:Enter self:Space";
+const HOLD_CLAIM = "self:ContextMenu press:contextmenu";
+// A fired hold's release: its compat mouse events and click belong to the hold.
+const SPENT_CLAIM = "prevent:touchend prevent:click stop:click";
 
 interface HoldFlood {
   x: number;
@@ -101,6 +108,7 @@ export function useWidgetGestures(
     startValue: undefined,
   };
   const [hold, setHold] = createSignal<HoldFlood | null>(null);
+  const [spent, setSpent] = createSignal(false);
 
   // Cached element dimensions — avoids forced layout in slide path.
   let cachedRect: { width: number; height: number } | null = null;
@@ -156,8 +164,12 @@ export function useWidgetGestures(
       const r = Math.hypot(Math.max(x, size.width - x), Math.max(y, size.height - y));
       setHold({ x, y, r, fired: false });
     },
-    onDisarm: () => setHold(null),
+    onDisarm: () => {
+      setHold(null);
+      setSpent(false);
+    },
     onHold: () => {
+      setSpent(true);
       setHold((h) => (h ? { ...h, fired: true } : h));
       haptics.bump();
       config().hold?.action();
@@ -360,8 +372,15 @@ export function useWidgetGestures(
     }
   };
 
+  const claim = () => {
+    const cfg = config();
+    const tokens = [cfg.tap && TAP_CLAIM, cfg.hold && HOLD_CLAIM, spent() && SPENT_CLAIM];
+    return tokens.filter(Boolean).join(" ") || undefined;
+  };
+
   return {
     onKeyDown,
+    claim,
     onPointerDown,
     onPointerMove,
     onPointerUp,

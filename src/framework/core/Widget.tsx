@@ -300,6 +300,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
               on:pointerup={onPointerUp}
               on:pointercancel={onPointerCancel}
               tabIndex={gestureEnabled() ? 0 : undefined}
+              data-claim={gestureEnabled() ? gestures()?.claim?.() : undefined}
               onKeyDown={(e) => {
                 if (gestureEnabled()) gestures()?.onKeyDown?.(e);
               }}
