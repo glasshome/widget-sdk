@@ -27,9 +27,16 @@ describe("a hold's fill", () => {
     const flood = view.container.querySelector<HTMLElement>(".glasshome-widget-hold-flood");
     if (!shell || !flood) throw new Error("no widget shell");
 
+    // Observers are called in the order they were made, so the widget's size reads have run when this one does.
+    const sized = new Promise<void>((done) => {
+      const after = new ResizeObserver(() => {
+        after.disconnect();
+        done();
+      });
+      after.observe(shell);
+    });
     await mouseOn("down", shell, { x: 0.25, y: 0.75 });
-    await new Promise(requestAnimationFrame);
-    await new Promise(requestAnimationFrame);
+    await sized;
     await vi.advanceTimersByTimeAsync(HOLD_GRACE_MS + 1);
 
     expect(flood.hasAttribute("data-hold")).toBe(true);
