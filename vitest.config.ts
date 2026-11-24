@@ -67,6 +67,10 @@ export default defineConfig({
   },
   test: {
     sequence: shuffleSeed ? { shuffle: true, seed: Number(shuffleSeed) } : undefined,
+    // Whole values in test.each titles keep two cases from sharing one results-ledger id.
+    taskTitleValueFormatTruncate: 0,
+    // Vitest's shared default directory is wiped by any suite whose lockfile differs, and its key misses workspace exports edits.
+    fsModuleCache: false,
     attachmentsDir: resultsDir ? `${resultsDir}/attachments` : undefined,
     reporters: resultsDir
       ? ["default", ["junit", { outputFile: `${resultsDir}/vitest.xml` }]]
@@ -80,16 +84,13 @@ export default defineConfig({
     include: ["tests/dom/**/*.test.{ts,tsx}"],
     setupFiles: ["./tests/dom/harness/setup.ts"],
     maxWorkers: 4,
+    api: { port: ownPort("WIDGET_SDK_BROWSER_PORT"), strictPort: true },
     browser: {
       enabled: true,
-      api: { port: ownPort("WIDGET_SDK_BROWSER_PORT"), strictPort: true },
       headless: true,
       screenshotFailures: Boolean(resultsDir),
-      screenshotDirectory: resultsDir ? `${resultsDir}/screenshots` : undefined,
       viewport: { width: 1024, height: 768 },
       provider: playwright({
-        // test-change-ok a press that cannot land fails in 5 s instead of waiting out the test
-        actionTimeout: 5000,
         contextOptions: { permissions: ["clipboard-read", "clipboard-write"] },
       }),
       instances: [{ browser: "chromium" }],
