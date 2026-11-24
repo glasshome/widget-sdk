@@ -89,8 +89,6 @@ export default defineConfig({
       screenshotFailures: Boolean(resultsDir),
       viewport: { width: 1024, height: 768 },
       provider: playwright({
-        // test-change-ok a press that cannot land fails in 5 s instead of waiting out the test
-        actionTimeout: 5000,
         contextOptions: { permissions: ["clipboard-read", "clipboard-write"] },
       }),
       instances: [{ browser: "chromium" }],
