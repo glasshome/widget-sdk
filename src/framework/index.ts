@@ -132,6 +132,7 @@ export {
 // ============================================================================
 
 export {
+  asset,
   formatDate,
   type FormattedText,
   type Formatters,

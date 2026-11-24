@@ -1,3 +1,4 @@
+export { asset } from "./assets";
 export { HostI18nContext, type WidgetI18n } from "./context";
 export {
   formatDate,
