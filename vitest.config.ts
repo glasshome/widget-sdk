@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";
@@ -8,6 +9,15 @@ import { mouse, touch } from "./tests/dom/harness/commands";
 
 // Forked workers inherit it, so a direct run matches the gate; bun test is UTC already.
 process.env.TZ = "UTC";
+
+const PICK =
+  "const s=require('net').createServer().listen(0,'localhost',()=>{console.log(s.address().port);s.close()})";
+
+// Vitest's default counts up from 63315 in every process, so two suites would probe the same ports.
+function ownPort(name: string): number {
+  process.env[name] ??= execFileSync(process.execPath, ["-e", PICK]).toString().trim();
+  return Number(process.env[name]);
+}
 
 // A gate run names a results directory; the runner keeps junit and failure shots there.
 const resultsDir = process.env.GATE_RESULTS_DIR;
@@ -72,6 +82,7 @@ export default defineConfig({
     maxWorkers: 4,
     browser: {
       enabled: true,
+      api: { port: ownPort("WIDGET_SDK_BROWSER_PORT"), strictPort: true },
       headless: true,
       screenshotFailures: Boolean(resultsDir),
       screenshotDirectory: resultsDir ? `${resultsDir}/screenshots` : undefined,
