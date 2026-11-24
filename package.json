@@ -79,7 +79,7 @@
     "build": "vite build && tsc -p tsconfig.build.json && bun scripts/check-host-singleton.ts && bun scripts/emit-export-history.ts",
     "catalogs": "bun scripts/compile-catalogs.ts",
     "dev": "vite build --watch",
-    "test": "bun test --timeout 30000 src scripts; s=$?; vitest run && exit $s",
+    "test": "bun test --isolate --timeout 30000 src scripts; s=$?; vitest run && exit $s",
     "test:dom": "vitest run",
     "test:dom:watch": "vitest",
     "typecheck:test": "tsc --noEmit",
