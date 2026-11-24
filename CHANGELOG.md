@@ -5,6 +5,20 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.0](https://github.com/glasshome/widget-sdk/compare/v1.33.1...v1.34.0) (2026-11-24)
+
+
+### Features
+
+* widget root, gestures and panel rows declare their claims ([dc69114](https://github.com/glasshome/widget-sdk/commit/dc691147dc2ede1a9cc6978a8209c2baaacb1416))
+* widget root, gestures and panel rows declare their claims ([15c3d3b](https://github.com/glasshome/widget-sdk/commit/15c3d3b99c4f005b18a36eee943b45bdbf4b3b59))
+
+
+### Bug Fixes
+
+* **test:** browser suites allow the gate results directory, so failure screenshots save ([3816c80](https://github.com/glasshome/widget-sdk/commit/3816c80b13c139b7b80903d94abcb9d3fbf016c8))
+* **test:** failure attachments go to the gate results directory, never the package ([cd6e9c9](https://github.com/glasshome/widget-sdk/commit/cd6e9c98e14720e4dedd2e3befacdb4c6383eb8f))
+
 ## [1.33.1](https://github.com/glasshome/widget-sdk/compare/v1.33.0...v1.33.1) (2026-11-21)
 
 
