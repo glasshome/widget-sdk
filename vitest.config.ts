@@ -82,9 +82,9 @@ export default defineConfig({
     include: ["tests/dom/**/*.test.{ts,tsx}"],
     setupFiles: ["./tests/dom/harness/setup.ts"],
     maxWorkers: 4,
+    api: { port: ownPort("WIDGET_SDK_BROWSER_PORT"), strictPort: true },
     browser: {
       enabled: true,
-      api: { port: ownPort("WIDGET_SDK_BROWSER_PORT"), strictPort: true },
       headless: true,
       screenshotFailures: Boolean(resultsDir),
       viewport: { width: 1024, height: 768 },
