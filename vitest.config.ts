@@ -2,13 +2,22 @@ import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";
 import solid from "vite-plugin-solid";
+import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 import { mouse, touch } from "./tests/dom/harness/commands";
 
 // Forked workers inherit it, so a direct run matches the gate; bun test is UTC already.
 process.env.TZ = "UTC";
 
+// A gate run names a results directory; the runner keeps junit and failure shots there.
+const resultsDir = process.env.GATE_RESULTS_DIR;
+const shuffleSeed = process.env.GATE_SHUFFLE_SEED;
+
 export default defineConfig({
+  // A failure screenshot is written through the dev server, which serves only allowed roots.
+  server: {
+    fs: { allow: [searchForWorkspaceRoot(process.cwd()), ...(resultsDir ? [resultsDir] : [])] },
+  },
   plugins: [solid({ dev: false, hot: false }), tailwindcss()],
   resolve: {
     // No "@glasshome/source": ui publishes dist, and this suite runs in the standalone clone too.
@@ -47,6 +56,13 @@ export default defineConfig({
     ],
   },
   test: {
+    sequence: shuffleSeed ? { shuffle: true, seed: Number(shuffleSeed) } : undefined,
+    attachmentsDir: resultsDir ? `${resultsDir}/attachments` : undefined,
+    reporters: resultsDir
+      ? ["default", ["junit", { outputFile: `${resultsDir}/vitest.xml` }]]
+      : ["default"],
+    // test-change-ok hang guard for expect.poll and expect.element, below the 5 s testTimeout; provisional until the nightly stress ledger measures it
+    expect: { poll: { timeout: 4_000 } },
     // Unset, vite-plugin-solid asks for jsdom, which a standalone clone does not install.
     environment: "node",
     // @solidjs/testing-library registers its cleanup on a global afterEach.
@@ -57,7 +73,8 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      screenshotFailures: false,
+      screenshotFailures: Boolean(resultsDir),
+      screenshotDirectory: resultsDir ? `${resultsDir}/screenshots` : undefined,
       viewport: { width: 1024, height: 768 },
       provider: playwright({
         // test-change-ok a press that cannot land fails in 5 s instead of waiting out the test
