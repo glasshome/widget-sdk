@@ -73,6 +73,11 @@
       "types": "./dist/testing/index.d.ts",
       "import": "./dist/testing/index.js"
     },
+    "./testing/tools": {
+      "@glasshome/source": "./src/testing/tools.ts",
+      "types": "./dist/testing/tools.d.ts",
+      "import": "./dist/testing/tools.js"
+    },
     "./export-history": "./dist/export-history.json",
     "./tailwind-sources": "./tailwind-sources.css",
     "./package.json": "./package.json"

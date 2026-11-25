@@ -1,1 +1,2 @@
-export { languageTools, type TestLanguage, WidgetLanguage } from "./i18n";
+export { WidgetLanguage } from "./i18n";
+export { languageTools, type TestLanguage } from "./tools";
