@@ -2,7 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { createComponent, createRoot } from "solid-js";
 import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
 import type { WidgetI18n } from "./context";
-import { formatDate, formatNumber, formatRelative, formatTemperature } from "./format";
+import {
+  formatDate,
+  formatDateParts,
+  formatNumber,
+  formatRelative,
+  formatTemperature,
+} from "./format";
 
 function inWidget(formatting: string, read: () => string): string {
   const i18n: WidgetI18n = {
@@ -73,5 +79,30 @@ describe("formatDate", () => {
 describe("formatRelative", () => {
   test("writes a relative time in the formatting locale", () => {
     expect(inWidget("fr-FR", () => formatRelative(-1, "day", { numeric: "auto" }))).toBe("hier");
+  });
+});
+
+describe("formatDateParts", () => {
+  const options: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+  };
+  const moment = Date.UTC(2026, 10, 3, 15, 4);
+
+  test("formatDateParts follows the formatting locale", () => {
+    const american = inWidget("en-US", () =>
+      formatDateParts(moment, options)
+        .map((part) => `${part.type}:${part.value}`)
+        .join("|"),
+    );
+    expect(american).toContain("dayPeriod:PM");
+    const german = inWidget("de-DE", () =>
+      formatDateParts(moment, options)
+        .map((part) => `${part.type}:${part.value}`)
+        .join("|"),
+    );
+    expect(german).not.toContain("dayPeriod");
+    expect(german).toContain("hour:15");
   });
 });

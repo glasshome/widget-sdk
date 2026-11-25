@@ -134,6 +134,8 @@ export {
 export {
   asset,
   formatDate,
+  formatDateParts,
+  type FormattedPart,
   type FormattedText,
   type Formatters,
   formatNumber,
@@ -149,8 +151,11 @@ export {
   type TranslateArgs,
   translateState,
   type TranslateState,
+  type TranslationTools,
   useTranslation,
   type WidgetI18n,
+  zonedTime,
+  type ZonedTime,
 } from "./i18n";
 
 // ============================================================================

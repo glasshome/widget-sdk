@@ -7,6 +7,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: "src/index.ts",
+        "testing/index": "src/testing/index.ts",
         schemas: "src/schemas.ts",
         deprecations: "src/deprecations.ts",
         "media/camera-source": "src/media/camera-source.ts",

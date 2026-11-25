@@ -13,7 +13,7 @@ import { stateTranslator, type TranslateState } from "./state";
 export type TranslateArgs = Readonly<Record<string, string | number>>;
 export type Translate = (key: string, args?: TranslateArgs) => string;
 
-function translator(scope: I18nScope): Translate {
+export function translator(scope: I18nScope): Translate {
   return (key, args = {}) => {
     const current = scope.i18n();
     const formatting = formattingOf(scope);
@@ -51,3 +51,5 @@ export function useTranslation(): Formatters & {
     ...formattersOf(scope),
   };
 }
+
+export type TranslationTools = ReturnType<typeof useTranslation>;

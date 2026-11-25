@@ -40,11 +40,14 @@ import {
   splitProps,
   useContext,
 } from "solid-js";
+import { localizeManifest } from "@glasshome/widget-contract/catalog-reserved";
+import { formatMessage } from "@glasshome/widget-contract/i18n-format";
 import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { toFormSchema } from "../to-form-schema";
 import { type SdkKey } from "../../locales/compiled/en";
+import { messageEnv, messageOf } from "../i18n/context";
 import { sdkI18n } from "../i18n/sdk-text";
 import { WidgetDebugTab } from "./debug-view";
 import { validateConfigDraft } from "./validate-config";
@@ -218,14 +221,24 @@ export function WidgetDialog(props: WidgetDialogProps) {
     ),
   );
 
-  // Generate JSON Schema from Zod configSchema once
+  const instanceI18n = useContext(WidgetCtx)?.i18n;
+  const lookup = (key: string): string | undefined => {
+    const current = instanceI18n?.();
+    const message = messageOf(current?.catalog, key);
+    return current && message
+      ? formatMessage(message, {}, messageEnv(current.language, current.formatting))
+      : undefined;
+  };
+
   createEffect(
-    on(
-      () => local.configSchema,
-      (schema) => {
-        if (schema) setFormSchema(asFormSchema(schema));
-      },
-    ),
+    on([() => local.configSchema, () => instanceI18n?.()?.catalog], ([schema]) => {
+      if (schema) {
+        setFormSchema(
+          localizeManifest({ name: "", schema: asFormSchema(schema) }, lookup)
+            .schema as SchemaFormSchema,
+        );
+      }
+    }),
   );
 
   const schemaDirty = () =>
