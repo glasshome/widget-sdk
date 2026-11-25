@@ -37,6 +37,8 @@ export function WidgetHead(props: {
   /** Small line above the name: a state, a count, a reading. Hidden when it repeats the name. */
   eyebrow?: JSX.Element;
   name: JSX.Element;
+  /** The name is one the home chose (a title, an entity's name): a long one is cut by design. A word the widget's own catalog supplies stays checked. */
+  homeName?: boolean;
   /** Chips at the head's end, on tiles tall enough. */
   aside?: JSX.Element;
   /** Draws the icon in the widget's colour instead of muted. */
@@ -77,7 +79,10 @@ export function WidgetHead(props: {
         <Show when={eyebrow() && !repeatsName()}>
           <span class="glasshome-widget-eyebrow">{eyebrow()}</span>
         </Show>
-        <span class="glasshome-widget-name" data-truncate="a name the home chose">
+        <span
+          class="glasshome-widget-name"
+          data-truncate={props.homeName ? "a name the home chose" : undefined}
+        >
           {props.name}
         </span>
       </div>

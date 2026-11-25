@@ -201,3 +201,24 @@ describe("a widget with a sheet", () => {
     expect(taps).toEqual([]);
   });
 });
+
+describe("Widget.Head's name", () => {
+  it("marks designed truncation only for a name the home chose", () => {
+    render(() => (
+      <>
+        <Widget>
+          <Widget.Content>
+            <Widget.Head name="Kitchen Window" homeName />
+          </Widget.Content>
+        </Widget>
+        <Widget>
+          <Widget.Content>
+            <Widget.Head name="Batterien" />
+          </Widget.Content>
+        </Widget>
+      </>
+    ));
+    const names = [...document.querySelectorAll<HTMLElement>(".glasshome-widget-name")];
+    expect(names.map((n) => n.dataset.truncate)).toEqual(["a name the home chose", undefined]);
+  });
+});
