@@ -77,7 +77,9 @@ export function WidgetHead(props: {
         <Show when={eyebrow() && !repeatsName()}>
           <span class="glasshome-widget-eyebrow">{eyebrow()}</span>
         </Show>
-        <span class="glasshome-widget-name">{props.name}</span>
+        <span class="glasshome-widget-name" data-truncate="a name the home chose">
+          {props.name}
+        </span>
       </div>
       <Show when={aside()}>
         <div class="glasshome-widget-head-aside">{aside()}</div>
