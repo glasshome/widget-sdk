@@ -200,6 +200,40 @@ export function assertHookReadsDeclared(
 
 export type Introspector = (outFile: string) => IntrospectResult | Promise<IntrospectResult>;
 
+function assertSchemaRecordCurrent(args: {
+  currentRecord: string;
+  hash: string;
+  configVersion: number | null;
+  widgetName: string;
+  hashFile: string;
+}): void {
+  const { hash, configVersion, widgetName, hashFile } = args;
+  const raw = args.currentRecord.trim();
+  let recorded: SchemaGuardRecord | null = null;
+  if (raw.startsWith("{")) {
+    try {
+      recorded = JSON.parse(raw) as SchemaGuardRecord;
+    } catch {
+      recorded = null;
+    }
+  }
+  if (recorded && recorded.hashVersion === SCHEMA_HASH_VERSION) {
+    if (recorded.hash !== hash && recorded.configVersion === configVersion) {
+      throw new Error(
+        `[widget-sdk] Config schema shape changed for "${widgetName}" without a configVersion bump. ` +
+          `Bump configVersion in defineWidget (currently ${configVersion ?? "unset"}) or revert the schema change, ` +
+          `then rebuild. Recorded in ${hashFile}`,
+      );
+    }
+  } else {
+    console.warn(
+      `[widget-sdk] Schema shape record for "${widgetName}" was written by an older SDK, so it cannot be ` +
+        `compared. Re-recording it under hash format ${SCHEMA_HASH_VERSION}. This build is not checked for a ` +
+        `missing configVersion bump; the next one is. (${hashFile})`,
+    );
+  }
+}
+
 export async function runSchemaGuard(args: {
   outFile: string;
   hashFile: string;
@@ -248,30 +282,13 @@ export async function runSchemaGuard(args: {
 
   const currentRecord = existsSync(args.hashFile) ? readFileSync(args.hashFile, "utf-8") : null;
   if (currentRecord !== null) {
-    const raw = currentRecord.trim();
-    let recorded: SchemaGuardRecord | null = null;
-    if (raw.startsWith("{")) {
-      try {
-        recorded = JSON.parse(raw) as SchemaGuardRecord;
-      } catch {
-        recorded = null;
-      }
-    }
-    if (recorded && recorded.hashVersion === SCHEMA_HASH_VERSION) {
-      if (recorded.hash !== hash && recorded.configVersion === configVersion) {
-        throw new Error(
-          `[widget-sdk] Config schema shape changed for "${widgetName}" without a configVersion bump. ` +
-            `Bump configVersion in defineWidget (currently ${configVersion ?? "unset"}) or revert the schema change, ` +
-            `then rebuild. Recorded in ${args.hashFile}`,
-        );
-      }
-    } else {
-      console.warn(
-        `[widget-sdk] Schema shape record for "${widgetName}" was written by an older SDK, so it cannot be ` +
-          `compared. Re-recording it under hash format ${SCHEMA_HASH_VERSION}. This build is not checked for a ` +
-          `missing configVersion bump; the next one is. (${args.hashFile})`,
-      );
-    }
+    assertSchemaRecordCurrent({
+      currentRecord,
+      hash,
+      configVersion,
+      widgetName,
+      hashFile: args.hashFile,
+    });
   }
 
   const nextRecord = `${JSON.stringify({ hash, configVersion, hashVersion: SCHEMA_HASH_VERSION })}\n`;
