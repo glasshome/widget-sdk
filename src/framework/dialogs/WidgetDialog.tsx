@@ -40,7 +40,7 @@ import {
   splitProps,
   useContext,
 } from "solid-js";
-import { localizeManifest } from "@glasshome/widget-contract/catalog-reserved";
+import { localizeManifest } from "@glasshome/widget-contract/catalog-keys";
 import { formatMessage } from "@glasshome/widget-contract/i18n-format";
 import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
