@@ -74,6 +74,16 @@ describe("formatDate", () => {
       ),
     ).toBe("3. Nov.");
   });
+
+  test("an empty or unknown zone writes in the device zone", () => {
+    const date = new Date(Date.UTC(2026, 10, 3, 12));
+    const base = { hour: "numeric", minute: "2-digit" } as const;
+    const device = inWidget("de-DE", () => formatDate(date, base));
+    expect(inWidget("de-DE", () => formatDate(date, { ...base, timeZone: "" }))).toBe(device);
+    expect(inWidget("de-DE", () => formatDate(date, { ...base, timeZone: "Not/AZone" }))).toBe(
+      device,
+    );
+  });
 });
 
 describe("formatRelative", () => {
@@ -104,5 +114,21 @@ describe("formatDateParts", () => {
     );
     expect(german).not.toContain("dayPeriod");
     expect(german).toContain("hour:15");
+  });
+
+  test("an empty or unknown zone gives the device zone parts", () => {
+    const read = (timeZone: string) =>
+      inWidget("de-DE", () =>
+        formatDateParts(moment, { hour: "numeric", minute: "2-digit", timeZone })
+          .map((part) => part.value)
+          .join(""),
+      );
+    const device = inWidget("de-DE", () =>
+      formatDateParts(moment, { hour: "numeric", minute: "2-digit" })
+        .map((part) => part.value)
+        .join(""),
+    );
+    expect(read("")).toBe(device);
+    expect(read("Not/AZone")).toBe(device);
   });
 });

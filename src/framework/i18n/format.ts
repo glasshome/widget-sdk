@@ -11,11 +11,38 @@ function numberIn(locale: string, n: number, options?: Intl.NumberFormatOptions)
   );
 }
 
+const zones = new Map<string, boolean>();
+
+function usableZone(zone: string | undefined): string | undefined {
+  if (!zone) return undefined;
+  let ok = zones.get(zone);
+  if (ok === undefined) {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: zone });
+      ok = true;
+    } catch {
+      ok = false;
+    }
+    zones.set(zone, ok);
+  }
+  return ok ? zone : undefined;
+}
+
+function deviceZoneFallback(
+  options: Intl.DateTimeFormatOptions | undefined,
+): Intl.DateTimeFormatOptions | undefined {
+  if (!options || !("timeZone" in options)) return options;
+  const { timeZone, ...rest } = options;
+  const zone = usableZone(timeZone);
+  return zone ? { ...rest, timeZone: zone } : rest;
+}
+
 function dateIn(
   locale: string,
   value: Date | number,
-  options?: Intl.DateTimeFormatOptions,
+  rawOptions?: Intl.DateTimeFormatOptions,
 ): FormattedText {
+  const options = deviceZoneFallback(rawOptions);
   return display(
     cachedIntl("date", locale, options, () => new Intl.DateTimeFormat(locale, options)).format(
       value,
@@ -44,8 +71,9 @@ export type FormattedPart = { type: Intl.DateTimeFormatPartTypes; value: Formatt
 function datePartsIn(
   locale: string,
   value: Date | number,
-  options?: Intl.DateTimeFormatOptions,
+  rawOptions?: Intl.DateTimeFormatOptions,
 ): FormattedPart[] {
+  const options = deviceZoneFallback(rawOptions);
   const parts = cachedIntl(
     "date",
     locale,
@@ -80,7 +108,7 @@ export function zonedTime(value: Date | number, timeZone?: string): ZonedTime {
     minute: "numeric",
     second: "numeric",
     weekday: "short",
-    timeZone,
+    ...(usableZone(timeZone) && { timeZone: usableZone(timeZone) }),
   };
   const parts = cachedIntl(
     "zoned",
