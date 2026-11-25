@@ -234,18 +234,9 @@ function assertSchemaRecordCurrent(args: {
   }
 }
 
-export async function runSchemaGuard(args: {
-  outFile: string;
-  hashFile: string;
-  widgetName: string;
-  manifestPath?: string;
-  /** Persistent worker to reuse. Only `bun widget connect`'s watch loop passes one. */
-  session?: IntrospectSession;
-  /** Reads the bundle when no session is given. Defaults to one subprocess per call. */
-  introspect?: Introspector;
-}): Promise<void> {
-  if (!existsSync(args.outFile)) return;
+type GuardArgs = Parameters<typeof runSchemaGuard>[0];
 
+async function readDefinition(args: GuardArgs) {
   const read = args.session
     ? await args.session.introspect(args.outFile)
     : await (args.introspect ?? introspectOnce)(args.outFile);
@@ -257,25 +248,33 @@ export async function runSchemaGuard(args: {
         "  This usually means the bundle throws while being imported.",
     );
   }
+  return read.value;
+}
 
-  const def = read.value;
+async function assertDefinitionValid(
+  args: GuardArgs,
+  def: Awaited<ReturnType<typeof readDefinition>>,
+): Promise<void> {
   const declaredName = def.manifest?.name ?? args.widgetName;
   // Shape first, or a malformed entry reads as a schema rejection.
   await assertExamplesValid(def.manifest?.examples, declaredName);
   assertExampleConfigsValid(def.exampleConfigIssues, declaredName);
 
-  const jsonSchema = def.jsonSchema;
   const manifestFile =
     args.manifestPath && existsSync(args.manifestPath) ? args.manifestPath : null;
-  if (jsonSchema && manifestFile) writeGeneratedManifest(manifestFile, def, jsonSchema);
+  if (def.jsonSchema && manifestFile) writeGeneratedManifest(manifestFile, def, def.jsonSchema);
   // Checked against the manifest as written, since that file is what publish ships.
   const shipped: CapabilityGrant[] | undefined = manifestFile
     ? JSON.parse(readFileSync(manifestFile, "utf-8")).capabilities
     : def.manifest?.capabilities;
   assertHookReadsDeclared(readFileSync(args.outFile, "utf-8"), shipped ?? [], declaredName);
+}
 
-  if (!jsonSchema) return;
-
+function recordSchemaShape(
+  args: GuardArgs,
+  def: Awaited<ReturnType<typeof readDefinition>>,
+  jsonSchema: NonNullable<Awaited<ReturnType<typeof readDefinition>>["jsonSchema"]>,
+): void {
   const hash = hashSchema(jsonSchema);
   const configVersion = def.manifest?.configVersion ?? null;
   const widgetName = def.manifest?.name ?? args.widgetName;
@@ -293,6 +292,22 @@ export async function runSchemaGuard(args: {
 
   const nextRecord = `${JSON.stringify({ hash, configVersion, hashVersion: SCHEMA_HASH_VERSION })}\n`;
   if (nextRecord !== currentRecord) writeFileSync(args.hashFile, nextRecord);
+}
+
+export async function runSchemaGuard(args: {
+  outFile: string;
+  hashFile: string;
+  widgetName: string;
+  manifestPath?: string;
+  /** Persistent worker to reuse. Only `bun widget connect`'s watch loop passes one. */
+  session?: IntrospectSession;
+  /** Reads the bundle when no session is given. Defaults to one subprocess per call. */
+  introspect?: Introspector;
+}): Promise<void> {
+  if (!existsSync(args.outFile)) return;
+  const def = await readDefinition(args);
+  await assertDefinitionValid(args, def);
+  if (def.jsonSchema) recordSchemaShape(args, def, def.jsonSchema);
 }
 
 /** The two checks every built widget passes, in this order: host theme vars in its CSS, then the schema guard on its bundle. */

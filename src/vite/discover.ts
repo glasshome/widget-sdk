@@ -24,32 +24,32 @@ export function discoverWidgets(srcDir: string): DiscoveredWidget[] {
   return widgets;
 }
 
-/** Generate registry.json from widget manifests, validated against the contract schema. */
-export function generateRegistry(srcDir: string, outDir: string): void {
-  const widgets: unknown[] = [];
-
-  if (existsSync(srcDir)) {
-    for (const dir of readdirSync(srcDir)) {
-      if (!statSync(join(srcDir, dir)).isDirectory()) continue;
-      const manifestPath = join(srcDir, dir, "manifest.json");
-      if (!existsSync(manifestPath)) continue;
-      const parsed = widgetManifestSchema.safeParse(
-        JSON.parse(readFileSync(manifestPath, "utf-8")),
+function registryEntries(srcDir: string, outDir: string): unknown[] {
+  if (!existsSync(srcDir)) return [];
+  return readdirSync(srcDir).flatMap((dir) => {
+    if (!statSync(join(srcDir, dir)).isDirectory()) return [];
+    const manifestPath = join(srcDir, dir, "manifest.json");
+    if (!existsSync(manifestPath)) return [];
+    const parsed = widgetManifestSchema.safeParse(JSON.parse(readFileSync(manifestPath, "utf-8")));
+    if (!parsed.success) {
+      throw new Error(
+        `[registry] Invalid manifest for "${dir}": ${formatSchemaError(parsed.error)}`,
       );
-      if (!parsed.success) {
-        throw new Error(
-          `[registry] Invalid manifest for "${dir}": ${formatSchemaError(parsed.error)}`,
-        );
-      }
-      const hasCss = existsSync(join(outDir, `${dir}.css`));
-      widgets.push({
+    }
+    const hasCss = existsSync(join(outDir, `${dir}.css`));
+    return [
+      {
         ...parsed.data,
         bundleUrl: `./${dir}.js`,
         ...(hasCss ? { cssUrl: `./${dir}.css` } : {}),
-      });
-    }
-  }
+      },
+    ];
+  });
+}
 
+/** Generate registry.json from widget manifests, validated against the contract schema. */
+export function generateRegistry(srcDir: string, outDir: string): void {
+  const widgets = registryEntries(srcDir, outDir);
   const registry = {
     version: 1,
     generatedAt: new Date().toISOString(),
