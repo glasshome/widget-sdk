@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createRoot } from "solid-js";
+import { createEffect, createMemo, createRoot, flush } from "solid-js";
 import { describe, expect, it } from "vitest";
 import { createWarmSet, WARM_SHEET_CAP } from "../../src/framework/dialogs/warm-dialogs";
 
@@ -54,13 +54,20 @@ describe("createWarmSet", () => {
     const seen: boolean[] = [];
     const dispose = createRoot((dispose) => {
       const warm = createMemo(() => set.has("a"));
-      createEffect(() => seen.push(warm()));
+      createEffect(warm, (value) => {
+        seen.push(value);
+      });
       return dispose;
     });
+    flush();
     set.touch("a");
+    flush();
     set.touch("b");
+    flush();
     set.touch("a");
+    flush();
     set.drop("a");
+    flush();
     dispose();
     expect(seen).toEqual([false, true, false, true, false]);
   });

@@ -5,7 +5,7 @@
  */
 
 import { render } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { createSignal, flush } from "solid-js";
 import { describe, expect, it } from "vitest";
 import { materialTerms } from "@glasshome/ui/tokens";
 import { Widget } from "../../src/framework/core/Widget";
@@ -44,6 +44,7 @@ describe("useMaterial", () => {
     ));
     expect(view.getByTestId("probe").textContent).toBe("frosted:flat:0");
     setWorn({ id: "neon", terms: materialTerms(neon) });
+    flush();
     expect(view.getByTestId("probe").textContent).toBe("neon:raised:3");
   });
 

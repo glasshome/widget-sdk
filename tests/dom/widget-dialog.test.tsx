@@ -5,7 +5,7 @@
  */
 
 import { render, screen } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { createSignal, flush } from "solid-js";
 import { type JSX } from "@solidjs/web";
 import { describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
@@ -157,6 +157,7 @@ describe("WidgetDialog draft lifecycle", () => {
     expect(save().disabled).toBe(false);
 
     setConfig({ title: "Reverted" });
+    flush();
     expect(field().value).toBe("Reverted");
     expect(save().disabled).toBe(true);
   });

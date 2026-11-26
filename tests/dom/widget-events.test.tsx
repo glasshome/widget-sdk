@@ -6,6 +6,7 @@
  */
 
 import { render } from "@solidjs/testing-library";
+// oxlint-disable-next-line solid/portal-in-layer -- stands in for the layer a host injects
 import { Portal, render as renderInto } from "@solidjs/web";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";

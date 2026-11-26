@@ -1,7 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 import { checkWidgetStateWrite } from "@glasshome/widget-contract/state";
 import { createSignal, type Signal } from "solid-js";
-import { createSignal as signal, Show } from "solid-js";
+import { flush, createSignal as signal, Show } from "solid-js";
 import { describe, expect, it } from "vitest";
 import { Widget } from "../../src/framework/core/Widget";
 import { z } from "zod";
@@ -96,6 +96,7 @@ describe("useWidgetState", () => {
     const host = hostStore();
     mount(ctxWith(host.store));
     host.setFromHost("recent", "[[1,2]]");
+    flush();
     expect(text("a")).toBe("1,2");
     expect(text("b")).toBe("1,2");
   });
@@ -105,6 +106,7 @@ describe("useWidgetState", () => {
     mount(ctxWith(host.store));
     expect(setRecent((prev) => [[3, 4], ...prev])).toBe("ok");
     expect(host.writes).toEqual([["recent", "[[3,4],[1,2]]"]]);
+    flush();
     expect(text("a")).toBe("3,4 1,2");
     expect(text("b")).toBe("3,4 1,2");
   });
@@ -129,6 +131,7 @@ describe("useWidgetState", () => {
     mount(ctxWith());
     expect(text("a")).toBe("");
     expect(setRecent([[7, 8]])).toBe("ok");
+    flush();
     expect(text("a")).toBe("7,8");
     expect(text("b")).toBe("7,8");
     expect(setRecent(Array.from({ length: 2000 }, () => [123.456, 78.9]))).toBe("value");
@@ -162,11 +165,15 @@ describe("useWidgetState", () => {
       </WidgetCtx>
     ));
     expect(setRecent([[1, 2]])).toBe("ok");
+    flush();
     expect(text("body")).toBe("1,2");
     expect(setInBody([[3, 4]])).toBe("ok");
+    flush();
     expect(text("part")).toBe("3,4");
     setShown(false);
+    flush();
     setShown(true);
+    flush();
     expect(text("part")).toBe("3,4");
   });
 

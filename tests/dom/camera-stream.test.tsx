@@ -1,5 +1,5 @@
 import { render } from "@solidjs/testing-library";
-import { createSignal } from "solid-js";
+import { createSignal, flush } from "solid-js";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";
 import {
@@ -220,6 +220,7 @@ describe("CameraStream", () => {
     const first = view.container.querySelector("img");
     expect(first?.getAttribute("src")).toBe(PICTURE);
     setSession(2);
+    flush();
     const second = view.container.querySelector("img");
     expect(second).not.toBe(first);
     expect(second?.getAttribute("src")).toBe(PICTURE);

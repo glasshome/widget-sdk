@@ -1,6 +1,7 @@
 import { render } from "@solidjs/testing-library";
-import { Show } from "solid-js";
+import { flush, Show } from "solid-js";
 import { type JSX } from "@solidjs/web";
+// oxlint-disable-next-line solid/portal-in-layer -- stands in for the layer a host injects
 import { Portal } from "@solidjs/web";
 import { describe, expect, it } from "vitest";
 import { useSheetDormant, WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
@@ -188,12 +189,15 @@ describe("a warm sheet", () => {
   it("reopens on the node it closed with", () => {
     const a = mountSheet("a");
     a.dialog.openDialog();
+    flush();
     const first = sheetOf("a");
     expect(first).not.toBeNull();
     a.dialog.closeDialog();
+    flush();
     expect(first?.isConnected).toBe(true);
     expect(first?.closest("[data-dormant]")).not.toBeNull();
     a.dialog.openDialog();
+    flush();
     expect(sheetOf("a")).toBe(first);
     expect(first?.closest("[data-dormant]")).toBeNull();
   });
@@ -202,19 +206,24 @@ describe("a warm sheet", () => {
     const widgets = ["a", "b", "c", "d"].map(mountSheet);
     for (const widget of widgets.slice(0, 3)) {
       widget.dialog.openDialog();
+      flush();
       widget.dialog.closeDialog();
+      flush();
     }
     const kept = ["a", "b", "c"].map(sheetOf);
     expect(kept.map((node) => node?.isConnected)).toEqual([true, true, true]);
     widgets[3]?.dialog.openDialog();
+    flush();
     expect(kept.map((node) => node?.isConnected)).toEqual([false, true, true]);
   });
 
   it("edit-mode settings never keep", () => {
     const a = mountSheet("a");
     a.dialog.openDialog("edit");
+    flush();
     expect(document.querySelector('[data-edit="a"]')).not.toBeNull();
     a.dialog.closeDialog();
+    flush();
     expect(warmSheets.has(a.ctx)).toBe(true);
     expect(document.querySelector('[data-edit="a"]')).toBeNull();
     expect(document.querySelector("[data-layer]")).toBeNull();
@@ -223,7 +232,9 @@ describe("a warm sheet", () => {
   it("a widget unmounted while its sheet is dormant takes the layer with it", () => {
     const a = mountSheet("a");
     a.dialog.openDialog();
+    flush();
     a.dialog.closeDialog();
+    flush();
     const layer = sheetOf("a")?.closest("[data-layer]");
     expect(layer?.isConnected).toBe(true);
     a.unmount();
@@ -234,10 +245,13 @@ describe("a warm sheet", () => {
   it("its body reads dormant from the close to the next open", () => {
     const a = mountSheet("a");
     a.dialog.openDialog();
+    flush();
     expect(sheetOf("a")?.textContent).toBe("shown");
     a.dialog.closeDialog();
+    flush();
     expect(sheetOf("a")?.textContent).toBe("dormant");
     a.dialog.openDialog();
+    flush();
     expect(sheetOf("a")?.textContent).toBe("shown");
   });
 });
