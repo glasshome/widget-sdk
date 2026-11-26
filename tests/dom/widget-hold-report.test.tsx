@@ -50,9 +50,9 @@ describe("the host hears about holds", () => {
   it("a widget with a hold reports it can be held, and false once it unmounts", () => {
     const host = hostCtx();
     const { unmount } = render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <HoldTile />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toBe(true);
     unmount();
@@ -62,9 +62,9 @@ describe("the host hears about holds", () => {
   it("a <Widget> nested inside a holding widget does not overwrite its report", () => {
     const host = hostCtx();
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <HoldTile />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toBe(true);
   });
@@ -72,9 +72,9 @@ describe("the host hears about holds", () => {
   it("a widget that only taps reports it cannot be held", () => {
     const host = hostCtx();
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <TapTile />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toBe(false);
   });
@@ -82,9 +82,9 @@ describe("the host hears about holds", () => {
   it("an empty widget reports it cannot be held, though holding opens its settings", () => {
     const host = hostCtx();
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Widget emptyState={{ title: "No light entity", message: "Hold to configure" }} />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toBe(false);
   });
@@ -93,9 +93,9 @@ describe("the host hears about holds", () => {
     useFakeTime();
     const host = hostCtx();
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <HoldTile />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     await mouseOn("down", shell());
     await vi.advanceTimersByTimeAsync(100);
@@ -111,9 +111,9 @@ describe("the host hears about holds", () => {
   it("the context-menu key is a hold too", async () => {
     const host = hostCtx();
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <HoldTile />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     shell().focus();
     await userEvent.keyboard("{ContextMenu}");
@@ -125,9 +125,9 @@ describe("the host hears about holds", () => {
     const host = hostCtx();
     let opened = 0;
     const view = render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <PanelRow icon="lucide:lamp" name="Hallway" on={false} onHold={() => opened++} />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     await mouseOn("down", view.getByText("Hallway"));
     await vi.advanceTimersByTimeAsync(HOLD_MS);

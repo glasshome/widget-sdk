@@ -45,7 +45,7 @@ function mount(extra: Partial<WidgetDialogProps> = {}, developer = true) {
     developer: () => developer,
   };
   return render(() => (
-    <WidgetCtx.Provider value={ctx}>
+    <WidgetCtx value={ctx}>
       <WidgetDialog
         {...parts}
         open
@@ -56,7 +56,7 @@ function mount(extra: Partial<WidgetDialogProps> = {}, developer = true) {
         editContent={<p>edit pane</p>}
         {...extra}
       />
-    </WidgetCtx.Provider>
+    </WidgetCtx>
   ));
 }
 
@@ -231,7 +231,7 @@ describe("WidgetDialog for a homeowner", () => {
       anchor: () => tile,
     };
     render(() => (
-      <WidgetCtx.Provider value={ctx}>
+      <WidgetCtx value={ctx}>
         <WidgetDialog
           {...parts}
           open
@@ -240,7 +240,7 @@ describe("WidgetDialog for a homeowner", () => {
           activeTab="controls"
           sheet={() => <div>the extras</div>}
         />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
 
     const sheet = panel();

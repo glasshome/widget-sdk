@@ -1,6 +1,7 @@
 import { render } from "@solidjs/testing-library";
-import { type JSX, Show } from "solid-js";
-import { Portal } from "solid-js/web";
+import { Show } from "solid-js";
+import { type JSX } from "@solidjs/web";
+import { Portal } from "@solidjs/web";
 import { describe, expect, it } from "vitest";
 import { useSheetDormant, WidgetDialog } from "../../src/framework/dialogs/WidgetDialog";
 import { warmSheets } from "../../src/framework/dialogs/warm-dialogs";
@@ -39,7 +40,7 @@ const stubs = {
 function mount(ctx: ReactiveWidgetContext) {
   let dialog: WidgetDialogReturn | undefined;
   const view = render(() => (
-    <WidgetCtx.Provider value={ctx}>
+    <WidgetCtx value={ctx}>
       {(() => {
         dialog = useWidgetDialog();
         return (
@@ -51,7 +52,7 @@ function mount(ctx: ReactiveWidgetContext) {
           />
         );
       })()}
-    </WidgetCtx.Provider>
+    </WidgetCtx>
   ));
   if (!dialog) throw new Error("hook did not run");
   return { dialog, unmount: view.unmount };
@@ -117,12 +118,12 @@ describe("useWidgetDialog and the warm set", () => {
     const ctx = newCtx();
     let dialog: WidgetDialogReturn | undefined;
     const view = render(() => (
-      <WidgetCtx.Provider value={ctx}>
+      <WidgetCtx value={ctx}>
         {(() => {
           dialog = useWidgetDialog();
           return <p>no dialog</p>;
         })()}
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     dialog?.openDialog();
     expect(warmSheets.has(ctx)).toBe(true);
@@ -161,7 +162,7 @@ function mountSheet(name: string) {
   const ctx = newCtx();
   let dialog: WidgetDialogReturn | undefined;
   const view = render(() => (
-    <WidgetCtx.Provider value={ctx}>
+    <WidgetCtx value={ctx}>
       {(() => {
         dialog = useWidgetDialog();
         return (
@@ -175,7 +176,7 @@ function mountSheet(name: string) {
           />
         );
       })()}
-    </WidgetCtx.Provider>
+    </WidgetCtx>
   ));
   if (!dialog) throw new Error("hook did not run");
   return { ctx, dialog, unmount: view.unmount };

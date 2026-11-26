@@ -112,7 +112,7 @@ const developerCtx = {
 describe("the dialog's copy action", () => {
   it("reports the copy it made", async () => {
     render(() => (
-      <WidgetCtx.Provider value={developerCtx}>
+      <WidgetCtx value={developerCtx}>
         <WidgetDialog
           {...parts}
           open
@@ -121,7 +121,7 @@ describe("the dialog's copy action", () => {
           activeTab="debug"
           debugData={data()}
         />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
 
     await userEvent.click(screen.getByRole("button", { name: "Copy all" }));
@@ -138,7 +138,7 @@ describe("the dialog's copy action", () => {
     });
     document.execCommand = vi.fn(() => false);
     render(() => (
-      <WidgetCtx.Provider value={developerCtx}>
+      <WidgetCtx value={developerCtx}>
         <WidgetDialog
           {...parts}
           open
@@ -147,7 +147,7 @@ describe("the dialog's copy action", () => {
           activeTab="debug"
           debugData={data()}
         />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
 
     await userEvent.click(screen.getByRole("button", { name: "Copy all" }));

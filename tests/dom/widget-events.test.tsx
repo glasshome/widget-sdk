@@ -6,7 +6,7 @@
  */
 
 import { render } from "@solidjs/testing-library";
-import { Portal, render as renderInto } from "solid-js/web";
+import { Portal, render as renderInto } from "@solidjs/web";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";
 import { delegateInside } from "../../src/host";

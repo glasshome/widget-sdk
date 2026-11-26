@@ -143,11 +143,11 @@ describe("a widget with a sheet", () => {
       );
     }
     render(() => (
-      <WidgetCtx.Provider value={ctx}>
+      <WidgetCtx value={ctx}>
         <Cell>
           <Tile />
         </Cell>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
     if (!shell) throw new Error("shell did not render");
@@ -184,11 +184,11 @@ describe("a widget with a sheet", () => {
       );
     }
     render(() => (
-      <WidgetCtx.Provider value={ctx}>
+      <WidgetCtx value={ctx}>
         <Cell>
           <Tile />
         </Cell>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
     if (!shell) throw new Error("shell did not render");

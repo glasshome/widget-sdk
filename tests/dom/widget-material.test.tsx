@@ -38,9 +38,9 @@ describe("useMaterial", () => {
       terms: materialTerms({ v: 1, preset: "frosted" }),
     });
     const view = render(() => (
-      <WidgetCtx.Provider value={host(worn)}>
+      <WidgetCtx value={host(worn)}>
         <Probe />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(view.getByTestId("probe").textContent).toBe("frosted:flat:0");
     setWorn({ id: "neon", terms: materialTerms(neon) });

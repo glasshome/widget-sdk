@@ -21,11 +21,11 @@ describe("the host hears a widget's shell", () => {
   it("the outer widget reports its tone, and nothing once it unmounts", () => {
     const host = hostCtx(true);
     const { unmount } = render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Widget tone="info">
           <Widget color="#ff0000">Lamp</Widget>
         </Widget>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toEqual({ tone: "var(--tone-info)", lift: null });
     unmount();
@@ -35,9 +35,9 @@ describe("the host hears a widget's shell", () => {
   it("a widget with no tone reports a shell without one", () => {
     const host = hostCtx(true);
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Widget>Clock</Widget>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toEqual({ tone: null, lift: null });
   });
@@ -45,15 +45,15 @@ describe("the host hears a widget's shell", () => {
   it("a variant that sets the shell's lift or tone reports them", () => {
     const minimal = hostCtx(true);
     render(() => (
-      <WidgetCtx.Provider value={minimal.ctx}>
+      <WidgetCtx value={minimal.ctx}>
         <Widget variant="minimal">Clock</Widget>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(minimal.reports.at(-1)).toEqual({ tone: null, lift: 0 });
 
     const custom = hostCtx(true);
     render(() => (
-      <WidgetCtx.Provider value={custom.ctx}>
+      <WidgetCtx value={custom.ctx}>
         <Widget
           variant={{
             id: "teal",
@@ -63,7 +63,7 @@ describe("the host hears a widget's shell", () => {
         >
           Clock
         </Widget>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(custom.reports.at(-1)).toEqual({ tone: "#00aaaa", lift: 0.2 });
   });
@@ -71,11 +71,11 @@ describe("the host hears a widget's shell", () => {
   it("a host that hears the shell draws its halo, so the outer widget draws none of its own", () => {
     const host = hostCtx(true);
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Widget>
           <Widget>Lamp</Widget>
         </Widget>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(halos()).toBe(1);
   });
@@ -83,9 +83,9 @@ describe("the host hears a widget's shell", () => {
   it("a host that does not hear the shell leaves the widget to draw its halo", () => {
     const host = hostCtx(false);
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Widget>Lamp</Widget>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(halos()).toBe(1);
   });

@@ -72,10 +72,10 @@ function Probe(props: { id: string }) {
 
 function mount(ctx: ReactiveWidgetContext) {
   render(() => (
-    <WidgetCtx.Provider value={ctx}>
+    <WidgetCtx value={ctx}>
       <Probe id="a" />
       <Probe id="b" />
-    </WidgetCtx.Provider>
+    </WidgetCtx>
   ));
 }
 
@@ -157,9 +157,9 @@ describe("useWidgetState", () => {
       );
     }
     render(() => (
-      <WidgetCtx.Provider value={ctxWith()}>
+      <WidgetCtx value={ctxWith()}>
         <Body />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(setRecent([[1, 2]])).toBe("ok");
     expect(text("body")).toBe("1,2");
@@ -180,9 +180,9 @@ describe("useWidgetState", () => {
       return null;
     }
     render(() => (
-      <WidgetCtx.Provider value={ctxWith(host.store)}>
+      <WidgetCtx value={ctxWith(host.store)}>
         <Dates />
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(setSince(new Date(5))).toBe("value");
     expect(setCount(Number.NaN)).toBe("value");

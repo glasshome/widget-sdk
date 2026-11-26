@@ -41,11 +41,11 @@ describe("every widget answers a hold", () => {
       return <Widget gestures={gestures}>Lamp</Widget>;
     }
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Cell>
           <Tile />
         </Cell>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     await press(shell());
     await vi.advanceTimersByTimeAsync(HOLD_MS - 1);
@@ -59,11 +59,11 @@ describe("every widget answers a hold", () => {
     useFakeTime();
     const host = hostCtx();
     render(() => (
-      <WidgetCtx.Provider value={host.ctx}>
+      <WidgetCtx value={host.ctx}>
         <Cell>
           <Widget>Clock</Widget>
         </Cell>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
     expect(host.reports.at(-1)).toBe(false);
     const frame = shell().closest<HTMLElement>(".glasshome-widget-frame");

@@ -33,11 +33,7 @@ function mount(kind: "webrtc" | "hls", source?: CameraSource, fullscreen?: boole
     />
   );
   const view = render(() =>
-    source ? (
-      <CameraSourceContext.Provider value={source}>{stream()}</CameraSourceContext.Provider>
-    ) : (
-      stream()
-    ),
+    source ? <CameraSourceContext value={source}>{stream()}</CameraSourceContext> : stream(),
   );
   return { view, errors };
 }
@@ -77,14 +73,14 @@ describe("CameraStream", () => {
     const errors: string[] = [];
     const [entityId, setEntityId] = createSignal("camera.a");
     render(() => (
-      <CameraSourceContext.Provider value={source}>
+      <CameraSourceContext value={source}>
         <CameraStream
           entityId={entityId()}
           kind="hls"
           muted
           onError={(reason) => errors.push(reason)}
         />
-      </CameraSourceContext.Provider>
+      </CameraSourceContext>
     ));
     await expect.poll(() => asked).toBe(true);
     setEntityId("camera.b");
@@ -117,9 +113,9 @@ describe("CameraStream", () => {
       webrtc: () => signal,
     };
     const view = render(() => (
-      <CameraSourceContext.Provider value={source}>
+      <CameraSourceContext value={source}>
         <CameraStream entityId="camera.front_door" kind="webrtc" muted />
-      </CameraSourceContext.Provider>
+      </CameraSourceContext>
     ));
     await expect.poll(() => started).toBe(true);
     view.unmount();
@@ -165,7 +161,7 @@ describe("CameraStream", () => {
     };
     const [session, setSession] = createSignal(1);
     const view = render(() => (
-      <CameraSourceContext.Provider value={source}>
+      <CameraSourceContext value={source}>
         <CameraStream
           entityId="camera.front_door"
           kind="hls"
@@ -174,7 +170,7 @@ describe("CameraStream", () => {
           fullscreen
           class={SIZED}
         />
-      </CameraSourceContext.Provider>
+      </CameraSourceContext>
     ));
     await expect.poll(() => asked).toHaveLength(1);
     await userEvent.click(view.getByRole("button", { name: "Full screen" }));
@@ -236,7 +232,7 @@ describe("CameraStream", () => {
     const beside: string[] = [];
     const [kind, setKind] = createSignal<"image" | "hls">("image");
     render(() => (
-      <CameraSourceContext.Provider value={refusing}>
+      <CameraSourceContext value={refusing}>
         <CameraStream
           entityId="camera.front_door"
           kind={kind()}
@@ -252,7 +248,7 @@ describe("CameraStream", () => {
           muted
           onError={(reason) => beside.push(reason)}
         />
-      </CameraSourceContext.Provider>
+      </CameraSourceContext>
     ));
     setKind("hls");
     await expect.poll(() => beside).toEqual(["image error"]);
@@ -267,14 +263,14 @@ describe("CameraStream", () => {
       candidate: () => Promise.resolve(),
     };
     render(() => (
-      <CameraSourceContext.Provider value={{ ...refusing, webrtc: () => signal }}>
+      <CameraSourceContext value={{ ...refusing, webrtc: () => signal }}>
         <CameraStream
           entityId="camera.front_door"
           kind="webrtc"
           muted
           onStage={(stage) => stages.push(stage)}
         />
-      </CameraSourceContext.Provider>
+      </CameraSourceContext>
     ));
     await expect.poll(() => stages.at(-1)).toMatch(/^stage home assistant answer, connection \w+$/);
   });

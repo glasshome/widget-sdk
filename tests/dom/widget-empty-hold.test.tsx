@@ -24,11 +24,11 @@ describe("an empty tile", () => {
     useFakeTime();
     const ctx = { updateConfig: () => {} };
     render(() => (
-      <WidgetCtx.Provider value={ctx}>
+      <WidgetCtx value={ctx}>
         <Cell>
           <EmptyWidget />
         </Cell>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
 
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");
@@ -43,11 +43,11 @@ describe("an empty tile", () => {
   it("opens the widget's settings from the context-menu key", async () => {
     const ctx = { updateConfig: () => {} };
     render(() => (
-      <WidgetCtx.Provider value={ctx}>
+      <WidgetCtx value={ctx}>
         <Cell>
           <EmptyWidget />
         </Cell>
-      </WidgetCtx.Provider>
+      </WidgetCtx>
     ));
 
     const shell = document.querySelector<HTMLElement>(".glasshome-widget");

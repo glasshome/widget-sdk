@@ -5,7 +5,8 @@
  */
 
 import { render, screen } from "@solidjs/testing-library";
-import { createSignal, type JSX } from "solid-js";
+import { createSignal } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { z } from "zod";
