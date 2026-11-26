@@ -32,7 +32,15 @@ export default defineConfig({
   resolve: {
     // No "@glasshome/source": ui publishes dist, and this suite runs in the standalone clone too.
     conditions: ["browser"],
-    dedupe: ["solid-js", "solid-js/web", "solid-js/store"],
+    dedupe: [
+      "solid-js",
+      "solid-js/web",
+      "solid-js/store",
+      "@solidjs/web",
+      "@solidjs/router",
+      "@solidjs/signals",
+      "@solidjs/meta",
+    ],
     // The host imports the SDK by name to share its module state; here that is the source under test.
     alias: [
       {
