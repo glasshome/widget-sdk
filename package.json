@@ -75,6 +75,7 @@
     "dev": "vite build --watch",
     "test": "bun test --isolate --timeout 30000 src scripts; s=$?; vitest run && exit $s",
     "test:dom": "vitest run",
+    "test:production": "WIDGET_SDK_SOLID_DEV=0 vitest run",
     "test:dom:watch": "vitest",
     "typecheck:test": "tsc --noEmit",
     "check:history": "bun scripts/check-export-history.ts",
@@ -95,7 +96,9 @@
   },
   "devDependencies": {
     "@glasshome/ui": "1.37.0",
-    "@solidjs/testing-library": "^0.8.10",
+    "@solidjs/testing-library": "1.0.0-rc.2",
+    "@solidjs/vite-plugin": "3.0.1",
+    "@solidjs/web": "2.0.3",
     "@types/bun": "^1.4.0",
     "@types/node": "^25.2.2",
     "@types/semver": "^7.7.0",
@@ -105,15 +108,16 @@
     "oxlint": "1.81.0",
     "oxlint-tsgolint": "7.0.2001",
     "playwright": "1.63.0",
+    "solid-js": "2.0.3",
     "typescript": "^7.0.2",
-    "vite": "^8.1.0",
-    "vite-plugin-solid": "^2.11.12",
+    "vite": "^8.2.2",
     "vitest": "5.1.1"
   },
   "peerDependencies": {
     "@glasshome/sync-layer": "0.9.1",
     "@glasshome/ui": "1.37.0",
-    "solid-js": "^1.9.11"
+    "@solidjs/web": "^2.0.3",
+    "solid-js": "^2.0.3"
   },
   "engines": {
     "node": ">=18"

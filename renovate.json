@@ -22,7 +22,7 @@
       "matchPackageNames": [
         "typescript",
         "vite",
-        "vite-plugin-solid",
+        "@solidjs/vite-plugin",
         "vitest",
         "@biomejs/biome",
         "tsdown",

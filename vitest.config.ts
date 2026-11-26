@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { playwright } from "@vitest/browser-playwright";
-import solid from "vite-plugin-solid";
+import solid from "@solidjs/vite-plugin";
 import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 import { mouse, touch } from "./tests/dom/harness/commands";
@@ -21,6 +21,8 @@ function ownPort(name: string): number {
 
 // A gate run names a results directory; the runner keeps junit and failure shots there.
 const resultsDir = process.env.GATE_RESULTS_DIR;
+// Solid's development build reports owned-scope and context errors the production build hides.
+const devMode = process.env.WIDGET_SDK_SOLID_DEV !== "0";
 const shuffleSeed = process.env.GATE_SHUFFLE_SEED;
 
 export default defineConfig({
@@ -28,10 +30,10 @@ export default defineConfig({
   server: {
     fs: { allow: [searchForWorkspaceRoot(process.cwd()), ...(resultsDir ? [resultsDir] : [])] },
   },
-  plugins: [solid({ dev: false, hot: false }), tailwindcss()],
+  plugins: [solid({ dev: devMode, refresh: false }), tailwindcss()],
   resolve: {
     // No "@glasshome/source": ui publishes dist, and this suite runs in the standalone clone too.
-    conditions: ["browser"],
+    conditions: devMode ? ["browser", "development"] : ["browser"],
     dedupe: [
       "solid-js",
       "solid-js/web",
@@ -58,8 +60,7 @@ export default defineConfig({
     noDiscovery: true,
     include: [
       "solid-js",
-      "solid-js/web",
-      "solid-js/store",
+      "@solidjs/web",
       "@solidjs/testing-library",
       "clsx",
       "tailwind-merge",
@@ -85,7 +86,7 @@ export default defineConfig({
       : ["default"],
     // test-change-ok hang guard for expect.poll and expect.element, below the 5 s testTimeout; provisional until the nightly stress ledger measures it
     expect: { poll: { timeout: 4_000 } },
-    // Unset, vite-plugin-solid asks for jsdom, which a standalone clone does not install.
+    // Unset, the Solid plugin asks for jsdom, which a standalone clone does not install.
     environment: "node",
     // @solidjs/testing-library registers its cleanup on a global afterEach.
     globals: true,
