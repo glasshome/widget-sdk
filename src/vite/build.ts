@@ -5,7 +5,12 @@ import { discoverWidgets, generateRegistry } from "./discover";
 import { isWidgetExternal, syncLayerImportGuard, uiImportGuard } from "./import-guards";
 import type { IntrospectSession } from "./introspect-session";
 import { checkBuiltWidget } from "./schema-guard";
-import { buildOnlyTailwind, createWidgetBuildEntry, widgetCssConfig } from "./tailwind-entry";
+import {
+  buildOnlyTailwind,
+  createWidgetBuildEntry,
+  readSdkRange,
+  widgetCssConfig,
+} from "./tailwind-entry";
 
 export interface BuildWidgetsOptions {
   /** Directory containing widget subdirectories (default: "src") */
@@ -66,7 +71,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
         ...buildOnlyTailwind(),
         ...(options?.plugins ?? []),
         syncLayerImportGuard(),
-        uiImportGuard(uiImportWarned),
+        uiImportGuard(uiImportWarned, readSdkRange(join(dirname(widget.entry), "manifest.json"))),
       ],
       ...options?.viteConfig,
       css: { ...options?.viteConfig?.css, ...widgetCssConfig() },

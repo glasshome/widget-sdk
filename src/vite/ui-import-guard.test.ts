@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { deprecations } from "../deprecations";
 import { createUiImportTracker, isDirectUiImportSource } from "./index";
+import { uiImportGuard } from "./import-guards";
 
 /** One widget build: scan its sources, then report what is new this run. */
 function runBuild(warned: Set<string>, sources: [id: string, code: string][]): string[] {
@@ -111,5 +112,36 @@ describe("direct-ui-import registry entry", () => {
     expect(re.test("import { Badge } from '@glasshome/ui'")).toBe(true);
     expect(re.test('import { Slider } from "@glasshome/widget-sdk";')).toBe(false);
     expect(re.test('import { x } from "@glasshome/ui-kit";')).toBe(false);
+  });
+});
+
+describe("uiImportGuard by the manifest's sdkVersion", () => {
+  const source: [string, string] = [
+    `${process.cwd()}/src/light/controls.tsx`,
+    'import { Slider } from "@glasshome/ui/solid";',
+  ];
+  const transform = (sdkRange: string | undefined) => {
+    const hook = uiImportGuard(new Set(), sdkRange).transform;
+    if (typeof hook !== "function") throw new Error("guard has no transform");
+    return () => hook.call({} as never, source[1], source[0]);
+  };
+
+  test("fails a widget that admits only SDK 2", () => {
+    expect(transform("^2.0.0")).toThrow(/must not import "@glasshome\/ui" directly/);
+    expect(transform(">=2.0.0")).toThrow(/src\/light\/controls\.tsx/);
+  });
+
+  test("leaves a widget that still admits SDK 1 to the warning", () => {
+    for (const range of ["^1.30.0", ">=1.30.0", "^1.30.0 || ^2.0.0", "^2.0.0-beta.1", undefined]) {
+      expect(transform(range)).not.toThrow();
+    }
+  });
+
+  test("never fails a widget that imports through the SDK", () => {
+    const hook = uiImportGuard(new Set(), "^2.0.0").transform;
+    if (typeof hook !== "function") throw new Error("guard has no transform");
+    expect(() =>
+      hook.call({} as never, 'import { Slider } from "@glasshome/widget-sdk";', source[0]),
+    ).not.toThrow();
   });
 });

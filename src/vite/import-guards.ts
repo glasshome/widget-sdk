@@ -1,5 +1,6 @@
 import { relative } from "node:path";
 import { isHostProvidedModule } from "@glasshome/widget-contract";
+import { intersects, validRange } from "semver";
 import type { Plugin } from "vite";
 import { deprecations, formatDeprecation } from "../deprecations";
 import { normalizePath } from "./normalize-path";
@@ -79,10 +80,7 @@ export function isDirectUiImportSource(id: string, code: string): boolean {
 }
 
 /**
- * Warns (never fails) when widget source imports @glasshome/ui directly.
- * Warn-only counterpart to syncLayerImportGuard: direct imports keep working
- * until 2.0, but they bypass the sdkVersion gate, so ui can drift against
- * published widgets with nothing checking compatibility. Detection scans
+ * Reports widget source that imports @glasshome/ui directly. Detection scans
  * module source in `transform` because externalized specifiers never reach
  * `resolveId` (rollup consults `external` for the bare id first).
  *
@@ -106,13 +104,28 @@ export function createUiImportTracker(warned: Set<string> = new Set()) {
   };
 }
 
-export function uiImportGuard(warned?: Set<string>): Plugin {
+/** True when the manifest's sdkVersion admits no SDK below 2.0.0, where direct ui imports end. */
+function refusesDirectUi(sdkRange: string | undefined): boolean {
+  if (!sdkRange || validRange(sdkRange) === null) return false;
+  return !intersects(sdkRange, "<2.0.0", { includePrerelease: true });
+}
+
+/** Fails a widget whose sdkVersion admits only SDK 2 or later; warns one that still admits SDK 1. */
+export function uiImportGuard(warned?: Set<string>, sdkRange?: string): Plugin {
   const tracker = createUiImportTracker(warned);
+  const refuses = refusesDirectUi(sdkRange);
   return {
     name: "glasshome-widget:ui-import-guard",
     apply: "build",
     enforce: "pre",
     transform(code: string, id: string) {
+      if (refuses && isDirectUiImportSource(id, code)) {
+        throw new Error(
+          `Widgets on SDK 2 must not import "@glasshome/ui" directly ` +
+            `(imported by ${normalizePath(relative(process.cwd(), id.split("?")[0] ?? id))}). ` +
+            `Import the same export from "@glasshome/widget-sdk" instead.`,
+        );
+      }
       tracker.scan(id, code);
       return null;
     },

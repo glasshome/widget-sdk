@@ -42,7 +42,7 @@ export function hostStylesUi(sdkRange: string | undefined): boolean {
   return !intersects(sdkRange, `<${HOST_UI_SHEET_SDK}`, { includePrerelease: true });
 }
 
-function readSdkRange(manifestPath: string): string | undefined {
+export function readSdkRange(manifestPath: string): string | undefined {
   if (!existsSync(manifestPath)) return undefined;
   const manifest: unknown = JSON.parse(readFileSync(manifestPath, "utf-8"));
   if (typeof manifest !== "object" || manifest === null || !("sdkVersion" in manifest))

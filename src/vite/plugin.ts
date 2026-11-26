@@ -6,7 +6,12 @@ import { buildWidgets } from "./build";
 import { isWidgetExternal, syncLayerImportGuard, uiImportGuard } from "./import-guards";
 import { normalizePath } from "./normalize-path";
 import { checkBuiltWidget } from "./schema-guard";
-import { buildOnlyTailwind, createWidgetBuildEntry, widgetCssConfig } from "./tailwind-entry";
+import {
+  buildOnlyTailwind,
+  createWidgetBuildEntry,
+  readSdkRange,
+  widgetCssConfig,
+} from "./tailwind-entry";
 
 export interface GlasshomeWidgetOptions {
   /** Entry file for the widget (default: "src/index.tsx") */
@@ -138,7 +143,7 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     ...buildOnlyTailwind(),
     buildPlugin,
     syncLayerImportGuard(),
-    uiImportGuard(),
+    uiImportGuard(undefined, readSdkRange(resolve(process.cwd(), "manifest.json"))),
     schemaPlugin,
     devPlugin,
   ];
