@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
@@ -59,6 +59,22 @@ describe("historyWithBuild", () => {
       "1.0.0": ["Widget"],
       "1.3.0": ["Widget", "useEntity"],
     });
+  });
+
+  test("keys the build by the first release of a major the package declares ahead of its version", () => {
+    const dir = fakePackage(
+      { version: "1.34.1", main: "./dist/index.js", glasshome: { sdkMajor: 2 } },
+      { "dist/index.js": `export { Widget };` },
+    );
+    expect(Object.keys(historyWithBuild(dir, { "1.0.0": ["Widget"] }))).toEqual(["1.0.0", "2.0.0"]);
+  });
+});
+
+describe("this package's declared major", () => {
+  test("is its version's major, or the next one while the release that writes it is pending", () => {
+    const pkg = JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf-8"));
+    const versionMajor = Number(pkg.version.split(".")[0]);
+    expect([versionMajor, versionMajor + 1]).toContain(pkg.glasshome.sdkMajor);
   });
 });
 
