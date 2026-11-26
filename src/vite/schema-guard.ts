@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type CapabilityGrant, matchesRead } from "@glasshome/widget-contract";
 import { sdkImportsOf } from "@glasshome/widget-contract/sdk-floor";
+import { intersects, validRange } from "semver";
 import { assertNoHostThemeVars } from "./css-guard";
 import type { ExampleConfigIssue, WidgetIntrospection } from "./introspect-core";
 import {
@@ -234,6 +235,23 @@ function assertSchemaRecordCurrent(args: {
   }
 }
 
+/** Fails a bundle on SDK 2 whose defineWidget names another sdkVersion than manifest.json; warns one that admits SDK 1. */
+function assertSdkVersionAgrees(
+  bundleRange: unknown,
+  fileRange: unknown,
+  widgetName: string,
+): void {
+  if (typeof bundleRange !== "string" || typeof fileRange !== "string") return;
+  if (bundleRange === fileRange) return;
+  const message =
+    `[widget-sdk] "${widgetName}": defineWidget declares sdkVersion "${bundleRange}", but manifest.json declares "${fileRange}". ` +
+    "The host picks the widget's guest from either one, so set defineWidget's sdkVersion to the manifest's.";
+  const onSdk2 =
+    validRange(fileRange) !== null && !intersects(fileRange, "<2.0.0", { includePrerelease: true });
+  if (onSdk2) throw new Error(message);
+  console.warn(message);
+}
+
 type GuardArgs = Parameters<typeof runSchemaGuard>[0];
 
 async function readDefinition(args: GuardArgs) {
@@ -264,8 +282,10 @@ async function assertDefinitionValid(
     args.manifestPath && existsSync(args.manifestPath) ? args.manifestPath : null;
   if (def.jsonSchema && manifestFile) writeGeneratedManifest(manifestFile, def, def.jsonSchema);
   // Checked against the manifest as written, since that file is what publish ships.
-  const shipped: CapabilityGrant[] | undefined = manifestFile
-    ? JSON.parse(readFileSync(manifestFile, "utf-8")).capabilities
+  const file = manifestFile ? JSON.parse(readFileSync(manifestFile, "utf-8")) : null;
+  if (file) assertSdkVersionAgrees(def.manifest?.sdkVersion, file.sdkVersion, declaredName);
+  const shipped: CapabilityGrant[] | undefined = file
+    ? file.capabilities
     : def.manifest?.capabilities;
   assertHookReadsDeclared(readFileSync(args.outFile, "utf-8"), shipped ?? [], declaredName);
 }
