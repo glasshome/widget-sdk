@@ -1,7 +1,11 @@
 #!/usr/bin/env bun
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
-import { compareSdkVersions, exportNames } from "@glasshome/widget-contract/sdk-floor";
+import {
+  buildSdkVersion,
+  compareSdkVersions,
+  exportNames,
+} from "@glasshome/widget-contract/sdk-floor";
 
 export type ExportHistory = Record<string, string[]>;
 
@@ -30,7 +34,8 @@ export function scanPackage(pkgDir: string): string[] | null {
 }
 
 export function historyWithBuild(pkgDir: string, committed: ExportHistory): ExportHistory {
-  const { version } = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8"));
+  const version = buildSdkVersion(JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8")));
+  if (!version) throw new Error(`${pkgDir}/package.json has no version`);
   const names = scanPackage(pkgDir);
   if (!names) throw new Error(`cannot scan the exports of ${pkgDir} ${version}`);
   return sortHistory({ ...committed, [version]: names });
