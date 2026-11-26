@@ -211,11 +211,10 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
         />
       </Show>
       <span
-        class="glasshome-widget-icon glass glasshome-panel-row-icon"
-        classList={{
-          "glass-tint": props.on,
-          "glasshome-panel-row-icon-off": !props.on,
-        }}
+        class={[
+          "glasshome-widget-icon glass glasshome-panel-row-icon",
+          { "glass-tint": props.on, "glasshome-panel-row-icon-off": !props.on },
+        ]}
       >
         <Icon icon={props.icon} class="glasshome-widget-icon-glyph" />
       </span>

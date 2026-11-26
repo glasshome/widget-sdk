@@ -13,7 +13,6 @@ import {
   createMemo,
   createSignal,
   For,
-  on,
   onCleanup,
   Show,
   useContext,
@@ -45,7 +44,12 @@ export function WidgetHead(props: {
 }): JSX.Element {
   const confirmed = useContext(WidgetConfirmedCtx);
   const registry = widgetRegistry(useContext(WidgetCtx));
-  createEffect(() => registry?.setIcon(props.icon));
+  createEffect(
+    () => props.icon,
+    (icon) => {
+      registry?.setIcon(icon);
+    },
+  );
   onCleanup(() => {
     if (registry?.icon() === props.icon) registry?.setIcon(undefined);
   });
@@ -105,7 +109,13 @@ export function WidgetHero(props: {
       ? String(props.value).length + (props.unit ? 0.5 : 0)
       : undefined;
   const [turn, setTurn] = createSignal<"a" | "b" | undefined>();
-  createEffect(on(wording, () => setTurn((t) => (t === "a" ? "b" : "a")), { defer: true }));
+  createEffect(
+    wording,
+    () => {
+      setTurn((t) => (t === "a" ? "b" : "a"));
+    },
+    { defer: true },
+  );
   return (
     <div
       class={cn("glasshome-widget-hero", props.class)}

@@ -1,19 +1,9 @@
-import { clearDelegatedEvents, DelegatedEvents, delegateEvents } from "@solidjs/web";
-
-// Handlers passed through props (every ui control) are delegated, and the document cannot see into a closed root.
-// Solid's handler leaves target/currentTarget pinned to inner nodes; unpin, registered after it, removes them before the event leaves.
-const unpin = (e: Event) => {
-  Reflect.deleteProperty(e, "target");
-  Reflect.deleteProperty(e, "currentTarget");
-};
-
-// A widget overlay portalled to the body walks back into the closed root on the document pass; a stopped walk pins there.
-// Installed at load, before any widget bundle can register a document listener that would run ahead of it.
-if (typeof document !== "undefined") {
-  const events = [...DelegatedEvents];
-  delegateEvents(events);
-  for (const name of events) document.addEventListener(name, unpin, { passive: true });
-}
+import {
+  DelegatedEvents,
+  delegateEvents,
+  registerDelegatedContainer,
+  unregisterDelegatedContainer,
+} from "@solidjs/web";
 
 /**
  * Solid handlers inside a closed root run; anything a host renders into one it owns needs this.
@@ -24,18 +14,20 @@ export function delegateInside(
   passive: ReadonlySet<string> = new Set(),
 ): () => void {
   if (shadow.mode !== "closed") return () => {};
-  const events = [...DelegatedEvents];
-  // Solid listens on whatever it is handed; this hands it the root, passive where asked.
-  const root = {
-    addEventListener: (type: string, listener: EventListener) =>
-      shadow.addEventListener(type, listener, { passive: passive.has(type) }),
-    removeEventListener: (type: string, listener: EventListener) =>
-      shadow.removeEventListener(type, listener),
-  } as unknown as Document;
-  delegateEvents(events, root);
-  for (const name of events) shadow.addEventListener(name, unpin, { passive: true });
-  return () => {
-    clearDelegatedEvents(root);
-    for (const name of events) shadow.removeEventListener(name, unpin);
-  };
+  delegateEvents([...DelegatedEvents]);
+  const options = (type: string, capture: boolean | AddEventListenerOptions | undefined) => ({
+    capture: typeof capture === "boolean" ? capture : (capture?.capture ?? false),
+    passive: passive.has(type),
+  });
+  // Solid listens on whatever container it is handed; this hands it the root, passive where asked.
+  const container = {
+    addEventListener: (type: string, listener: EventListener, capture?: boolean) =>
+      shadow.addEventListener(type, listener, options(type, capture)),
+    removeEventListener: (type: string, listener: EventListener, capture?: boolean) =>
+      shadow.removeEventListener(type, listener, options(type, capture)),
+    contains: (node: Node | null) => shadow.contains(node),
+  } as unknown as ShadowRoot;
+  // Owned by the host, so the walk ends on it and the page's own root resumes from there.
+  registerDelegatedContainer(container, shadow.host);
+  return () => unregisterDelegatedContainer(container, shadow.host);
 }

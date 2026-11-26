@@ -1,5 +1,5 @@
 import { useEntity, useTemperatureUnit } from "@glasshome/sync-layer/solid";
-import { createEffect, createMemo, createSignal, on, onCleanup, Show, useContext } from "solid-js";
+import { createEffect, createMemo, createSignal, onCleanup, Show, useContext } from "solid-js";
 import { type JSX } from "@solidjs/web";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
@@ -318,11 +318,9 @@ export function PanelEntityRow(props: {
     if (value !== undefined) settle = setTimeout(() => setPending(undefined), SETTLE_MS);
   };
   createEffect(
-    on(
-      () => props.entityId,
-      () => hold(undefined),
-      { defer: true },
-    ),
+    () => props.entityId,
+    () => hold(undefined),
+    { defer: true },
   );
   onCleanup(() => clearTimeout(settle));
   return (
@@ -330,9 +328,12 @@ export function PanelEntityRow(props: {
       {(e) => {
         const d = () => DOMAINS[e().domain] ?? FALLBACK;
         const reported = () => d().level?.(e());
-        createEffect(() => {
-          if (pending() !== undefined && reported() === pending()) hold(undefined);
-        });
+        createEffect(
+          () => pending() !== undefined && reported() === pending(),
+          (arrived) => {
+            if (arrived) hold(undefined);
+          },
+        );
         const level = () => pending() ?? reported();
         const bounds = createMemo(() => d().bounds?.(e(), unit()) ?? WHOLE);
         const allowed = (call: Call) => canCall?.(e().domain, call.service, [e().id]) ?? true;

@@ -64,8 +64,11 @@ export function useWidgetDialog(defaultTab = "controls"): WidgetDialogReturn {
   const [showDialog, setOpen] = createSignal(false);
   const [activeTab, setActiveTab] = createSignal(defaultTab);
 
+  // Reads lag writes until flush, so an open right after a close compares against the last write.
+  let opened = false;
   const setShowDialog = (open: boolean) => {
-    if (open && ctx && !showDialog()) warmSheets.touch(ctx);
+    if (open && ctx && !opened) warmSheets.touch(ctx);
+    opened = open;
     setOpen(open);
   };
 

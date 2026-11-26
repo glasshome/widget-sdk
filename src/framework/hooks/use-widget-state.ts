@@ -38,7 +38,11 @@ function createMemoryStore(): WidgetStateStore {
     return signal;
   };
   return {
-    read: (key) => parseJson(signalFor(key)[0]()),
+    // Reads lag writes until flush; the plain entries answer a read right after a write.
+    read: (key) => {
+      signalFor(key)[0]();
+      return parseJson(memory.snapshot()[key]);
+    },
     write(key, value) {
       const json = toJson(value);
       if (json === undefined) return "value";
@@ -92,12 +96,13 @@ export function useWidgetState<T>(
   fallback: T,
 ): [Accessor<T>, (next: T | ((prev: T) => T)) => WidgetStateVerdict] {
   const store = storeFor(useWidgetContext());
-  const value = createMemo(() => {
+  const current = () => {
     const parsed = schema.safeParse(store.read(key));
     return parsed.success ? parsed.data : fallback;
-  });
+  };
+  const value = createMemo(current);
   const set = (next: T | ((prev: T) => T)): WidgetStateVerdict => {
-    const resolved = typeof next === "function" ? (next as (prev: T) => T)(untrack(value)) : next;
+    const resolved = typeof next === "function" ? (next as (prev: T) => T)(untrack(current)) : next;
     if (!readsBack(schema, resolved)) return "value";
     return store.write(key, resolved);
   };

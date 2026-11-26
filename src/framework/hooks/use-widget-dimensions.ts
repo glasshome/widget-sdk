@@ -8,7 +8,7 @@ export type WidgetDimensionsAccessor = () => WidgetDimensions;
  * `WidgetCtx`, the host's pre-`<Widget>` stub never provides it, so a read
  * from the wrong scope throws instead of silently returning (0,0).
  */
-export const WidgetSizeCtx = createContext<WidgetDimensionsAccessor>();
+export const WidgetSizeCtx = createContext<WidgetDimensionsAccessor | null>(null);
 
 /**
  * Reactive accessor for the widget shell's measured dimensions (CSS px,

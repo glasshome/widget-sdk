@@ -7,11 +7,21 @@ export interface WarmSet<K> {
 }
 
 export function createWarmSet<K>(cap: number): WarmSet<K> {
-  const [keys, setKeys] = createSignal<readonly K[]>([]);
+  // Reads lag writes until flush; the plain list answers a has() right after a touch.
+  let held: readonly K[] = [];
+  const [version, setVersion] = createSignal(0);
+  const hold = (next: readonly K[]) => {
+    if (next === held) return;
+    held = next;
+    setVersion((v) => v + 1);
+  };
   return {
-    has: (key) => keys().includes(key),
-    touch: (key) => setKeys((held) => [...held.filter((k) => k !== key), key].slice(-cap)),
-    drop: (key) => setKeys((held) => (held.includes(key) ? held.filter((k) => k !== key) : held)),
+    has: (key) => {
+      version();
+      return held.includes(key);
+    },
+    touch: (key) => hold([...held.filter((k) => k !== key), key].slice(-cap)),
+    drop: (key) => hold(held.includes(key) ? held.filter((k) => k !== key) : held),
   };
 }
 

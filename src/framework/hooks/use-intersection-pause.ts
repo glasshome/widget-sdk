@@ -17,8 +17,7 @@ export function useIntersectionPause(el: Accessor<Element | undefined>): Accesso
     if (entry) setPaused(!entry.isIntersecting);
   });
 
-  createEffect(() => {
-    const element = el();
+  createEffect(el, (element) => {
     observer.disconnect();
     if (element) observer.observe(element);
   });

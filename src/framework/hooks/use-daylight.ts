@@ -1,5 +1,5 @@
 import { useEntity } from "@glasshome/sync-layer/solid";
-import { type Accessor, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { type Accessor, createEffect, createMemo, createSignal } from "solid-js";
 
 export type DaylightPhase = "day" | "dusk" | "night" | "dawn";
 
@@ -54,6 +54,7 @@ export function daylightFrom(sun: SunReading | undefined, now: Date): Daylight {
   return { phase, isNight: phase === "night" };
 }
 
+// oxlint-disable-next-line solid/ssr-module-state -- a wall-clock minute holds no request data, and every widget shares its one timer
 const [minute, setMinute] = createSignal(new Date());
 let holders = 0;
 let timer: ReturnType<typeof setInterval> | undefined;
@@ -80,10 +81,8 @@ function holdClock(): () => void {
  */
 export function useDaylight(): Accessor<Daylight> {
   const sun = useEntity("sun.sun");
-  createEffect(() => {
-    if (sun()) return;
-    onCleanup(holdClock());
-  });
+  const hasSun = createMemo(() => !!sun());
+  createEffect(hasSun, (has) => (has ? undefined : holdClock()));
   return createMemo(() => {
     const s = sun();
     const reading: SunReading | undefined = s

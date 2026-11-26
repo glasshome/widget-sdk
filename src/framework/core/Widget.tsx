@@ -112,26 +112,36 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       ? emptyGestures
       : (props.gestures ?? (reportsHold ? sheetGestures : undefined));
   if (reportsHold) {
-    createEffect(() => parentCtx?.onHoldable?.(!props.emptyState && !!gestures()?.holds?.()));
+    createEffect(
+      () => !props.emptyState && !!gestures()?.holds?.(),
+      (holds) => {
+        parentCtx?.onHoldable?.(holds);
+      },
+    );
     onCleanup(() => parentCtx?.onHoldable?.(false));
   }
   const [frameEl, setFrameEl] = createSignal<HTMLDivElement>();
   // Listens only while shaking: every animation in the tile bubbles here, and each one is guest work.
-  createEffect(() => {
-    const frame = frameEl();
-    if (!reportsHold || !frame || !registry?.nothingMore()) return;
-    const settle = (e: AnimationEvent) => {
-      if (e.animationName === "widget-nothing-more") registry.setNothingMore(false);
-    };
-    frame.addEventListener("animationend", settle);
-    frame.addEventListener("animationcancel", settle);
-    onCleanup(() => {
-      frame.removeEventListener("animationend", settle);
-      frame.removeEventListener("animationcancel", settle);
-    });
-  });
-  createEffect(() =>
-    registry?.setTone(props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined)),
+  createEffect(
+    () => (reportsHold && registry?.nothingMore() ? frameEl() : undefined),
+    (frame) => {
+      if (!frame || !registry) return;
+      const settle = (e: AnimationEvent) => {
+        if (e.animationName === "widget-nothing-more") registry.setNothingMore(false);
+      };
+      frame.addEventListener("animationend", settle);
+      frame.addEventListener("animationcancel", settle);
+      return () => {
+        frame.removeEventListener("animationend", settle);
+        frame.removeEventListener("animationcancel", settle);
+      };
+    },
+  );
+  createEffect(
+    () => props.color ?? (props.tone ? `var(--tone-${props.tone})` : undefined),
+    (tone) => {
+      registry?.setTone(tone);
+    },
   );
 
   const [shellEl, setShellEl] = createSignal<HTMLDivElement | undefined>();
@@ -142,8 +152,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   // layout box itself never changes, the observer never fires again to
   // correct it. borderBoxSize is the transform-free layout box.
   const [measured, setMeasured] = createSignal({ width: 0, height: 0 });
-  createEffect(() => {
-    const el = shellEl();
+  createEffect(shellEl, (el) => {
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       if (!entry) return;
@@ -155,7 +164,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       );
     });
     ro.observe(el);
-    onCleanup(() => ro.disconnect());
+    return () => ro.disconnect();
   });
 
   // Tokens must land in the widget's own root: the host renders widgets
@@ -210,10 +219,11 @@ function WidgetBase(props: WidgetProps): JSX.Element {
           lift: typeof lift === "number" && Number.isFinite(lift) ? lift : null,
         };
       },
-      undefined,
       { equals: (a, b) => a.tone === b.tone && a.lift === b.lift },
     );
-    createEffect(() => parentCtx?.onShell?.(shell()));
+    createEffect(shell, (value) => {
+      parentCtx?.onShell?.(value);
+    });
     onCleanup(() => parentCtx?.onShell?.(null));
   }
 
@@ -228,8 +238,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
       : {}),
   }));
 
-  // Solid's `on:event` directive binds once; we re-read gesture handlers at
-  // dispatch time so edit-mode toggles take effect without rebinding.
+  // Handlers bind once; reading the gestures at dispatch lets edit-mode toggles apply without rebinding.
   const gestureEnabled = () => !!gestures() && !props.isEditMode;
   const onPointerEnter = (e: PointerEvent) => {
     if (gestureEnabled()) gestures()?.onPointerEnter(e);

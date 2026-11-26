@@ -1,5 +1,5 @@
 import { Button, Icon } from "@glasshome/ui/solid";
-import { createEffect, createSignal, on, onCleanup, onSettled, Show } from "solid-js";
+import { createEffect, createSignal, onCleanup, onSettled, Show } from "solid-js";
 import { type JSX } from "@solidjs/web";
 import { useCameraSource } from "./camera-source";
 import { startHls } from "./drivers/hls";
@@ -43,54 +43,56 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
   const canFullscreen = typeof document !== "undefined" && document.fullscreenEnabled;
   const image = () => props.kind === "image";
 
-  onSettled(() => {
-    createEffect(
-      on([() => props.entityId, () => props.kind, () => props.session], ([entityId, kind]) => {
-        if (kind === "image") return;
-        let current = true;
-        let driver: StreamDriver | undefined;
-        const cb: StreamCallbacks = {
-          onLive: () => current && props.onLive?.(),
-          onAudio: (has) => current && props.onAudio?.(has),
-          onError: (reason) => current && props.onError?.(reason),
-          onStale: (reason) => current && props.onStale?.(reason),
-          onStage: (at) => current && props.onStage?.(at),
-        };
-        if (kind === "webrtc") {
-          try {
-            driver = startWebRtc(video, source.webrtc(entityId), cb);
-          } catch (err) {
-            cb.onError(`webrtc: ${reasonOf(err)}`);
-          }
-        } else {
-          cb.onStage("hls stream request");
-          Promise.resolve()
-            .then(() => source.stream(entityId, "hls"))
-            .then((url) => {
-              if (!current) return;
-              if (!url) return cb.onError("home assistant returned no hls url");
-              cb.onStage("hls playlist");
-              driver = startHls(video, url, cb);
-            })
-            .catch((err: unknown) => cb.onError(`hls stream request: ${reasonOf(err)}`));
+  createEffect(
+    () => [props.entityId, props.kind, props.session] as const,
+    ([entityId, kind]) => {
+      if (kind === "image") return;
+      let current = true;
+      let driver: StreamDriver | undefined;
+      const cb: StreamCallbacks = {
+        onLive: () => current && props.onLive?.(),
+        onAudio: (has) => current && props.onAudio?.(has),
+        onError: (reason) => current && props.onError?.(reason),
+        onStale: (reason) => current && props.onStale?.(reason),
+        onStage: (at) => current && props.onStage?.(at),
+      };
+      if (kind === "webrtc") {
+        try {
+          driver = startWebRtc(video, source.webrtc(entityId), cb);
+        } catch (err) {
+          cb.onError(`webrtc: ${reasonOf(err)}`);
         }
-        onCleanup(() => {
-          current = false;
-          driver?.stop();
-          video.removeAttribute("src");
-          // Removing src alone keeps a native HLS stream playing.
-          video.load();
-        });
-      }),
-    );
+      } else {
+        cb.onStage("hls stream request");
+        Promise.resolve()
+          .then(() => source.stream(entityId, "hls"))
+          .then((url) => {
+            if (!current) return;
+            if (!url) return cb.onError("home assistant returned no hls url");
+            cb.onStage("hls playlist");
+            driver = startHls(video, url, cb);
+          })
+          .catch((err: unknown) => cb.onError(`hls stream request: ${reasonOf(err)}`));
+      }
+      return () => {
+        current = false;
+        driver?.stop();
+        video.removeAttribute("src");
+        // Removing src alone keeps a native HLS stream playing.
+        video.load();
+      };
+    },
+  );
+
+  onSettled(() => {
     // document.fullscreenElement names the shadow host when the stage sits in a shadow root.
     const isFull = () => (stage.getRootNode() as Document | ShadowRoot).fullscreenElement === stage;
     const sync = () => setFull(isFull());
     document.addEventListener("fullscreenchange", sync);
-    onCleanup(() => {
+    return () => {
       document.removeEventListener("fullscreenchange", sync);
       if (isFull()) void document.exitFullscreen();
-    });
+    };
   });
 
   const toggle = () => {

@@ -19,7 +19,12 @@ interface WidgetContentProps {
  */
 export function WidgetContent(props: WidgetContentProps): JSX.Element {
   const registry = widgetRegistry(useContext(WidgetCtx));
-  createEffect(() => registry?.setAccent(props.accent));
+  createEffect(
+    () => props.accent,
+    (accent) => {
+      registry?.setAccent(accent);
+    },
+  );
   onCleanup(() => registry?.setAccent(undefined));
   const resolved = children(() => props.children);
   const hasParts = createMemo(() =>

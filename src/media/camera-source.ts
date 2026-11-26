@@ -55,7 +55,7 @@ const homeAssistant: CameraSource = {
 let defaultSource: CameraSource = homeAssistant;
 
 /** A tree's own camera source, over the host's default. */
-export const CameraSourceContext = createContext<CameraSource>();
+export const CameraSourceContext = createContext<CameraSource | null>(null);
 
 /** Host apps call this once at startup; CameraSourceContext overrides it per tree. */
 export function provideCameraSource(source: CameraSource): void {

@@ -28,7 +28,7 @@ function keyOf(ctx: object): object {
 }
 
 /** The registry for a widget, keyed by its host context; created on first use. */
-export function widgetRegistry(ctx: object | undefined): WidgetRegistry | undefined {
+export function widgetRegistry(ctx: object | null | undefined): WidgetRegistry | undefined {
   if (!ctx) return undefined;
   const key = keyOf(ctx);
   let registry = registries.get(key);

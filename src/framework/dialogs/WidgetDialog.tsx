@@ -31,11 +31,10 @@ import {
   createMemo,
   createSignal,
   For,
-  on,
   onCleanup,
   onSettled,
   Show,
-  omit,
+  untrack,
   useContext,
 } from "solid-js";
 import { type ComponentProps, type JSX } from "@solidjs/web";
@@ -167,22 +166,18 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   // Reset draft when config changes or dialog opens
   createEffect(
-    on(
-      () => props.config,
-      (config) => {
-        if (config) setDraftConfig({ ...config });
-      },
-    ),
+    () => props.config,
+    (config) => {
+      if (config) setDraftConfig({ ...config });
+    },
   );
 
   // Generate JSON Schema from Zod configSchema once
   createEffect(
-    on(
-      () => props.configSchema,
-      (schema) => {
-        if (schema) setFormSchema(asFormSchema(schema));
-      },
-    ),
+    () => props.configSchema,
+    (schema) => {
+      if (schema) setFormSchema(asFormSchema(schema));
+    },
   );
 
   const schemaDirty = () =>
@@ -212,7 +207,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   };
 
   // Controlled when `activeTab`/`onActiveTabChange` provided; internal signal otherwise.
-  const [internalTab, setInternalTab] = createSignal(props.defaultTab ?? "controls");
+  const [internalTab, setInternalTab] = createSignal(untrack(() => props.defaultTab) ?? "controls");
   const activeTab = () => props.activeTab ?? internalTab();
   const setActiveTab = (tab: string) => {
     if (props.onActiveTabChange) {
@@ -344,7 +339,12 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   const ctx = useContext(WidgetCtx);
   const registry = widgetRegistry(ctx);
-  createEffect(() => registry?.setHasSheet(props.sheet !== undefined));
+  createEffect(
+    () => props.sheet !== undefined,
+    (hasSheet) => {
+      registry?.setHasSheet(hasSheet);
+    },
+  );
   onCleanup(() => {
     registry?.setHasSheet(false);
     if (ctx) warmSheets.drop(ctx);
@@ -372,22 +372,24 @@ export function WidgetDialog(props: WidgetDialogProps) {
     void debugCopy.copy(text);
   };
 
-  const RD = props.ResponsiveDialog;
-  const RDContent = props.ResponsiveDialogContent;
-  const RDHeader = props.ResponsiveDialogHeader;
-  const RDTitle = props.ResponsiveDialogTitle;
-  const RDDescription = props.ResponsiveDialogDescription;
-  const RDBody = props.ResponsiveDialogBody ?? ResponsiveDialogBody;
-  const RDFooter = props.ResponsiveDialogFooter ?? ResponsiveDialogFooter;
-  const TabsRoot = props.Tabs ?? Tabs;
-  const TabsListPart = props.TabsList ?? TabsList;
-  const TabsTriggerPart = props.TabsTrigger ?? TabsTrigger;
-  const TabsContentPart = props.TabsContent ?? TabsContent;
-  const Btn = props.Button;
+  // A host passes its parts once; they are fixed for the dialog's life.
+  const RD = untrack(() => props.ResponsiveDialog);
+  const RDContent = untrack(() => props.ResponsiveDialogContent);
+  const RDHeader = untrack(() => props.ResponsiveDialogHeader);
+  const RDTitle = untrack(() => props.ResponsiveDialogTitle);
+  const RDDescription = untrack(() => props.ResponsiveDialogDescription);
+  const RDBody = untrack(() => props.ResponsiveDialogBody ?? ResponsiveDialogBody);
+  const RDFooter = untrack(() => props.ResponsiveDialogFooter ?? ResponsiveDialogFooter);
+  const TabsRoot = untrack(() => props.Tabs ?? Tabs);
+  const TabsListPart = untrack(() => props.TabsList ?? TabsList);
+  const TabsTriggerPart = untrack(() => props.TabsTrigger ?? TabsTrigger);
+  const TabsContentPart = untrack(() => props.TabsContent ?? TabsContent);
+  const Btn = untrack(() => props.Button);
 
-  const builtTabs = createMemo(
-    on([() => props.open, formSchema, () => props.config, () => props.tabs], () => resolvedTabs()),
-  );
+  const builtTabs = createMemo(() => {
+    void [props.open, formSchema(), props.config, props.tabs];
+    return untrack(resolvedTabs);
+  });
 
   const effectiveOnOpenChange = (open: boolean) =>
     schemaMode() ? handleSchemaClose(open) : props.onOpenChange(open);
@@ -406,7 +408,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     const bare =
       activeTab() === "controls" &&
       props.sheet === undefined &&
-      !("controlsContent" in local) &&
+      !("controlsContent" in props) &&
       !props.tabs;
     const active = bare ? "edit" : activeTab();
     return tabs.some((tab) => tab.id === active) ? active : (tabs[0]?.id ?? active);
@@ -420,7 +422,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
     <RD
       open={props.open}
       onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}
-      keep={sheetMode() && ctx !== undefined && warmSheets.has(ctx)}
+      keep={sheetMode() && !!ctx && warmSheets.has(ctx)}
     >
       <Show
         when={!sheetMode()}
@@ -548,7 +550,7 @@ function createNarrow() {
     const mql = window.matchMedia(query);
     const onChange = () => setNarrow(mql.matches);
     mql.addEventListener("change", onChange);
-    onCleanup(() => mql.removeEventListener("change", onChange));
+    return () => mql.removeEventListener("change", onChange);
   });
   return narrow;
 }

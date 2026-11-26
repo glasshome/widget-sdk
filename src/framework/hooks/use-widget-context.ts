@@ -82,7 +82,7 @@ export interface ReactiveWidgetContext {
   state?: WidgetStateStore;
 }
 
-export const WidgetCtx = createContext<ReactiveWidgetContext>();
+export const WidgetCtx = createContext<ReactiveWidgetContext | null>(null);
 
 export function useWidgetContext(): ReactiveWidgetContext {
   const context = useContext(WidgetCtx);
