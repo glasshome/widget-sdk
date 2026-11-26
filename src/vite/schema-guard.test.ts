@@ -235,3 +235,49 @@ describe("runSchemaGuard", () => {
     expect(manifest.schema?.type).toBe("object");
   });
 });
+
+describe("sdkVersion in the bundle and the manifest", () => {
+  function guard(bundleRange: string, fileRange: string) {
+    const name = `sdk-${fixtureCount++}`;
+    const outFile = join(tmpDir, `${name}.js`);
+    writeFileSync(
+      outFile,
+      `export default { manifest: { name: "${name}", sdkVersion: "${bundleRange}" } };\n`,
+    );
+    const manifestPath = join(tmpDir, `${name}-manifest.json`);
+    writeFileSync(manifestPath, JSON.stringify({ name, sdkVersion: fileRange }));
+    return runSchemaGuard({
+      introspect: inProcessIntrospector,
+      outFile,
+      hashFile: join(tmpDir, `${name}.schema-hash`),
+      widgetName: name,
+      manifestPath,
+    });
+  }
+
+  test("a bundle on SDK 2 that names another range than its manifest fails the build", async () => {
+    await expect(guard("^1.15.0", "^2.0.0")).rejects.toThrow(
+      /defineWidget declares sdkVersion "\^1\.15\.0".*manifest\.json declares "\^2\.0\.0"/,
+    );
+  });
+
+  test("a bundle that still admits SDK 1 is warned, and builds", async () => {
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await guard("^1.0.0", "^1.4.0");
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('declares sdkVersion "^1.0.0"'));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  test("a bundle whose range matches its manifest passes quietly", async () => {
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await guard("^2.0.0", "^2.0.0");
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
