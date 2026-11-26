@@ -82,7 +82,9 @@ function holdClock(): () => void {
 export function useDaylight(): Accessor<Daylight> {
   const sun = useEntity("sun.sun");
   const hasSun = createMemo(() => !!sun());
-  createEffect(hasSun, (has) => (has ? undefined : holdClock()));
+  createEffect(hasSun, (has) => {
+    if (!has) return holdClock();
+  });
   return createMemo(() => {
     const s = sun();
     const reading: SunReading | undefined = s

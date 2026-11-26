@@ -319,7 +319,9 @@ export function PanelEntityRow(props: {
   };
   createEffect(
     () => props.entityId,
-    () => hold(undefined),
+    () => {
+      hold(undefined);
+    },
     { defer: true },
   );
   onCleanup(() => clearTimeout(settle));
