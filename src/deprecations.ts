@@ -1,84 +1,26 @@
 /**
- * Reusable deprecation mechanism: one registry drives all three channels
- * (runtime warn-once, JSDoc `@deprecated`, and the widget-cli source lint) plus the
- * generated docs table. Every future deprecation is one registry entry + one
- * `deprecate()` wrapper call, giving widget developers a timed window to migrate.
+ * Deprecation registry: one entry per pattern with no runtime symbol, read by the
+ * widget-cli source lint, the SDK build guard and the generated docs table.
  */
 
 export interface DeprecationEntry {
-  /** Stable identifier, e.g. `widgetFields.title`. Used for warn-once and lint matching. */
+  /** Stable identifier. Used for lint matching. */
   id: string;
   /** Version the symbol/pattern was deprecated in. */
   since: string;
   /** Version it is removed in. */
   removeIn: string;
-  /** Human-readable replacement, e.g. `field.title()`. */
+  /** Human-readable replacement. */
   replacement: string;
   /** Public docs URL for the migration. */
   docsUrl: string;
-  /**
-   * Regex source matched against widget files by the CLI lint. Present for patterns
-   * with no wrappable runtime symbol (e.g. the raw-zod config pattern).
-   */
+  /** Regex source matched against widget files by the CLI lint. */
   sourcePattern?: string;
 }
 
 const DOCS_URL = "https://glasshome.app/docs/widget-sdk/config";
 
 export const deprecations: readonly DeprecationEntry[] = [
-  {
-    id: "widgetFields.title",
-    since: "1.4.0",
-    removeIn: "2.0.0",
-    replacement: "field.title()",
-    docsUrl: DOCS_URL,
-    sourcePattern: "widgetFields\\.title\\b",
-  },
-  {
-    id: "widgetFields.entityIds",
-    since: "1.4.0",
-    removeIn: "2.0.0",
-    replacement: "field.entities(domain, options?)",
-    docsUrl: DOCS_URL,
-    sourcePattern: "widgetFields\\.entityIds\\b",
-  },
-  {
-    id: "widgetFields.singleEntity",
-    since: "1.4.0",
-    removeIn: "2.0.0",
-    replacement: "field.entity(domain, options?)",
-    docsUrl: DOCS_URL,
-    sourcePattern: "widgetFields\\.singleEntity\\b",
-  },
-  {
-    id: "widgetFields.areaId",
-    since: "1.4.0",
-    removeIn: "2.0.0",
-    replacement: "field.area()",
-    docsUrl: DOCS_URL,
-    sourcePattern: "widgetFields\\.areaId\\b",
-  },
-  {
-    // No wrappable runtime symbol: the host used to infer an area picker from the
-    // property name alone, so a raw `areaId` string field got one by accident and
-    // any other name silently rendered a text input.
-    id: "area-by-field-name",
-    since: "1.8.0",
-    removeIn: "2.0.0",
-    replacement: "field.area()",
-    docsUrl: DOCS_URL,
-    sourcePattern: "\\bareaId\\s*:\\s*z\\.string\\(",
-  },
-  {
-    // The stub context outside <Widget> returns (0,0) forever; three widgets
-    // shipped frozen in their smallest scene before a user noticed.
-    id: "ctx.dimensions",
-    since: "1.9.0",
-    removeIn: "2.0.0",
-    replacement: "useWidgetDimensions()",
-    docsUrl: "https://glasshome.app/docs/widget-api-reference",
-    sourcePattern: "\\.dimensions\\(\\)",
-  },
   {
     // No wrappable runtime symbol: the host serves @glasshome/ui/solid through its
     // import map with no compat gate, so direct imports drift ungated across the Hub
@@ -102,114 +44,9 @@ export const deprecations: readonly DeprecationEntry[] = [
     docsUrl: DOCS_URL,
     sourcePattern: "(?:from|import)\\s+[\"']@?iconify-icon(/solid)?[\"']",
   },
-  {
-    // No wrappable runtime symbol: `z` stays a permanent escape hatch, so this is
-    // flagged only when `z.object(...)` is used to build a widget's configSchema.
-    id: "raw-zod-config",
-    since: "1.4.0",
-    removeIn: "2.0.0",
-    replacement: "defineConfig({ ... })",
-    docsUrl: DOCS_URL,
-    sourcePattern: "configSchema\\s*=\\s*z\\.object\\(",
-  },
-  {
-    id: "widget.gradient",
-    since: "1.16.0",
-    removeIn: "2.0.0",
-    replacement: "<Widget color colorTo>",
-    docsUrl: "https://glasshome.app/docs/widget-sdk/widget",
-    sourcePattern: "<Widget[^>]*\\sgradient=",
-  },
-  {
-    // A fill in its own colour paints a second tone over the card's wash.
-    id: "sliderFill.color",
-    since: "1.16.0",
-    removeIn: "2.0.0",
-    replacement: "the Widget's tone or color; the fill follows the card",
-    docsUrl: "https://glasshome.app/docs/widget-sdk/widget",
-    sourcePattern: "<WidgetSliderFill[^>]*\\scolor=",
-  },
-  {
-    // No wrappable runtime symbol: a stylesheet reading the glass formula's
-    // internals breaks on every ui refactor. Setting a .glass knob stays fine.
-    id: "internal-material-vars",
-    since: "1.21.0",
-    removeIn: "2.0.0",
-    replacement: "the --material-* variables on the materials page, or useMaterial()",
-    docsUrl: "https://glasshome.app/docs/widgets/widget-sdk/materials",
-    sourcePattern:
-      "var\\(\\s*--(?:glass-[a-z0-9-]+|_[a-z0-9-]+|material-(?:depth|hue|reach|ink|ink-level|ink-lift|edge-width|edge-ink|edge-accent)(?![a-z0-9-]))",
-  },
-  {
-    // Type-only: layout, elements, plugins, interactions and extends were never read by the shell.
-    id: "WidgetVariantConfig.layout",
-    since: "1.18.0",
-    removeIn: "2.0.0",
-    replacement: "WidgetVariantConfig.styles (container, class, cssVars)",
-    docsUrl: "https://glasshome.app/docs/widgets/widget-sdk#variants",
-  },
-  {
-    // The page engine: every home and preview mounts in the sealed engine instead.
-    id: "host.instantiateWidget",
-    since: "1.30.0",
-    removeIn: "2.0.0",
-    replacement: "the sealed engine: Dash's WidgetSlot, or bun widget preview",
-    docsUrl: "https://glasshome.app/docs/widgets/widget-sealed-engine",
-    sourcePattern: "\\binstantiateWidget\\b",
-  },
-  ...["getStream", "getWebRtcClientConfig", "startWebRtcSession", "sendWebRtcCandidate"].map(
-    (id) => ({
-      // A sealed widget never reaches a stream URL or a peer connection; the host plays the camera.
-      id,
-      since: "1.31.0",
-      removeIn: "2.0.0",
-      replacement: "<CameraStream entityId kind>",
-      docsUrl: "https://glasshome.app/docs/widgets/widget-api-reference",
-      sourcePattern: `\\b${id}\\b`,
-    }),
-  ),
-  {
-    // Type-only: no host ever constructed a WidgetContext.
-    id: "WidgetContext.theme",
-    since: "1.26.0",
-    removeIn: "2.0.0",
-    replacement: "isDark()",
-    docsUrl: "https://glasshome.app/docs/widgets/widget-api-reference",
-  },
 ];
 
 /** Format a registry entry into the one-line notice shared by every channel. */
 export function formatDeprecation(d: DeprecationEntry): string {
   return `[@glasshome/widget-sdk] ${d.id} is deprecated since ${d.since}, removed in ${d.removeIn}. Use ${d.replacement}. See ${d.docsUrl}`;
-}
-
-const warned = new Set<string>();
-
-/** Reset warn-once state. Test-only. */
-export function _resetDeprecationWarnings(): void {
-  warned.clear();
-}
-
-function isDev(): boolean {
-  // Bundlers inline process.env.NODE_ENV; guard for runtimes without `process`.
-  return typeof process !== "undefined" && process.env?.NODE_ENV !== "production";
-}
-
-/**
- * Wrap a deprecated export. On its first call in a dev build, emits a `console.warn`
- * once per id (formatted from the registry); production builds are silent and add no
- * overhead beyond a Set lookup. The wrapped function's signature is preserved.
- */
-export function deprecate<A extends unknown[], R>(
-  fn: (...args: A) => R,
-  id: string,
-): (...args: A) => R {
-  return (...args: A): R => {
-    if (isDev() && !warned.has(id)) {
-      warned.add(id);
-      const entry = deprecations.find((d) => d.id === id);
-      if (entry) console.warn(formatDeprecation(entry));
-    }
-    return fn(...args);
-  };
 }

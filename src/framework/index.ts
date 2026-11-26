@@ -143,7 +143,6 @@ export { injectTokens, type SvgColorKey, svgColors, type Tone, ToneSchema } from
 // Config Schema Helpers
 // ============================================================================
 
-export { widgetFields } from "./fields";
 export {
   type ConfigShape,
   defineConfig,

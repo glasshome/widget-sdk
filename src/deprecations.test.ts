@@ -1,12 +1,5 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import {
-  _resetDeprecationWarnings,
-  deprecate,
-  type DeprecationEntry,
-  deprecations,
-  formatDeprecation,
-} from "./deprecations";
-import { widgetFields } from "./framework/fields";
+import { describe, expect, test } from "bun:test";
+import { type DeprecationEntry, deprecations, formatDeprecation } from "./deprecations";
 
 const ENTRY: DeprecationEntry = {
   id: "test.symbol",
@@ -24,51 +17,6 @@ describe("formatDeprecation", () => {
   });
 });
 
-describe("deprecate()", () => {
-  let warnSpy: ReturnType<typeof spyOn>;
-  const prevEnv = process.env.NODE_ENV;
-
-  beforeEach(() => {
-    _resetDeprecationWarnings();
-    warnSpy = spyOn(console, "warn").mockImplementation(() => {});
-  });
-  afterEach(() => {
-    warnSpy.mockRestore();
-    process.env.NODE_ENV = prevEnv;
-  });
-
-  test("preserves signature and return value", () => {
-    const wrapped = deprecate((a: number, b: number) => a + b, "widgetFields.title");
-    process.env.NODE_ENV = "development";
-    expect(wrapped(2, 3)).toBe(5);
-  });
-
-  test("warns once per id in dev, then stays silent", () => {
-    process.env.NODE_ENV = "development";
-    const wrapped = deprecate(() => 1, "widgetFields.title");
-    wrapped();
-    wrapped();
-    wrapped();
-    expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0]?.[0]).toContain("widgetFields.title is deprecated");
-  });
-
-  test("is silent in production", () => {
-    process.env.NODE_ENV = "production";
-    const wrapped = deprecate(() => 1, "widgetFields.areaId");
-    wrapped();
-    wrapped();
-    expect(warnSpy).not.toHaveBeenCalled();
-  });
-
-  test("does not warn for an id missing from the registry", () => {
-    process.env.NODE_ENV = "development";
-    const wrapped = deprecate(() => 1, "not.in.registry");
-    wrapped();
-    expect(warnSpy).not.toHaveBeenCalled();
-  });
-});
-
 describe("registry integrity", () => {
   test("every entry has the required fields and a unique id", () => {
     const ids = new Set<string>();
@@ -83,68 +31,11 @@ describe("registry integrity", () => {
     }
   });
 
-  test("covers every widgetFields symbol + the raw-zod config pattern", () => {
-    const ids = deprecations.map((d) => d.id);
-    for (const key of Object.keys(widgetFields)) {
-      expect(ids).toContain(`widgetFields.${key}`);
-    }
-    expect(ids).toContain("raw-zod-config");
-  });
-
-  test("the page engine's mount is deprecated, removed in 2.0", () => {
-    expect(deprecations.find((d) => d.id === "host.instantiateWidget")?.removeIn).toBe("2.0.0");
-  });
-
   test("iconify-icon pattern matches both the element and its solid wrapper import", () => {
     const entry = deprecations.find((d) => d.id === "iconify-icon");
     const re = new RegExp(entry?.sourcePattern ?? "$^");
     expect(re.test('import { Icon } from "@iconify-icon/solid";')).toBe(true);
     expect(re.test("import 'iconify-icon';")).toBe(true);
     expect(re.test('import { Icon } from "@glasshome/widget-sdk";')).toBe(false);
-  });
-
-  test("reading --glass-*, --_* or a retired --material-* name warns; the --material-* variables, --surface-* and knob writes do not", () => {
-    const entry = deprecations.find((d) => d.id === "internal-material-vars");
-    const re = new RegExp(entry?.sourcePattern ?? "$^");
-    for (const internal of [
-      "box-shadow: var(--glass-rim-shine);",
-      "angle: var( --glass-wash-angle, 135deg);",
-      "blur: calc(var(--material-reach) * 2px);",
-      "background: var(--_material-face-raised);",
-      "opacity: var(--material-edge-accent);",
-      "transform: scale(var(--material-depth));",
-      "color: var(--material-hue);",
-    ]) {
-      expect(re.test(internal), internal).toBe(true);
-    }
-    for (const contract of [
-      "background: var(--material-face);",
-      "box-shadow: var(--material-raised), var(--material-pressed);",
-      "color: var(--material-accent, #ff007f);",
-      "background: var(--material-control-fill);",
-      "backdrop-filter: blur(var(--material-blur));",
-      "opacity: calc(var(--material-clarity) / 100%);",
-      "color: var(--surface-tone);",
-      'class="glass [--glass-base:transparent]"',
-    ]) {
-      expect(re.test(contract), contract).toBe(false);
-    }
-  });
-});
-
-describe("widgetFields runtime is wrapped and still works", () => {
-  const prevEnv = process.env.NODE_ENV;
-  afterEach(() => {
-    process.env.NODE_ENV = prevEnv;
-  });
-
-  test("wrapped helper warns in dev but returns a working schema", () => {
-    _resetDeprecationWarnings();
-    const spy = spyOn(console, "warn").mockImplementation(() => {});
-    process.env.NODE_ENV = "development";
-    const schema = widgetFields.title();
-    expect(schema.safeParse(undefined).success).toBe(true);
-    expect(spy).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
   });
 });

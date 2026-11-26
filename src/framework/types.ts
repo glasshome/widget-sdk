@@ -47,74 +47,12 @@ export interface WidgetStyles {
   cssVars?: Record<`--widget-${string}` | `--glass-${string}`, string | number>;
 }
 
-type WidgetElement =
-  | "icon"
-  | "title"
-  | "subtitle"
-  | "status"
-  | "value"
-  | "metrics"
-  | "content"
-  | "background"
-  | "overlay"
-  | "decorations";
-
-/** @deprecated Never read by the shell. Removed in 2.0.0. */
-type LayoutStrategy =
-  | {
-      type: "flex";
-      direction: "row" | "column" | "row-reverse" | "column-reverse";
-      align: "start" | "center" | "end" | "stretch";
-      justify: "start" | "center" | "end" | "between" | "around";
-      wrap?: boolean;
-      gap?: string;
-      order?: Partial<Record<WidgetElement, number>>;
-    }
-  | {
-      type: "grid";
-      areas: string;
-      columns?: string;
-      rows?: string;
-      gap?: string;
-      elementAreas: Partial<Record<WidgetElement, string>>;
-    }
-  | {
-      type: "absolute";
-      positions: Partial<
-        Record<
-          WidgetElement,
-          { top?: string; right?: string; bottom?: string; left?: string; transform?: string }
-        >
-      >;
-    }
-  | { type: "custom"; renderer: string };
-
 /** A custom shell look; only `styles` is applied. */
 export interface WidgetVariantConfig {
   id: string;
   name: string;
   description?: string;
   styles?: WidgetStyles;
-  /** @deprecated Never read by the shell. Removed in 2.0.0. */
-  layout?: LayoutStrategy;
-  /** @deprecated Never read by the shell. Removed in 2.0.0. */
-  elements?: {
-    visible?: Partial<Record<WidgetElement, boolean>>;
-    styles?: Partial<Record<WidgetElement, JSX.CSSProperties>>;
-    classNames?: Partial<Record<WidgetElement, string>>;
-  };
-  /** @deprecated Never read by the shell. Removed in 2.0.0. */
-  plugins?: { background?: string; overlay?: string; decorations?: string[] };
-  /** @deprecated Never read by the shell. Removed in 2.0.0. */
-  interactions?: {
-    hover?: boolean;
-    active?: boolean;
-    focus?: boolean;
-    hoverScale?: number;
-    activeScale?: number;
-  };
-  /** @deprecated Never read by the shell. Removed in 2.0.0. */
-  extends?: string;
 }
 
 // ============================================================================

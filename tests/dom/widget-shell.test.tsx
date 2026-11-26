@@ -85,11 +85,6 @@ describe("Widget shell", () => {
     expect(channel(neutral.container, "--glass-tone")).toBe("");
   });
 
-  it("paints a deprecated full gradient inline, over the material", () => {
-    const { container } = render(() => <Widget gradient="linear-gradient(90deg, red, blue)" />);
-    expect(shell(container).style.backgroundImage).toBe("linear-gradient(90deg, red, blue)");
-  });
-
   it("leaves every channel unset when no colour props are given", () => {
     const { container } = render(() => <Widget />);
     for (const name of ["--widget-color", "--widget-color-to"]) {

@@ -28,7 +28,6 @@ import type { WidgetValue as WidgetValueType } from "../components/WidgetValue";
 import { WIDGET_Z } from "../design-system/z-index";
 import { type GestureHandlers, useWidgetGestures } from "../gestures/use-widget-gestures";
 import { dialogOpeners } from "../hooks/use-widget-dialog";
-import { deprecate } from "../../deprecations";
 import { type ReactiveWidgetContext, WidgetCtx } from "../hooks/use-widget-context";
 import { WidgetSizeCtx } from "../hooks/use-widget-dimensions";
 import { REGISTRY_KEY, widgetRegistry } from "../hooks/widget-registry";
@@ -54,8 +53,6 @@ interface WidgetProps {
   color?: string;
   /** Second-stop gradient color (`--widget-color-to`). */
   colorTo?: string;
-  /** @deprecated Use `color` + `colorTo`; a full gradient paints over the material. Removed in 2.0.0. */
-  gradient?: string;
   loading?: boolean;
   class?: string;
   isEditMode?: boolean;
@@ -176,7 +173,6 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   const contextValue: ReactiveWidgetContext = {
     ...parentCtx,
     updateConfig: parentCtx?.updateConfig ?? (() => {}),
-    dimensions: deprecate(() => measured(), "ctx.dimensions"),
   };
   // Parts read the widget's registry through this copy; point it back at the host's context.
   if (parentCtx) Object.defineProperty(contextValue, REGISTRY_KEY, { value: parentCtx });
@@ -186,8 +182,6 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     if (typeof props.variant === "string") return getBuiltInVariantStyles(props.variant);
     return props.variant.styles;
   });
-
-  const gradient = deprecate(() => props.gradient, "widget.gradient");
 
   const toned = () => (!!props.tone && props.tone !== "neutral") || !!props.color;
 
@@ -232,7 +226,6 @@ function WidgetBase(props: WidgetProps): JSX.Element {
     ...(props.colorTo
       ? { "--widget-color-to": props.colorTo, "--glass-tone-2": props.colorTo }
       : {}),
-    ...(props.gradient ? { "background-image": gradient() } : {}),
   }));
 
   // Solid's `on:event` directive binds once; we re-read gesture handlers at

@@ -14,7 +14,6 @@ import {
 const newCtx = (): ReactiveWidgetContext & { opener?: (tab?: string) => void } => {
   const ctx: ReactiveWidgetContext & { opener?: (tab?: string) => void } = {
     updateConfig: () => {},
-    dimensions: () => ({ width: 0, height: 0 }),
     registerDialogOpener: (open) => {
       ctx.opener = open ?? undefined;
     },

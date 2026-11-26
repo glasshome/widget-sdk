@@ -18,7 +18,6 @@ function hostCtx() {
   let held = 0;
   const ctx: ReactiveWidgetContext = {
     updateConfig: () => {},
-    dimensions: () => ({ width: 0, height: 0 }),
     onHoldable: (holds) => reports.push(holds),
     onHeld: () => held++,
   };

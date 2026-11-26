@@ -24,16 +24,10 @@ export { formatSchemaError, WidgetManifestSchema } from "./schemas";
 // Theme utilities (framework-agnostic)
 export { isDark } from "./theme";
 // v1.0 Types (original SDK API)
-export type {
-  GridSize,
-  WidgetContext,
-  WidgetDefinition,
-  WidgetExample,
-  WidgetManifest,
-} from "./types";
+export type { GridSize, WidgetDefinition, WidgetExample, WidgetManifest } from "./types";
 // Version constant
 export { SDK_VERSION } from "./version";
-// Deprecation registry (single source of truth for warn-once, CLI lint, docs table)
+// Deprecation registry (source of truth for the CLI lint and docs table)
 export { type DeprecationEntry, deprecations, formatDeprecation } from "./deprecations";
 // Advanced escape hatch: raw zod, deduped via the external SDK vendor chunk.
 // Prefer the SDK config API; only reach for `z` for refinements/unions it can't express.

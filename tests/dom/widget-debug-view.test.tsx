@@ -106,7 +106,6 @@ describe("WidgetDebugTab", () => {
 
 const developerCtx = {
   updateConfig: () => {},
-  dimensions: () => ({ width: 0, height: 0 }),
   developer: () => true,
 };
 

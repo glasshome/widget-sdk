@@ -1,10 +1,4 @@
-// Host-only surface: mounting a widget into a closed shadow root. Kept off the
-// main SDK entry because it pulls solid-js/web `render` and installs a
-// document-level MutationObserver — code a widget bundle must never load, only
-// a host (dash, the preview harness, the hub render worker).
-export {
-  delegateInside,
-  instantiateWidget,
-  type MountOptions,
-  type WidgetInstanceHandle,
-} from "./instantiate-widget";
+// Host-only surface: event delegation into a closed shadow root. Kept off the
+// main SDK entry because it installs document-level listeners at load, code a
+// widget bundle must never load, only a host.
+export { delegateInside } from "./delegate-inside";

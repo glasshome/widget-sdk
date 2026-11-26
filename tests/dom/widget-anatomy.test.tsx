@@ -15,7 +15,6 @@ import { useFakeTime } from "@glasshome/ui/testing";
 
 const hostCtx = () => ({
   updateConfig: () => {},
-  dimensions: () => ({ width: 0, height: 0 }),
 });
 
 describe("Widget.Content", () => {

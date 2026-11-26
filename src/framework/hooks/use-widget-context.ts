@@ -7,9 +7,8 @@ import { createContext, useContext } from "solid-js";
  *
  * Visual scale (icon size, text size, padding, layout direction) lives in
  * CSS via container queries on `.glasshome-widget`. This context only
- * carries host RPC (updateConfig, dialog opener, service calls) plus the
- * deprecated `dimensions` accessor; size reads go through
- * `useWidgetDimensions()`, which only exists inside `<Widget>`.
+ * carries host RPC (updateConfig, dialog opener, service calls); size reads
+ * go through `useWidgetDimensions()`, which only exists inside `<Widget>`.
  */
 export interface WidgetDimensions {
   width: number;
@@ -54,12 +53,6 @@ export interface WidgetStateStore {
 
 export interface ReactiveWidgetContext {
   updateConfig: (config: Record<string, unknown>) => void;
-  /**
-   * Measured shell dimensions in CSS px. (0,0) before first layout.
-   * @deprecated since 1.9.0, removed in 2.0.0. Use `useWidgetDimensions()`
-   * (throws outside `<Widget>` instead of silently reading the host stub).
-   */
-  dimensions: () => WidgetDimensions;
   /** Host RPC: `useWidgetDialog` registers its opener here so the host can
       open the widget's dialog on a chosen tab. Called with `null` on cleanup. */
   registerDialogOpener?: (open: ((tab?: string) => void) | null) => void;

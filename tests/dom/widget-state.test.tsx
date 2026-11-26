@@ -53,7 +53,6 @@ function hostStore(seed: Record<string, string> = {}, verdict?: WidgetStateVerdi
 
 const ctxWith = (state?: WidgetStateStore): ReactiveWidgetContext => ({
   updateConfig: () => {},
-  dimensions: () => ({ width: 0, height: 0 }),
   state,
 });
 

@@ -22,7 +22,7 @@ function EmptyWidget() {
 describe("an empty tile", () => {
   it("opens the widget's settings when held", async () => {
     useFakeTime();
-    const ctx = { updateConfig: () => {}, dimensions: () => ({ width: 0, height: 0 }) };
+    const ctx = { updateConfig: () => {} };
     render(() => (
       <WidgetCtx.Provider value={ctx}>
         <Cell>
@@ -41,7 +41,7 @@ describe("an empty tile", () => {
   });
 
   it("opens the widget's settings from the context-menu key", async () => {
-    const ctx = { updateConfig: () => {}, dimensions: () => ({ width: 0, height: 0 }) };
+    const ctx = { updateConfig: () => {} };
     render(() => (
       <WidgetCtx.Provider value={ctx}>
         <Cell>

@@ -5,8 +5,6 @@
  * import map), and a direct import would bundle a second, disconnected
  * store. Phase 4 routes these through capability checks.
  */
-import * as syncLayer from "@glasshome/sync-layer";
-import { deprecate } from "./deprecations";
 
 export {
   getForecasts,
@@ -16,30 +14,6 @@ export {
   untrackEntityHistory,
 } from "@glasshome/sync-layer";
 
-// Each reads sync-layer at call time, as the plain re-exports did, so loading the SDK touches none of them.
-/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="hls">`. */
-export const getStream: typeof syncLayer.getStream = deprecate(
-  (...args: Parameters<typeof syncLayer.getStream>) => syncLayer.getStream(...args),
-  "getStream",
-);
-/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
-export const getWebRtcClientConfig: typeof syncLayer.getWebRtcClientConfig = deprecate(
-  (...args: Parameters<typeof syncLayer.getWebRtcClientConfig>) =>
-    syncLayer.getWebRtcClientConfig(...args),
-  "getWebRtcClientConfig",
-);
-/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
-export const startWebRtcSession: typeof syncLayer.startWebRtcSession = deprecate(
-  (...args: Parameters<typeof syncLayer.startWebRtcSession>) =>
-    syncLayer.startWebRtcSession(...args),
-  "startWebRtcSession",
-);
-/** @deprecated since 1.31.0, removed in 2.0.0. Use `<CameraStream entityId kind="webrtc">`. */
-export const sendWebRtcCandidate: typeof syncLayer.sendWebRtcCandidate = deprecate(
-  (...args: Parameters<typeof syncLayer.sendWebRtcCandidate>) =>
-    syncLayer.sendWebRtcCandidate(...args),
-  "sendWebRtcCandidate",
-);
 export type {
   AreaView,
   CalendarEvent,

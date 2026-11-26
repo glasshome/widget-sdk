@@ -42,7 +42,6 @@ const parts = {
 function mount(extra: Partial<WidgetDialogProps> = {}, developer = true) {
   const ctx = {
     updateConfig: () => {},
-    dimensions: () => ({ width: 0, height: 0 }),
     developer: () => developer,
   };
   return render(() => (
@@ -229,7 +228,6 @@ describe("WidgetDialog for a homeowner", () => {
     document.body.appendChild(tile);
     const ctx = {
       updateConfig: () => {},
-      dimensions: () => ({ width: 0, height: 0 }),
       anchor: () => tile,
     };
     render(() => (

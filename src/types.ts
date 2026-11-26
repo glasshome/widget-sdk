@@ -43,26 +43,6 @@ export interface WidgetManifest<C = Record<string, unknown>> {
 }
 
 /**
- * Runtime context provided to widgets by the host.
- * Framework-agnostic: plain objects and functions.
- *
- * @deprecated No host provides it; removed in 2.0.0. Read the theme with `isDark()` and the
- * size with `useWidgetDimensions()`.
- */
-export interface WidgetContext {
-  config: Record<string, unknown>;
-  /** @deprecated Removed in 2.0.0 with `WidgetContext`. Use `isDark()`. */
-  theme: {
-    getToken: (name: string) => string;
-    isDark: () => boolean;
-  };
-  dimensions: {
-    width: number;
-    height: number;
-  };
-}
-
-/**
  * A complete widget definition combining manifest metadata with a component.
  * The component return type is `any` so the type contract does not force SolidJS
  * (internally the runtime knows it is SolidJS, but widget authors code against

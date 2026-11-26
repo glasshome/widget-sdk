@@ -27,7 +27,6 @@ function Probe() {
 
 const host = (material: () => WidgetMaterial): ReactiveWidgetContext => ({
   updateConfig: () => {},
-  dimensions: () => ({ width: 0, height: 0 }),
   material,
 });
 

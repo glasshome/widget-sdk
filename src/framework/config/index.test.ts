@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { extractDefaults, toFormSchema } from "../to-form-schema";
-import { widgetFields } from "../fields";
 import { defineConfig, field, type Infer } from "./index";
 
 /**
@@ -17,28 +16,41 @@ function parity(built: z.ZodType, raw: z.ZodType) {
 }
 
 describe("field.* JSON-schema + default parity vs raw zod", () => {
-  test("title matches widgetFields.title", () => {
-    parity(field.title(), widgetFields.title());
+  const rawTitle = () =>
+    z.string().optional().meta({ title: "Title", description: "Optional display name override" });
+  const rawArea = () => z.string().optional().meta({ formType: "area-picker", title: "Area" });
+  const rawEntities = (domain: string, deviceClass?: string) =>
+    z
+      .array(z.string())
+      .default([])
+      .meta({ domain, title: "Entities", ...(deviceClass ? { deviceClass } : {}) });
+  const rawEntity = (domain: string, deviceClass?: string) =>
+    z
+      .array(z.string())
+      .default([])
+      .meta({
+        domain,
+        title: "Entity",
+        singleSelect: true,
+        ...(deviceClass ? { deviceClass } : {}),
+      });
+
+  test("title matches raw zod", () => {
+    parity(field.title(), rawTitle());
   });
 
-  test("area matches widgetFields.areaId", () => {
-    parity(field.area(), widgetFields.areaId());
+  test("area matches raw zod", () => {
+    parity(field.area(), rawArea());
   });
 
-  test("entities matches widgetFields.entityIds", () => {
-    parity(field.entities("light"), widgetFields.entityIds("light"));
-    parity(
-      field.entities("sensor", { deviceClass: "power" }),
-      widgetFields.entityIds("sensor", { deviceClass: "power" }),
-    );
+  test("entities matches raw zod", () => {
+    parity(field.entities("light"), rawEntities("light"));
+    parity(field.entities("sensor", { deviceClass: "power" }), rawEntities("sensor", "power"));
   });
 
-  test("entity matches widgetFields.singleEntity", () => {
-    parity(field.entity("climate"), widgetFields.singleEntity("climate"));
-    parity(
-      field.entity("sensor", { deviceClass: "battery" }),
-      widgetFields.singleEntity("sensor", { deviceClass: "battery" }),
-    );
+  test("entity matches raw zod", () => {
+    parity(field.entity("climate"), rawEntity("climate"));
+    parity(field.entity("sensor", { deviceClass: "battery" }), rawEntity("sensor", "battery"));
   });
 
   test("text (optional) matches raw z.string().optional()", () => {
@@ -112,7 +124,13 @@ describe("field.* JSON-schema + default parity vs raw zod", () => {
 describe("defineConfig whole-schema parity", () => {
   test("area widget schema (title + area)", () => {
     const built = defineConfig({ title: field.title(), areaId: field.area() });
-    const raw = z.object({ title: widgetFields.title(), areaId: widgetFields.areaId() });
+    const raw = z.object({
+      title: z
+        .string()
+        .optional()
+        .meta({ title: "Title", description: "Optional display name override" }),
+      areaId: z.string().optional().meta({ formType: "area-picker", title: "Area" }),
+    });
     expect(toFormSchema(built)).toEqual(toFormSchema(raw));
     expect(extractDefaults(built)).toEqual(extractDefaults(raw));
   });
@@ -132,8 +150,8 @@ type _AreaMatchesRawZod = Expect<
     Infer<typeof areaSchema>,
     z.infer<
       z.ZodObject<{
-        title: ReturnType<typeof widgetFields.title>;
-        areaId: ReturnType<typeof widgetFields.areaId>;
+        title: z.ZodOptional<z.ZodString>;
+        areaId: z.ZodOptional<z.ZodString>;
       }>
     >
   >

@@ -10,7 +10,6 @@ function hostCtx(hearsShell: boolean) {
   const reports: ({ tone: string | null } | null)[] = [];
   const ctx: ReactiveWidgetContext = {
     updateConfig: () => {},
-    dimensions: () => ({ width: 0, height: 0 }),
     ...(hearsShell ? { onShell: (shell) => reports.push(shell) } : {}),
   };
   return { ctx, reports };

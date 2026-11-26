@@ -6,11 +6,10 @@
  */
 
 import { render } from "@solidjs/testing-library";
-import { Portal } from "solid-js/web";
+import { Portal, render as renderInto } from "solid-js/web";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";
-import { instantiateWidget } from "../../src/host";
-import type { WidgetDefinition } from "../../src/types";
+import { delegateInside } from "../../src/host";
 import { Button } from "../../src/ui";
 import { mouseAt, mouseOn } from "./harness/press";
 
@@ -31,35 +30,20 @@ const inside = (n: EventTarget | null) => n instanceof Node && n.getRootNode() !
 function mountWidget() {
   const counts = { widget: 0, page: 0, leaks: 0, seen: 0, overlay: 0, overlayLeaks: 0 };
   const parts: { button?: HTMLButtonElement; overlay?: HTMLButtonElement } = {};
-  const definition: WidgetDefinition = {
-    manifest: {
-      name: "events",
-      minSize: { w: 1, h: 1 },
-      maxSize: { w: 1, h: 1 },
-      sdkVersion: "^1.0.0",
-    },
-    component: () => (
-      <>
-        <Button
-          ref={(el: HTMLButtonElement) => (parts.button = el)}
-          onClick={() => counts.widget++}
-        >
-          Tap
-        </Button>
-        <div onClick={(e) => e.stopPropagation()}>
-          <Portal>
-            <button
-              type="button"
-              ref={(el) => (parts.overlay = el)}
-              onClick={() => counts.overlay++}
-            >
-              Overlay
-            </button>
-          </Portal>
-        </div>
-      </>
-    ),
-  };
+  const Widget = () => (
+    <>
+      <Button ref={(el: HTMLButtonElement) => (parts.button = el)} onClick={() => counts.widget++}>
+        Tap
+      </Button>
+      <div onClick={(e) => e.stopPropagation()}>
+        <Portal>
+          <button type="button" ref={(el) => (parts.overlay = el)} onClick={() => counts.overlay++}>
+            Overlay
+          </button>
+        </Portal>
+      </div>
+    </>
+  );
   const stop = new AbortController();
   onTestFinished(() => stop.abort());
   for (const name of WATCHED) {
@@ -81,16 +65,13 @@ function mountWidget() {
   );
   const host = document.createElement("div");
   render(() => <div onClick={() => counts.page++}>{host}</div>);
-  const widget = instantiateWidget(host, {
-    definition,
-    config: () => ({}),
-    ctx: { updateConfig: () => undefined, dimensions: () => ({ width: 0, height: 0 }) },
-    cssText: null,
-    onCrash: (err) => {
-      throw err;
-    },
+  const shadow = host.attachShadow({ mode: "closed" });
+  const stopDelegation = delegateInside(shadow);
+  const dispose = renderInto(Widget, shadow);
+  onTestFinished(() => {
+    dispose();
+    stopDelegation();
   });
-  onTestFinished(() => widget.dispose());
   const part = (name: keyof typeof parts) => {
     const el = parts[name];
     if (!el) throw new Error(`${name} did not render`);
