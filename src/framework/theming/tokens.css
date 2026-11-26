@@ -394,8 +394,18 @@
   min-width: 0;
   z-index: 1;
 }
+/* A word wider than its room shrinks to fit, down to 70% of its size; past that it ends in an ellipsis. */
 .glasshome-widget-reading-value {
-  font-size: var(--widget-text-value);
+  --value-size: var(--widget-text-value);
+  --value-room: calc(100cqi - 2 * var(--widget-grid-pad));
+  font-size: max(
+    calc(0.7 * var(--value-size)),
+    min(var(--value-size), calc(var(--value-room) / (var(--value-len, 1) * 0.62)))
+  );
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.2em 0.3em;
+  margin: -0.2em -0.3em;
   font-weight: 650;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -452,10 +462,10 @@
   justify-content: flex-end;
   pointer-events: none;
 }
-/* Beside art a long word ("Unlocked") shrinks to end where the art starts, at about 50cqi; short values keep full size. */
+/* Beside art a long word ("Unlocked") ends where the art starts, at about 50cqi. */
 @container widget (min-width: 180px) and (min-height: 130px) {
   .glasshome-widget-hero[data-art] .glasshome-widget-reading-value {
-    font-size: max(18px, min(var(--widget-text-value), calc(50cqi / (var(--value-len, 1) * 0.56))));
+    --value-room: 50cqi;
   }
 }
 .glasshome-widget-backdrop > img {
@@ -590,7 +600,7 @@
     display: block;
   }
   .glasshome-widget-reading-value {
-    font-size: clamp(18px, min(34cqb, 20cqi), 30px);
+    --value-size: clamp(18px, min(34cqb, 20cqi), 30px);
   }
   .glasshome-widget-name {
     font-size: clamp(12px, min(18cqb, 11cqi), 15px);
