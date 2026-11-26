@@ -10,15 +10,15 @@
  */
 
 import {
-  type JSX,
   createEffect,
   createMemo,
   createSignal,
   onCleanup,
-  onMount,
+  onSettled,
   Show,
   useContext,
 } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import type { WidgetSliderFill as WidgetSliderFillType } from "../backgrounds/WidgetSliderFill";
 import type { WidgetContent as WidgetContentType } from "../components/WidgetContent";
 import type { WidgetIcon as WidgetIconType } from "../components/WidgetIcon";
@@ -160,7 +160,7 @@ function WidgetBase(props: WidgetProps): JSX.Element {
 
   // Tokens must land in the widget's own root: the host renders widgets
   // inside closed shadow roots, where document-level styles can't reach.
-  onMount(() => {
+  onSettled(() => {
     const rootNode = shellEl()?.getRootNode();
     injectTokens(
       (typeof ShadowRoot !== "undefined" && rootNode instanceof ShadowRoot) ||
@@ -262,9 +262,9 @@ function WidgetBase(props: WidgetProps): JSX.Element {
   };
 
   return (
-    <WidgetCtx.Provider value={contextValue}>
-      <WidgetConfirmedCtx.Provider value={() => props.confirmed === true}>
-        <WidgetSizeCtx.Provider value={measured}>
+    <WidgetCtx value={contextValue}>
+      <WidgetConfirmedCtx value={() => props.confirmed === true}>
+        <WidgetSizeCtx value={measured}>
           <div
             ref={setFrameEl}
             class="glasshome-widget-frame relative h-full w-full"
@@ -287,12 +287,12 @@ function WidgetBase(props: WidgetProps): JSX.Element {
               style={channelStyle()}
               data-toned={toned() ? "" : undefined}
               data-confirmed={props.confirmed || undefined}
-              on:pointerenter={onPointerEnter}
-              on:pointerdown={onPointerDown}
-              on:pointermove={onPointerMove}
-              on:pointerup={onPointerUp}
-              on:pointercancel={onPointerCancel}
-              tabIndex={gestureEnabled() ? 0 : undefined}
+              onPointerEnter={onPointerEnter}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerCancel}
+              tabindex={gestureEnabled() ? 0 : undefined}
               data-claim={gestureEnabled() ? gestures()?.claim?.() : undefined}
               onKeyDown={(e) => {
                 if (gestureEnabled()) gestures()?.onKeyDown?.(e);
@@ -335,9 +335,9 @@ function WidgetBase(props: WidgetProps): JSX.Element {
               />
             </Show>
           </div>
-        </WidgetSizeCtx.Provider>
-      </WidgetConfirmedCtx.Provider>
-    </WidgetCtx.Provider>
+        </WidgetSizeCtx>
+      </WidgetConfirmedCtx>
+    </WidgetCtx>
   );
 }
 

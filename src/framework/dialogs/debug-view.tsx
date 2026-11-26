@@ -20,7 +20,8 @@ import {
   type CopyState,
   useCopyText,
 } from "@glasshome/ui/solid";
-import { createMemo, For, type JSX, Show } from "solid-js";
+import { createMemo, For, Show } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import type { EntityView } from "../types";
 
 export interface WidgetDebugEntity {

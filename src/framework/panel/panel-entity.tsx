@@ -1,14 +1,6 @@
 import { useEntity, useTemperatureUnit } from "@glasshome/sync-layer/solid";
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  type JSX,
-  on,
-  onCleanup,
-  Show,
-  useContext,
-} from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, Show, useContext } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { PanelRow } from "./panel";

@@ -1,4 +1,4 @@
-import type { JSX } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { Show } from "solid-js";
 import { formatValue, interpretValue } from "../utils";
 import { cn } from "../utils/cn";

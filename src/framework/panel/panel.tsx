@@ -1,5 +1,6 @@
 import { Button, buttonVariants, createHold, Icon } from "@glasshome/ui/solid";
-import { createSignal, For, type JSX, Match, onCleanup, Show, Switch, useContext } from "solid-js";
+import { createSignal, For, Match, onCleanup, Show, Switch, useContext } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { INTERACTIVE } from "../gestures/use-widget-gestures";
 import { WidgetCtx } from "../hooks/use-widget-context";
 
@@ -243,7 +244,7 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
             // Sliding is all this row does, so it is a slider; a row that also taps stays a button.
             <div
               role="slider"
-              tabIndex={0}
+              tabindex={0}
               class={`${glass} glasshome-panel-row glasshome-panel-row-slides`}
               style={tone()}
               aria-label={

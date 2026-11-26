@@ -12,13 +12,13 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  Index,
-  type JSX,
+  For,
   on,
   onCleanup,
   Show,
   useContext,
 } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { type Confirm, useConfirm } from "../hooks/use-confirm";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { widgetRegistry } from "../hooks/widget-registry";
@@ -185,7 +185,7 @@ export function WidgetChoice(props: {
       onChange={(v: string | null) => v && props.onChange(v)}
       class="glasshome-widget-choice"
     >
-      <Index each={props.options}>
+      <For keyed={false} each={props.options}>
         {(o) => (
           <ToggleGroupItem
             value={o().value}
@@ -196,7 +196,7 @@ export function WidgetChoice(props: {
             <Icon icon={o().icon} />
           </ToggleGroupItem>
         )}
-      </Index>
+      </For>
     </ToggleGroup>
   );
 }

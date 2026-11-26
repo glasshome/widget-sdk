@@ -1,5 +1,6 @@
 import { Button, Icon } from "@glasshome/ui/solid";
-import { createEffect, createSignal, type JSX, on, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createSignal, on, onCleanup, onSettled, Show } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { useCameraSource } from "./camera-source";
 import { startHls } from "./drivers/hls";
 import { reasonOf, type StreamCallbacks, type StreamDriver } from "./drivers/types";
@@ -42,7 +43,7 @@ export function CameraStream(props: CameraStreamProps): JSX.Element {
   const canFullscreen = typeof document !== "undefined" && document.fullscreenEnabled;
   const image = () => props.kind === "image";
 
-  onMount(() => {
+  onSettled(() => {
     createEffect(
       on([() => props.entityId, () => props.kind, () => props.session], ([entityId, kind]) => {
         if (kind === "image") return;

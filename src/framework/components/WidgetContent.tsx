@@ -1,4 +1,5 @@
-import { children, createEffect, createMemo, type JSX, onCleanup, useContext } from "solid-js";
+import { children, createEffect, createMemo, onCleanup, useContext } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { cn } from "../utils/cn";

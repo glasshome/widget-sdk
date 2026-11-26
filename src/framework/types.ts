@@ -1,6 +1,6 @@
 /** Core type definitions for the Widget Framework. */
 
-import type { JSX } from "solid-js";
+import { type JSX } from "@solidjs/web";
 
 /** Slide gesture configuration */
 interface SlideGestureConfig {

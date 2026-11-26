@@ -1,4 +1,4 @@
-import type { JSX } from "solid-js";
+import { type JSX } from "@solidjs/web";
 import { WIDGET_Z } from "../design-system/z-index";
 import { cn } from "../utils/cn";
 

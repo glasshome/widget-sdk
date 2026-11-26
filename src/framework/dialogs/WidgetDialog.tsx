@@ -26,20 +26,19 @@ import {
 import {
   type Accessor,
   type Component,
-  type ComponentProps,
   createContext,
   createEffect,
   createMemo,
   createSignal,
   For,
-  type JSX,
   on,
   onCleanup,
-  onMount,
+  onSettled,
   Show,
-  splitProps,
+  omit,
   useContext,
 } from "solid-js";
+import { type ComponentProps, type JSX } from "@solidjs/web";
 import type { ZodType } from "zod";
 import { widgetRegistry } from "../hooks/widget-registry";
 import { WidgetCtx } from "../hooks/use-widget-context";
@@ -159,48 +158,9 @@ const COPY_LABEL: Record<CopyState, string> = {
 };
 
 export function WidgetDialog(props: WidgetDialogProps) {
-  const [local] = splitProps(props, [
-    "open",
-    "onOpenChange",
-    "title",
-    "description",
-    "onSave",
-    "hasUnsavedChanges",
-    "onDelete",
-    "editContent",
-    "controlsContent",
-    "sheet",
-    "tile",
-    "debugContent",
-    "debugData",
-    "tabs",
-    "class",
-    "maxWidth",
-    "defaultTab",
-    "activeTab",
-    "onActiveTabChange",
-    "headerActions",
-    "configSchema",
-    "config",
-    "onConfigSave",
-    "ResponsiveDialog",
-    "ResponsiveDialogContent",
-    "ResponsiveDialogHeader",
-    "ResponsiveDialogTitle",
-    "ResponsiveDialogDescription",
-    "ResponsiveDialogBody",
-    "ResponsiveDialogFooter",
-    "Button",
-    "SchemaForm",
-    "Tabs",
-    "TabsList",
-    "TabsTrigger",
-    "TabsContent",
-  ]);
-
   // Schema-driven config editing: draft lifecycle
   const schemaMode = () =>
-    !!local.configSchema && !!local.config && !!local.onConfigSave && !!local.SchemaForm;
+    !!props.configSchema && !!props.config && !!props.onConfigSave && !!props.SchemaForm;
   const [draftConfig, setDraftConfig] = createSignal<Record<string, unknown>>({});
   const [formSchema, setFormSchema] = createSignal<SchemaFormSchema | null>(null);
   const [configErrors, setConfigErrors] = createSignal<string[]>([]);
@@ -208,7 +168,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   // Reset draft when config changes or dialog opens
   createEffect(
     on(
-      () => local.config,
+      () => props.config,
       (config) => {
         if (config) setDraftConfig({ ...config });
       },
@@ -218,7 +178,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
   // Generate JSON Schema from Zod configSchema once
   createEffect(
     on(
-      () => local.configSchema,
+      () => props.configSchema,
       (schema) => {
         if (schema) setFormSchema(asFormSchema(schema));
       },
@@ -226,20 +186,20 @@ export function WidgetDialog(props: WidgetDialogProps) {
   );
 
   const schemaDirty = () =>
-    schemaMode() && JSON.stringify(draftConfig()) !== JSON.stringify(local.config);
+    schemaMode() && JSON.stringify(draftConfig()) !== JSON.stringify(props.config);
 
   const handleSchemaClose = (open: boolean) => {
-    if (!open && local.config) {
-      setDraftConfig({ ...local.config });
+    if (!open && props.config) {
+      setDraftConfig({ ...props.config });
       setConfigErrors([]);
     }
-    local.onOpenChange(open);
+    props.onOpenChange(open);
   };
 
   // Invalid drafts must not reach onConfigSave: the host's resolveConfig
   // falls back to defaults on parse failure, silently wiping the config.
   const handleSchemaSave = () => {
-    const schema = local.configSchema;
+    const schema = props.configSchema;
     if (schema) {
       const errors = validateConfigDraft(schema, draftConfig());
       if (errors) {
@@ -248,25 +208,25 @@ export function WidgetDialog(props: WidgetDialogProps) {
       }
     }
     setConfigErrors([]);
-    local.onConfigSave?.(draftConfig());
+    props.onConfigSave?.(draftConfig());
   };
 
   // Controlled when `activeTab`/`onActiveTabChange` provided; internal signal otherwise.
-  const [internalTab, setInternalTab] = createSignal(local.defaultTab ?? "controls");
-  const activeTab = () => local.activeTab ?? internalTab();
+  const [internalTab, setInternalTab] = createSignal(props.defaultTab ?? "controls");
+  const activeTab = () => props.activeTab ?? internalTab();
   const setActiveTab = (tab: string) => {
-    if (local.onActiveTabChange) {
-      local.onActiveTabChange(tab);
+    if (props.onActiveTabChange) {
+      props.onActiveTabChange(tab);
     } else {
       setInternalTab(tab);
     }
   };
 
-  const panelSize = () => PANEL_SIZE[local.maxWidth ?? "xl"];
+  const panelSize = () => PANEL_SIZE[props.maxWidth ?? "xl"];
 
   const resolvedTabs = (): BuiltTab[] => {
-    if (local.tabs) {
-      return local.tabs.map((tab) => ({
+    if (props.tabs) {
+      return props.tabs.map((tab) => ({
         ...tab,
         icon: () => tab.icon,
         content: () => tab.content,
@@ -292,9 +252,9 @@ export function WidgetDialog(props: WidgetDialogProps) {
         </svg>
       ),
       content: () =>
-        local.editContent ??
+        props.editContent ??
         (() => {
-          const SchemaFormEdit = local.SchemaForm;
+          const SchemaFormEdit = props.SchemaForm;
           const schema = schemaMode() ? formSchema() : undefined;
           if (!schema || !SchemaFormEdit) {
             return (
@@ -341,7 +301,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
         </svg>
       ),
       content: () =>
-        local.controlsContent ?? (
+        props.controlsContent ?? (
           <Empty>
             <EmptyHeader>
               <EmptyTitle>No controls</EmptyTitle>
@@ -376,7 +336,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
           <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
         </svg>
       ),
-      content: () => local.debugContent ?? <WidgetDebugTab data={local.debugData} />,
+      content: () => props.debugContent ?? <WidgetDebugTab data={props.debugData} />,
     });
 
     return tabs;
@@ -384,19 +344,19 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
   const ctx = useContext(WidgetCtx);
   const registry = widgetRegistry(ctx);
-  createEffect(() => registry?.setHasSheet(local.sheet !== undefined));
+  createEffect(() => registry?.setHasSheet(props.sheet !== undefined));
   onCleanup(() => {
     registry?.setHasSheet(false);
     if (ctx) warmSheets.drop(ctx);
   });
   // The sheet wears the tile: its head icon and colour unless the widget passes its own.
   const look = () => ({
-    icon: local.tile?.icon ?? registry?.icon(),
-    tone: local.tile?.tone ?? registry?.accent() ?? registry?.tone(),
-    backdrop: local.tile?.backdrop,
+    icon: props.tile?.icon ?? registry?.icon(),
+    tone: props.tile?.tone ?? registry?.accent() ?? registry?.tone(),
+    backdrop: props.tile?.backdrop,
   });
   const developer = () => ctx?.developer?.() ?? false;
-  const sheetMode = () => tabValue() === "controls" && local.sheet !== undefined;
+  const sheetMode = () => tabValue() === "controls" && props.sheet !== undefined;
   const narrow = createNarrow();
   const anchor = () => ctx?.anchor?.();
   const sheetBeside = () => sheetMode() && !narrow() && anchor() !== undefined;
@@ -404,61 +364,61 @@ export function WidgetDialog(props: WidgetDialogProps) {
   const debugCopy = useCopyText();
 
   const handleCopyDebug = () => {
-    if (local.debugData === undefined) return;
+    if (props.debugData === undefined) return;
     const text =
-      typeof local.debugData === "string"
-        ? local.debugData
-        : JSON.stringify(local.debugData, null, 2);
+      typeof props.debugData === "string"
+        ? props.debugData
+        : JSON.stringify(props.debugData, null, 2);
     void debugCopy.copy(text);
   };
 
-  const RD = local.ResponsiveDialog;
-  const RDContent = local.ResponsiveDialogContent;
-  const RDHeader = local.ResponsiveDialogHeader;
-  const RDTitle = local.ResponsiveDialogTitle;
-  const RDDescription = local.ResponsiveDialogDescription;
-  const RDBody = local.ResponsiveDialogBody ?? ResponsiveDialogBody;
-  const RDFooter = local.ResponsiveDialogFooter ?? ResponsiveDialogFooter;
-  const TabsRoot = local.Tabs ?? Tabs;
-  const TabsListPart = local.TabsList ?? TabsList;
-  const TabsTriggerPart = local.TabsTrigger ?? TabsTrigger;
-  const TabsContentPart = local.TabsContent ?? TabsContent;
-  const Btn = local.Button;
+  const RD = props.ResponsiveDialog;
+  const RDContent = props.ResponsiveDialogContent;
+  const RDHeader = props.ResponsiveDialogHeader;
+  const RDTitle = props.ResponsiveDialogTitle;
+  const RDDescription = props.ResponsiveDialogDescription;
+  const RDBody = props.ResponsiveDialogBody ?? ResponsiveDialogBody;
+  const RDFooter = props.ResponsiveDialogFooter ?? ResponsiveDialogFooter;
+  const TabsRoot = props.Tabs ?? Tabs;
+  const TabsListPart = props.TabsList ?? TabsList;
+  const TabsTriggerPart = props.TabsTrigger ?? TabsTrigger;
+  const TabsContentPart = props.TabsContent ?? TabsContent;
+  const Btn = props.Button;
 
   const builtTabs = createMemo(
-    on([() => local.open, formSchema, () => local.config, () => local.tabs], () => resolvedTabs()),
+    on([() => props.open, formSchema, () => props.config, () => props.tabs], () => resolvedTabs()),
   );
 
   const effectiveOnOpenChange = (open: boolean) =>
-    schemaMode() ? handleSchemaClose(open) : local.onOpenChange(open);
-  const effectiveHasChanges = () => (schemaMode() ? schemaDirty() : local.hasUnsavedChanges);
-  const effectiveOnSave = () => (schemaMode() ? handleSchemaSave : local.onSave);
+    schemaMode() ? handleSchemaClose(open) : props.onOpenChange(open);
+  const effectiveHasChanges = () => (schemaMode() ? schemaDirty() : props.hasUnsavedChanges);
+  const effectiveOnSave = () => (schemaMode() ? handleSchemaSave : props.onSave);
 
   // Custom `tabs` ids need not include the "controls" default useWidgetDialog
   // starts on; the tab row falls back to the first tab, so the footer must too.
   const visibleTabs = () => builtTabs().filter((tab) => tab.id !== "debug" || developer());
   // With a sheet, "controls" is the sheet itself, which has no tab row to come back by.
   const rowTabs = () =>
-    visibleTabs().filter((tab) => tab.id !== "controls" || local.sheet === undefined);
+    visibleTabs().filter((tab) => tab.id !== "controls" || props.sheet === undefined);
   const tabValue = () => {
     const tabs = visibleTabs();
     // Nothing extra to show: a configure button or a held empty tile lands on the settings.
     const bare =
       activeTab() === "controls" &&
-      local.sheet === undefined &&
+      props.sheet === undefined &&
       !("controlsContent" in local) &&
-      !local.tabs;
+      !props.tabs;
     const active = bare ? "edit" : activeTab();
     return tabs.some((tab) => tab.id === active) ? active : (tabs[0]?.id ?? active);
   };
 
   const showFooter = () =>
-    (tabValue() === "edit" && (effectiveOnSave() || local.onDelete)) ||
-    (tabValue() === "debug" && local.debugData !== undefined);
+    (tabValue() === "edit" && (effectiveOnSave() || props.onDelete)) ||
+    (tabValue() === "debug" && props.debugData !== undefined);
 
   return (
     <RD
-      open={local.open}
+      open={props.open}
       onOpenChange={(open: boolean) => effectiveOnOpenChange(open)}
       keep={sheetMode() && ctx !== undefined && warmSheets.has(ctx)}
     >
@@ -467,7 +427,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
         fallback={
           <RDContent
             size="sm"
-            ariaLabel={local.title}
+            ariaLabel={props.title}
             anchor={sheetBeside() ? anchor() : undefined}
             class="glasshome-sheet-surface"
             style={
@@ -498,19 +458,17 @@ export function WidgetDialog(props: WidgetDialogProps) {
                 </Show>
               }
             >
-              <RDTitle class="truncate">{local.title}</RDTitle>
+              <RDTitle class="truncate">{props.title}</RDTitle>
             </RDHeader>
             <RDBody>
               <div class="glasshome-sheet">
-                <SheetDormant.Provider value={() => !local.open}>
-                  {local.sheet?.()}
-                </SheetDormant.Provider>
+                <SheetDormant value={() => !props.open}>{props.sheet?.()}</SheetDormant>
               </div>
             </RDBody>
           </RDContent>
         }
       >
-        <RDContent size={panelSize()} class={local.class}>
+        <RDContent size={panelSize()} class={props.class}>
           <TabsRoot value={tabValue()} onChange={setActiveTab} layout="split">
             {/* A phone leaves no room for the tab row beside the title, so the
               header wraps rather than truncating it away. */}
@@ -520,7 +478,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                 <>
                   {/* Homeowners see one view per door (a held tile's controls, edit mode's
                     settings); the tab row is Developer Mode's way between them. */}
-                  <Show when={developer() || local.tabs !== undefined}>
+                  <Show when={developer() || props.tabs !== undefined}>
                     <TabsListPart class="w-auto">
                       <For each={rowTabs()}>
                         {(tab) => (
@@ -534,13 +492,13 @@ export function WidgetDialog(props: WidgetDialogProps) {
                       </For>
                     </TabsListPart>
                   </Show>
-                  {local.headerActions}
+                  {props.headerActions}
                 </>
               }
             >
-              <RDTitle class="truncate">{local.title}</RDTitle>
-              <Show when={local.description}>
-                <RDDescription>{local.description}</RDDescription>
+              <RDTitle class="truncate">{props.title}</RDTitle>
+              <Show when={props.description}>
+                <RDDescription>{props.description}</RDDescription>
               </Show>
             </RDHeader>
 
@@ -552,8 +510,8 @@ export function WidgetDialog(props: WidgetDialogProps) {
 
             <Show when={showFooter()}>
               <RDFooter>
-                <Show when={tabValue() === "edit" && local.onDelete}>
-                  <Btn size="sm" variant="destructive" onClick={() => local.onDelete?.()}>
+                <Show when={tabValue() === "edit" && props.onDelete}>
+                  <Btn size="sm" variant="destructive" onClick={() => props.onDelete?.()}>
                     Delete
                   </Btn>
                 </Show>
@@ -566,7 +524,7 @@ export function WidgetDialog(props: WidgetDialogProps) {
                     Save
                   </Btn>
                 </Show>
-                <Show when={tabValue() === "debug" && local.debugData !== undefined}>
+                <Show when={tabValue() === "debug" && props.debugData !== undefined}>
                   <Btn size="sm" variant="outline" onClick={handleCopyDebug}>
                     {COPY_LABEL[debugCopy.state()]}
                   </Btn>
@@ -586,7 +544,7 @@ function createNarrow() {
   const [narrow, setNarrow] = createSignal(
     typeof window !== "undefined" && window.matchMedia(query).matches,
   );
-  onMount(() => {
+  onSettled(() => {
     const mql = window.matchMedia(query);
     const onChange = () => setNarrow(mql.matches);
     mql.addEventListener("change", onChange);

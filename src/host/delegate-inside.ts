@@ -1,4 +1,4 @@
-import { clearDelegatedEvents, DelegatedEvents, delegateEvents } from "solid-js/web";
+import { clearDelegatedEvents, DelegatedEvents, delegateEvents } from "@solidjs/web";
 
 // Handlers passed through props (every ui control) are delegated, and the document cannot see into a closed root.
 // Solid's handler leaves target/currentTarget pinned to inner nodes; unpin, registered after it, removes them before the event leaves.
