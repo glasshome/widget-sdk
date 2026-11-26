@@ -1,6 +1,6 @@
 # GlassHome widgets
 
-Matches the installed `@glasshome/widget-sdk`. Wins over memory and older docs.
+Matches the installed `@glasshome/widget-sdk` 2, on Solid 2. Wins over memory and older docs, which may describe SDK 1 on Solid 1. Moving a widget from SDK 1: https://glasshome.app/md/widgets/widget-sdk-2-0.
 
 ## Loop
 
@@ -67,7 +67,7 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 - Continuous values keep the full-tile slider; buttons beside it. A stepper never stands alone.
 - Dialog content scrolls in `ResponsiveDialogBody`; no own `overflow`/`max-height` in a dialog.
 - Groups: one tap brings all members to one state; locks never unlock in one tap; doors, gates, garage doors never join bulk actions.
-- Readings update text in place; never rebuild DOM. `Index` for lists of readings. Over 20 s of changing demo data a widget adds and removes no DOM nodes.
+- Readings update text in place; never rebuild DOM. `<For keyed={false}>` for lists of readings. Over 20 s of changing demo data a widget adds and removes no DOM nodes.
 - Everything sits on an edge; text left, values/actions right. One accent per view; defaults quiet. No card in a card.
 - Motion: colours morph, never snap; time transitions with `--duration-state` / `--ease-morph` (zeroed under reduced motion). Decorative loops scale by `var(--motion-ambient, 0)`. Gate on `useReducedMotion()` (the device's setting or the home's Reduce motion); pause offscreen with `useIntersectionPause()`.
 
@@ -75,7 +75,7 @@ Render `<WidgetDialog>` next to `<Widget>`, spreading the dialog parts (`Respons
 
 Dash 1.5 previews the engine every widget will run in: QuickJS, no page access. Test there before publishing: Settings, Developer Mode, Sealed widgets (preview), reload, then `bun widget connect`. `bun widget preview` still renders in the page, so it does not prove a widget runs sealed.
 
-- Import only `@glasshome/widget-sdk` and `solid-js` (`/store`, `/web`).
+- Import only `@glasshome/widget-sdk`, `solid-js` and `@solidjs/web`. The build fails on any other host module and on a name the engine withholds.
 - No `fetch`, `XMLHttpRequest`, WebSocket, cookies, Capacitor. `localStorage` and `sessionStorage` are in memory, one pair per widget (every copy of a widget shares it), and empty on reload. They keep widgets apart but are no security boundary: widgets in one engine share its memory. Module top-level code uses its widget's store; a timer or listener set up there runs for no widget, so storage throws a catchable SecurityError in it and the engine runs on. Keep what must last with `useWidgetState(key, schema, fallback)`: for this widget on its board and this person, kept by the host (8 KB a value, 32 keys); config stays for settings the homeowner chooses. Built-ins are frozen: no `z.config`, no global patches.
 - DOM is mirrored through an allowlist: no `<style>`, `<link>`, `<script>`, no `el.click()`; images only `data:image/…`, same-origin `blob:` or `/ha-proxy/media`.
 - Limits: CPU 250 ms per second, setup 1.5 s per 10 s (both stop the widget until the homeowner turns it back on), 500 ms per run and 256 MB (both crash it), 20,000 elements, 512 timers, 128 observers.

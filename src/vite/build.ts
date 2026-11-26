@@ -2,7 +2,12 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type { InlineConfig, Plugin } from "vite";
 import { discoverWidgets, generateRegistry } from "./discover";
-import { isWidgetExternal, syncLayerImportGuard, uiImportGuard } from "./import-guards";
+import {
+  guestSurfaceGuard,
+  isWidgetExternal,
+  syncLayerImportGuard,
+  uiImportGuard,
+} from "./import-guards";
 import type { IntrospectSession } from "./introspect-session";
 import { checkBuiltWidget } from "./schema-guard";
 import {
@@ -72,6 +77,7 @@ export async function buildWidgets(options?: BuildWidgetsOptions): Promise<void>
         ...(options?.plugins ?? []),
         syncLayerImportGuard(),
         uiImportGuard(uiImportWarned, readSdkRange(join(dirname(widget.entry), "manifest.json"))),
+        guestSurfaceGuard(),
       ],
       ...options?.viteConfig,
       css: { ...options?.viteConfig?.css, ...widgetCssConfig() },

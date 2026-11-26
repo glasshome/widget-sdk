@@ -3,7 +3,12 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Plugin, ViteDevServer } from "vite";
 import { buildWidgets } from "./build";
-import { isWidgetExternal, syncLayerImportGuard, uiImportGuard } from "./import-guards";
+import {
+  guestSurfaceGuard,
+  isWidgetExternal,
+  syncLayerImportGuard,
+  uiImportGuard,
+} from "./import-guards";
 import { normalizePath } from "./normalize-path";
 import { checkBuiltWidget } from "./schema-guard";
 import {
@@ -144,6 +149,7 @@ export function glasshomeWidget(options?: GlasshomeWidgetOptions): Plugin[] {
     buildPlugin,
     syncLayerImportGuard(),
     uiImportGuard(undefined, readSdkRange(resolve(process.cwd(), "manifest.json"))),
+    guestSurfaceGuard(),
     schemaPlugin,
     devPlugin,
   ];

@@ -9,6 +9,11 @@ describe("isWidgetExternal — parity with the host import map", () => {
     }
   });
 
+  test("every module the SDK 2 guest serves is external", () => {
+    expect(isWidgetExternal("@solidjs/web")).toBe(true);
+    expect(isWidgetExternal("@solidjs/signals")).toBe(false);
+  });
+
   test("specifiers the import map does not serve get bundled", () => {
     // Externalizing these shipped builds that 404'd at mount time.
     expect(isWidgetExternal("@glasshome/ui")).toBe(false);

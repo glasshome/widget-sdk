@@ -1,19 +1,41 @@
 import { relative } from "node:path";
 import { isHostProvidedModule } from "@glasshome/widget-contract";
+import { surfaceViolations, WIDGET_SURFACE_V2 } from "@glasshome/widget-contract/widget-surface";
 import { intersects, validRange } from "semver";
 import type { Plugin } from "vite";
 import { deprecations, formatDeprecation } from "../deprecations";
 import { normalizePath } from "./normalize-path";
 
+const GUEST_MODULES: ReadonlySet<string> = new Set(Object.keys(WIDGET_SURFACE_V2.modules));
+
 /**
- * Packages provided by the host import map; widgets must not bundle these.
- * Delegates to the shared list in @glasshome/widget-contract so the host's
- * import map and the widget build can never disagree again. Exact match only:
- * a specifier the import map does not serve (e.g. "@glasshome/ui/tokens")
- * must be bundled, because leaving it external is a runtime 404.
+ * Modules the host serves to widgets; widgets must not bundle these. The SDK 1
+ * list stays external so the guest surface guard names a module SDK 2 no longer
+ * serves instead of bundling a second copy. Exact match only: a specifier the
+ * host does not serve (e.g. "@glasshome/ui/tokens") must be bundled.
  */
 export function isWidgetExternal(id: string): boolean {
-  return isHostProvidedModule(id);
+  return isHostProvidedModule(id) || GUEST_MODULES.has(id);
+}
+
+/** Fails the build when a bundle imports a module or name the SDK 2 guest does not serve. */
+export function guestSurfaceGuard(): Plugin {
+  return {
+    name: "glasshome-widget:guest-surface",
+    apply: "build",
+    generateBundle(_options, bundle) {
+      const problems = Object.values(bundle).flatMap((chunk) =>
+        chunk.type === "chunk"
+          ? surfaceViolations(chunk.code, WIDGET_SURFACE_V2).map((p) => `${chunk.fileName}: ${p}`)
+          : [],
+      );
+      if (problems.length > 0) {
+        throw new Error(
+          `The SDK 2 widget engine does not serve these imports:\n  ${problems.join("\n  ")}`,
+        );
+      }
+    },
+  };
 }
 
 const WIDGET_SOURCE_RE = /\.(ts|tsx|js|jsx)$/;
