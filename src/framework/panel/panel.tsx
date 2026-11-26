@@ -268,7 +268,7 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
             }
             style={tone()}
             aria-label={props["aria-label"]}
-            aria-pressed={props.on}
+            aria-pressed={props.on ? "true" : "false"}
             {...gestureProps}
             onClick={(e: MouseEvent) => {
               // Pointer taps land in onPointerUp; only a keyboard press reaches here with detail 0.
