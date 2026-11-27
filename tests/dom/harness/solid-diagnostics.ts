@@ -19,6 +19,7 @@ const REAL_BUGS: ReadonlySet<string> = new Set([
   "CLEANUP_IN_FORBIDDEN_SCOPE",
   "SETTLED_CLEANUP_UNOWNED",
   "ON_FLUSH_IN_OWNED_SCOPE",
+  "FLUSH_IN_EFFECT_CALLBACK",
   "PRIMITIVE_IN_FORBIDDEN_SCOPE",
   "PRIMITIVE_IN_EFFECT_CALLBACK",
   "NO_OWNER_EFFECT",
@@ -40,12 +41,6 @@ const REAL_BUGS: ReadonlySet<string> = new Set([
   "INVALID_HTML_NESTING",
 ]);
 
-let provoked = new Set<string>();
-
-export function provokesSolidDiagnostic(code: string): void {
-  provoked.add(code);
-}
-
 export function installSolidDiagnosticGuard(allow: readonly DiagnosticAllowance[] = []): void {
   for (const row of allow) {
     if (!/^\d{4}-\d{2}-\d{2}-/.test(row.item)) {
@@ -55,7 +50,6 @@ export function installSolidDiagnosticGuard(allow: readonly DiagnosticAllowance[
   let capture: ReturnType<NonNullable<typeof OBSERVE>["diagnostics"]["capture"]> | undefined;
 
   beforeEach(() => {
-    provoked = new Set();
     capture = OBSERVE?.diagnostics.capture();
   });
 
@@ -66,7 +60,6 @@ export function installSolidDiagnosticGuard(allow: readonly DiagnosticAllowance[
     const failures = events.filter(
       (event) =>
         (event.severity === "error" || REAL_BUGS.has(event.code)) &&
-        !provoked.has(event.code) &&
         !allow.some((row) => row.code === event.code && row.test === test),
     );
     if (failures.length === 0) return;
