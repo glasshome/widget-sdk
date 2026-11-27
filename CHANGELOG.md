@@ -5,6 +5,14 @@ All notable changes to `@glasshome/widget-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.2](https://github.com/glasshome/widget-sdk/compare/v1.34.1...v1.34.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **vite:** release the vite plugin split into modules ([338b0a9](https://github.com/glasshome/widget-sdk/commit/338b0a9cb2a907e5f099c3786f4401b8c306dad1))
+* **vite:** release the vite plugin split into modules ([c49582d](https://github.com/glasshome/widget-sdk/commit/c49582d642090f1339b00ec06588b8e0663b8ecb))
+
 ## [1.34.1](https://github.com/glasshome/widget-sdk/compare/v1.34.0...v1.34.1) (2026-11-24)
 
 
