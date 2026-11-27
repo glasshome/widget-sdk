@@ -160,25 +160,14 @@ export function WidgetDialog(props: WidgetDialogProps) {
   // Schema-driven config editing: draft lifecycle
   const schemaMode = () =>
     !!props.configSchema && !!props.config && !!props.onConfigSave && !!props.SchemaForm;
-  const [draftConfig, setDraftConfig] = createSignal<Record<string, unknown>>({});
-  const [formSchema, setFormSchema] = createSignal<SchemaFormSchema | null>(null);
+  const [draftConfig, setDraftConfig] = createSignal<Record<string, unknown>>((prev) => {
+    const config = props.config;
+    return config ? untrack(() => ({ ...config })) : (prev ?? {});
+  });
+  const formSchema = createMemo(() =>
+    props.configSchema ? asFormSchema(props.configSchema) : null,
+  );
   const [configErrors, setConfigErrors] = createSignal<string[]>([]);
-
-  // Reset draft when config changes or dialog opens
-  createEffect(
-    () => props.config,
-    (config) => {
-      if (config) setDraftConfig({ ...config });
-    },
-  );
-
-  // Generate JSON Schema from Zod configSchema once
-  createEffect(
-    () => props.configSchema,
-    (schema) => {
-      if (schema) setFormSchema(asFormSchema(schema));
-    },
-  );
 
   const schemaDirty = () =>
     schemaMode() && JSON.stringify(draftConfig()) !== JSON.stringify(props.config);
