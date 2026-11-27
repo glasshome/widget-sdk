@@ -1,6 +1,7 @@
 import { useEntity, useTemperatureUnit } from "@glasshome/sync-layer/solid";
-import { createEffect, createMemo, createSignal, onCleanup, Show, useContext } from "solid-js";
+import { createMemo, Show, useContext } from "solid-js";
 import { type JSX } from "@solidjs/web";
+import { useEntityCommand } from "../hooks/use-entity-command";
 import { useService } from "../hooks/use-service";
 import { WidgetCtx } from "../hooks/use-widget-context";
 import { PanelRow } from "./panel";
@@ -31,8 +32,6 @@ interface DomainRow {
   tap?: (e: Entity) => Call;
 }
 
-// Long enough for Home Assistant to report the new value back, short enough that a refused call springs back.
-const SETTLE_MS = 5000;
 // Climate and water heater share the TARGET_TEMPERATURE bit.
 const TARGET_TEMPERATURE = 1;
 const VALVE_SET_POSITION = 4;
@@ -309,38 +308,31 @@ export function PanelEntityRow(props: {
   const unit = useTemperatureUnit();
   const { callService } = useService();
   const canCall = useContext(WidgetCtx)?.canCall;
-  // The value a drag set, shown until the entity reports it or SETTLE_MS passes.
-  const [pending, setPending] = createSignal<number | undefined>();
-  let settle: ReturnType<typeof setTimeout> | undefined;
-  const hold = (value: number | undefined) => {
-    clearTimeout(settle);
-    setPending(value);
-    if (value !== undefined) settle = setTimeout(() => setPending(undefined), SETTLE_MS);
-  };
-  createEffect(
-    () => props.entityId,
-    () => {
-      hold(undefined);
+  const command = useEntityCommand<number | undefined>({
+    reported: () => {
+      const e = entity();
+      return e ? (DOMAINS[e.domain] ?? FALLBACK).level?.(e) : undefined;
     },
-    { defer: true },
-  );
-  onCleanup(() => clearTimeout(settle));
+    send: (next) => {
+      const e = entity();
+      const call = e && next !== undefined ? DOMAINS[e.domain]?.setLevel?.(e, next) : undefined;
+      if (!e || !call) return undefined;
+      return callService(e.domain, call.service, call.data ?? {}, { entity_id: e.id });
+    },
+    arrived: (now, target) => {
+      const e = entity();
+      const step = e ? DOMAINS[e.domain]?.bounds?.(e, unit()).step : undefined;
+      return now !== undefined && target !== undefined && Math.abs(now - target) <= (step ?? 1) / 2;
+    },
+  });
   return (
     <Show when={entity()}>
       {(e) => {
         const d = () => DOMAINS[e().domain] ?? FALLBACK;
-        const reported = () => d().level?.(e());
-        createEffect(
-          () => pending() !== undefined && reported() === pending(),
-          (arrived) => {
-            if (arrived) hold(undefined);
-          },
-        );
-        const level = () => pending() ?? reported();
         const bounds = createMemo(() => d().bounds?.(e(), unit()) ?? WHOLE);
         const allowed = (call: Call) => canCall?.(e().domain, call.service, [e().id]) ?? true;
         const run = (call: Call) =>
-          void callService(e().domain, call.service, call.data ?? {}, { entity_id: e().id });
+          callService(e().domain, call.service, call.data ?? {}, { entity_id: e().id });
         // Asked once per entity change, never per pointer move: in a sealed realm each ask crosses to the host.
         const tap = createMemo(() => {
           const t = d().tap?.(e());
@@ -352,6 +344,7 @@ export function PanelEntityRow(props: {
           return set && allowed(set(e(), b.min)) && allowed(set(e(), b.max)) ? set : undefined;
         });
         const isOn = () => d().on(e());
+        const level = command.value;
         const slide = createMemo(() => {
           const set = setLevel();
           const v = level();
@@ -359,11 +352,8 @@ export function PanelEntityRow(props: {
           return {
             value: v,
             ...bounds(),
-            onChange: hold,
-            onCommit: (next: number) => {
-              hold(next);
-              run(set(e(), next));
-            },
+            onChange: command.hold,
+            onCommit: (next: number) => void command.run(next),
           };
         });
         return (
@@ -396,7 +386,7 @@ export function PanelEntityRow(props: {
             })()}
             onTap={(() => {
               const t = tap();
-              return t ? () => run(t) : undefined;
+              return t ? () => void run(t) : undefined;
             })()}
             onHold={props.onHold}
           />

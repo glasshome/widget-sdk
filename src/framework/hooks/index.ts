@@ -42,3 +42,9 @@ export {
   type UseWidgetEntityGroupResult,
   useWidgetEntityGroup,
 } from "./use-widget-entity-group";
+// Entity command (optimistic value, busy flag, revert on failure or timeout)
+export {
+  type EntityCommand,
+  type EntityCommandOptions,
+  useEntityCommand,
+} from "./use-entity-command";
