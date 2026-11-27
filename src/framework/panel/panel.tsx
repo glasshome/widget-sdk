@@ -163,7 +163,9 @@ export function PanelRow(props: PanelRowProps): JSX.Element {
     axis: "x",
     slide: () => props.slide,
     onTap: () => props.onTap?.(),
-    onHold: props.onHold ? () => props.onHold?.() : undefined,
+    get onHold() {
+      return props.onHold;
+    },
   });
   const fill = () => {
     if (props.fill !== undefined) return props.fill;
