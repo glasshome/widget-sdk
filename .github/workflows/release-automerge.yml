@@ -1,0 +1,49 @@
+name: Release PR auto-merge
+
+# A green CI on main merges the open release-please PR when it sits right on that
+# commit and bumps a patch or minor (a patch on 0.x); a major always waits for the
+# owner. A merge made with GITHUB_TOKEN starts no push workflow, so this dispatches
+# the release workflow itself.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  merge:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+      RELEASE_WORKFLOW: npm-publish.yml
+    steps:
+      - name: Merge the release PR built on this green commit
+        run: |
+          set -euo pipefail
+          pr=$(gh pr list -R "$GITHUB_REPOSITORY" --state open --label "autorelease: pending" --json number --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then echo "no release PR open"; exit 0; fi
+          parent=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr/commits" --jq '.[0].parents[0].sha')
+          if [ "$parent" != "$SHA" ]; then
+            echo "release PR #$pr sits on $parent, not on the green $SHA; the CI run on its base decides"
+            exit 0
+          fi
+          head=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)
+          version() { gh api "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$1" --jq .content | base64 -d | jq -r .version; }
+          from=$(version "$SHA")
+          to=$(version "$head")
+          IFS=. read -r fmaj fmin _ <<< "$from"
+          IFS=. read -r tmaj tmin _ <<< "$to"
+          if [ "$fmaj" != "$tmaj" ] || { [ "$fmaj" = 0 ] && [ "$fmin" != "$tmin" ]; }; then
+            echo "::notice::$from -> $to is a major; release PR #$pr waits for the owner"
+            exit 0
+          fi
+          gh pr merge "$pr" -R "$GITHUB_REPOSITORY" --merge --match-head-commit "$head"
+          gh workflow run "$RELEASE_WORKFLOW" -R "$GITHUB_REPOSITORY" --ref main
+          echo "merged release PR #$pr ($from -> $to) and dispatched $RELEASE_WORKFLOW"

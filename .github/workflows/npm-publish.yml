@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           release-type: node
 
